@@ -30,6 +30,6 @@ public class ActionPreviewIntegrationTest {
                 .andExpect(jsonPath("$.riskLevel").value("MODERATE"))
                 // Ensure plainTextChanges contains the formatted string
                 .andExpect(jsonPath("$.plainTextChanges").isArray())
-                .andExpect(jsonPath("$.plainTextChanges[0]").value("salary changed from $95,000.00 to $114,000.00"));
+                .andExpect(jsonPath("$.plainTextChanges[0]").value("Salary changed from $95,000.00 to $114,000.00"));
     }
 }

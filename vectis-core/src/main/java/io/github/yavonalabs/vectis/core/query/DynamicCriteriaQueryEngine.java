@@ -161,6 +161,12 @@ public class DynamicCriteriaQueryEngine {
 
     @Transactional
     public void persist(Object entity) {
+        if (validator != null) {
+            Set<ConstraintViolation<Object>> violations = validator.validate(entity);
+            if (!violations.isEmpty()) {
+                throw new ConstraintViolationException(violations);
+            }
+        }
         entityManager.persist(entity);
     }
 

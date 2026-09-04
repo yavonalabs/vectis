@@ -76,7 +76,7 @@ public class EntityActionRegistry {
 
         for (Object bean : serviceBeans.values()) {
             if (bean == this) continue;
-            Class<?> beanClass = bean.getClass();
+            Class<?> beanClass = org.springframework.util.ClassUtils.getUserClass(bean);
 
             for (Method method : beanClass.getDeclaredMethods()) {
                 if (method.isAnnotationPresent(AdminAction.class)) {

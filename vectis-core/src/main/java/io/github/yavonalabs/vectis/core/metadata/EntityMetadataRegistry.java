@@ -200,10 +200,22 @@ public class EntityMetadataRegistry {
     }
 
     private String splitCamelCase(String s) {
-        return s.replaceAll(String.format("%s|%s|%s",
+        String spaced = s.replaceAll(String.format("%s|%s|%s",
                 "(?<=[A-Z])(?=[A-Z][a-z])",
                 "(?<=[^A-Z])(?=[A-Z])",
                 "(?<=[A-Za-z])(?=[^A-Za-z])"
         ), " ").trim();
+
+        if (spaced.isEmpty()) return spaced;
+        String[] words = spaced.split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < words.length; i++) {
+            if (words[i].length() > 0) {
+                sb.append(Character.toUpperCase(words[i].charAt(0)))
+                  .append(words[i].substring(1));
+                if (i < words.length - 1) sb.append(" ");
+            }
+        }
+        return sb.toString();
     }
 }

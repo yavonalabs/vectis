@@ -274,6 +274,7 @@ public class AdminController {
             @PathVariable String slug,
             @RequestParam Map<String, String> formParams,
             RedirectAttributes redirectAttributes,
+            Model model,
             Principal principal
     ) {
         EntityDescriptor descriptor = getDescriptorOrThrow(slug);
@@ -284,9 +285,9 @@ public class AdminController {
 
         String rawId = formParams.get("__id");
         boolean isNew = rawId == null || rawId.isBlank();
+        Object entity = null;
 
         try {
-            Object entity;
             Map<String, Object> beforeSnapshot = new HashMap<>();
 
             if (isNew) {
@@ -377,6 +378,19 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "Conflict: This record was modified by another user while you were editing it. Please refresh and try again.");
             return isNew ? "redirect:/admin/" + slug + "/create" : "redirect:/admin/" + slug + "/edit/" + rawId;
+        } catch (jakarta.validation.ConstraintViolationException e) {
+            model.addAttribute("descriptor", descriptor);
+            model.addAttribute("entity", entity);
+            model.addAttribute("isNew", isNew);
+            model.addAttribute("encodedId", isNew ? null : rawId);
+            model.addAttribute("formOptions", loadFormAssociationOptions(descriptor));
+            
+            StringBuilder sb = new StringBuilder("The following validation constraints were violated:\n");
+            e.getConstraintViolations().forEach(violation -> {
+                sb.append("- ").append(violation.getPropertyPath()).append(": ").append(violation.getMessage()).append("\n");
+            });
+            model.addAttribute("errorMessage", sb.toString());
+            return "vectis/form";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to save record: " + e.getMessage());
             return isNew ? "redirect:/admin/" + slug + "/create" : "redirect:/admin/" + slug + "/edit/" + rawId;
@@ -439,6 +453,12 @@ public class AdminController {
             ));
 
             redirectAttributes.addFlashAttribute("flashMessage", "Action '" + action.getLabel() + "' executed successfully!");
+        } catch (jakarta.validation.ConstraintViolationException e) {
+            StringBuilder sb = new StringBuilder("Action validation failed:\n");
+            e.getConstraintViolations().forEach(violation -> {
+                sb.append("- ").append(violation.getPropertyPath()).append(": ").append(violation.getMessage()).append("\n");
+            });
+            redirectAttributes.addFlashAttribute("errorMessage", sb.toString());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Action failed: " + e.getMessage());
         }

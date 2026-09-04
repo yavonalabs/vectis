@@ -21,6 +21,7 @@ public class Employee {
 
     @NotBlank
     @Column(nullable = false)
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Legal first name")
     private String firstName;
 
     @NotBlank
@@ -31,7 +32,10 @@ public class Employee {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @jakarta.validation.constraints.Min(30000)
+    @jakarta.validation.constraints.Max(500000)
     @Column(precision = 10, scale = 2)
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Annual base salary in USD")
     private BigDecimal salary;
 
     @Enumerated(EnumType.STRING)
