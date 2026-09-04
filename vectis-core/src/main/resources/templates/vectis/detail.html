@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{vectis/layout :: html(
+        pageTitle=${descriptor.displayName} + ' #' + ${encodedId},
+        content=~{::content}
+      )}">
+<body>
+
+<div th:fragment="content" class="space-y-6 max-w-6xl mx-auto" x-data="{ activeTab: 'attributes' }">
+    
+    <!-- Top Breadcrumbs & Action Bar -->
+    <div id="detail-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-white/10 gap-3">
+        <div class="flex items-center gap-2 text-xs font-mono text-[#9ca3af]">
+            <a href="/admin" class="hover:text-white transition" th:text="${adminTitle}">Operations Console</a>
+            <span>/</span>
+            <a th:href="@{'/admin/' + ${descriptor.slug}}" class="hover:text-white transition uppercase" th:text="${descriptor.displayName}">TABLE</a>
+            <span>/</span>
+            <span class="text-[#10b981] font-bold" th:text="${'#' + encodedId}">#1</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <a th:href="@{'/admin/' + ${descriptor.slug}}" class="px-3 py-1.5 text-xs text-[#9ca3af] hover:text-white bg-[#0f1117] hover:bg-[#151821] border border-white/10 rounded-lg transition font-medium">
+                &larr; Back to list
+            </a>
+            <a th:href="@{'/admin/' + ${descriptor.slug} + '/edit/' + ${encodedId}}" 
+               class="px-3.5 py-1.5 bg-[#10b981] hover:bg-[#059669] text-[#090a0f] font-bold rounded-lg text-xs transition flex items-center gap-1.5 shadow-lg shadow-[#10b981]/20">
+                <svg class="w-3.5 h-3.5 text-[#090a0f]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                <span>Edit Record</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 2-Column Grid Layout: Main Inspector (2/3) + Operations Control Plane (1/3) -->
+    <div th:class="${isDrawer != null && isDrawer ? 'grid grid-cols-1 gap-6' : 'grid grid-cols-1 lg:grid-cols-3 gap-6'}">
+        
+        <!-- LEFT COLUMN: Main Tabs & Schema Data (2/3) -->
+        <div th:class="${isDrawer != null && isDrawer ? 'col-span-1 space-y-4' : 'lg:col-span-2 space-y-4'}">
+            
+            <!-- Record Summary Header Card -->
+            <div class="bg-[#0f1117] border border-white/10 rounded-xl p-5 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-[#151821] border border-white/10 flex items-center justify-center font-mono font-bold text-lg text-[#10b981] shadow-inner">
+                        <span th:text="${#strings.toUpperCase(#strings.substring(entity.toString(), 0, 1))}">E</span>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2.5">
+                            <span th:text="${entity.toString()}">Entity Title</span>
+                            <span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/25 font-bold" th:text="${'#' + encodedId}">#1</span>
+                        </h2>
+                        <p class="text-xs text-[#9ca3af] font-mono mt-0.5" th:text="${descriptor.displayName + ' Record'}">Record Details</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex items-center gap-2 border-b border-white/10 text-xs font-mono">
+                <button @click="activeTab = 'attributes'" 
+                        :class="activeTab === 'attributes' ? 'text-[#10b981] border-b-2 border-[#10b981] font-bold' : 'text-[#9ca3af] hover:text-white'"
+                        class="px-3 py-2 transition">
+                    ATTRIBUTES
+                </button>
+                <button @click="activeTab = 'relationships'" 
+                        :class="activeTab === 'relationships' ? 'text-[#10b981] border-b-2 border-[#10b981] font-bold' : 'text-[#9ca3af] hover:text-white'"
+                        class="px-3 py-2 transition">
+                    RELATIONSHIPS
+                </button>
+                <button @click="activeTab = 'activity'" 
+                        :class="activeTab === 'activity' ? 'text-[#10b981] border-b-2 border-[#10b981] font-bold' : 'text-[#9ca3af] hover:text-white'"
+                        class="px-3 py-2 transition">
+                    ACTIVITY TIMELINE
+                </button>
+            </div>
+
+            <!-- Tab 1: Attributes -->
+            <div x-show="activeTab === 'attributes'" class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-4 shadow-sm">
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div th:each="field : ${descriptor.fields}" class="py-1 flex flex-col">
+                        <div class="flex items-center gap-2 justify-between">
+                            <dt class="text-[11px] font-mono uppercase text-[#9ca3af] font-semibold" th:text="${field.displayName}">Field</dt>
+                            <span class="type-badge" th:text="${field.isId ? 'int8' : (field.isBoolean() ? 'bool' : (field.isNumeric() ? 'int4' : (field.isDecimal() ? 'numeric' : (field.isEnum() ? 'enum' : 'varchar'))))}">type</span>
+                        </div>
+                        <dd class="mt-1 text-xs text-white break-all">
+                            <span th:if="${field.isId}" class="font-mono text-[#10b981] font-bold" th:text="${'#' + entity.__${field.name}__}">#1</span>
+
+                            <span th:if="${field.isBoolean()}">
+                                <span th:if="${entity.__${field.name}__ == true}" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20">TRUE</span>
+                                <span th:if="${entity.__${field.name}__ == false}" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#151821] text-[#9ca3af] border border-white/10">FALSE</span>
+                            </span>
+
+                            <span th:if="${field.isEnum() && entity.__${field.name}__ != null}" 
+                                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider"
+                                  th:classappend="${entity.__${field.name}__.toString() == 'ACTIVE' ? 'bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/25' : (entity.__${field.name}__.toString() == 'ON_LEAVE' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/25' : 'bg-rose-500/10 text-rose-400 border border-rose-500/25')}"
+                                  th:text="${entity.__${field.name}__}">STATUS</span>
+
+                            <span th:if="${field.isDecimal() && entity.__${field.name}__ != null}" 
+                                  class="font-mono text-[#f3f4f6] font-medium"
+                                  th:text="${'$' + #numbers.formatDecimal(entity.__${field.name}__, 1, 'COMMA', 2, 'POINT')}">$1,500.00</span>
+
+                            <span th:if="${!field.isId && !field.isBoolean() && !field.isEnum() && !field.isDecimal()}" 
+                                  class="text-[#f3f4f6]"
+                                  th:text="${entity.__${field.name}__}">Value</span>
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Tab 2: Relationships -->
+            <div x-show="activeTab === 'relationships'" class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-4 shadow-sm" style="display: none;">
+                <div class="space-y-4">
+                    <!-- Single Valued Associations -->
+                    <div th:each="assoc : ${descriptor.associations}" th:if="${assoc.isSingleValued()}" class="space-y-1.5 pb-3 border-b border-white/5">
+                        <div class="text-xs font-mono text-[#9ca3af]" th:text="${assoc.displayName + ' (Foreign Key)'}">Department</div>
+                        <div th:if="${singleAssocDetails.containsKey(assoc.name)}">
+                            <a th:href="@{'/admin/' + ${singleAssocDetails.get(assoc.name).slug} + '/view/' + ${singleAssocDetails.get(assoc.name).encodedId}}"
+                               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs bg-[#151821] hover:bg-[#1c202c] border border-white/10 text-[#f3f4f6] transition font-medium">
+                                <span th:text="${singleAssocDetails.get(assoc.name).display}">Associated Record</span>
+                                <span class="text-[#10b981] font-mono">&rarr;</span>
+                            </a>
+                        </div>
+                        <p th:unless="${singleAssocDetails.containsKey(assoc.name)}" class="text-xs text-[#6b7280] font-mono">null</p>
+                    </div>
+
+                    <!-- Collection Associations -->
+                    <div th:each="assoc : ${descriptor.associations}" th:if="${!assoc.isSingleValued()}" class="space-y-2">
+                        <div class="text-xs font-mono text-[#9ca3af]" th:text="${assoc.displayName + ' (Collection)'}">Skills</div>
+                        <div th:if="${collectionDetails.containsKey(assoc.name) && !#lists.isEmpty(collectionDetails.get(assoc.name))}" class="flex flex-wrap gap-2">
+                            <a th:each="item : ${collectionDetails.get(assoc.name)}"
+                               th:href="@{'/admin/' + ${item.slug} + '/view/' + ${item.encodedId}}"
+                               class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs bg-[#151821] text-[#f3f4f6] border border-white/10 hover:border-[#10b981] transition font-medium">
+                                <span th:text="${item.display}">Item</span>
+                                <span class="text-[#6b7280] font-mono">&rarr;</span>
+                            </a>
+                        </div>
+                        <p th:unless="${collectionDetails.containsKey(assoc.name) && !#lists.isEmpty(collectionDetails.get(assoc.name))}" class="text-xs text-[#6b7280] font-mono">Empty collection</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Activity Timeline -->
+            <div x-show="activeTab === 'activity'" class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-3 shadow-sm" style="display: none;">
+                <div th:if="${#lists.isEmpty(entityAudits)}" class="py-8 text-xs text-[#6b7280] text-center font-mono">
+                    No activity recorded for this entity yet.
+                </div>
+                <div class="space-y-2.5">
+                    <div th:each="audit : ${entityAudits}" class="p-3 bg-[#151821] border border-white/5 rounded-lg space-y-1 text-xs">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-white" th:text="${audit.actionName}">Operation</span>
+                                <span class="text-[10px] font-mono text-[#9ca3af]" th:text="${'by ' + (audit.actorUsername ?: 'Operator')}">by admin</span>
+                            </div>
+                            <span class="font-mono text-[10px] text-[#6b7280]" th:text="${#temporals.format(audit.timestamp, 'HH:mm:ss')}">Time</span>
+                        </div>
+                        <p th:if="${audit.reason != null && !audit.reason.isBlank()}" 
+                           class="text-[11px] text-[#9ca3af] italic" th:text="${'&ldquo;' + audit.reason + '&rdquo;'}">Reason</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Operations Control Plane & Risk Classifier (1/3) -->
+        <div th:class="${isDrawer != null && isDrawer ? 'col-span-1 space-y-4 min-w-0' : 'lg:col-span-1 space-y-4 min-w-0'}">
+            
+            <!-- Widget 1: Operations Hub (Vectis Differentiator) -->
+            <div class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-4 shadow-sm min-w-0">
+                <div class="flex items-center justify-between pb-2 border-b border-white/10">
+                    <div class="text-xs font-mono font-bold text-[#9ca3af] uppercase tracking-wider flex items-center gap-2">
+                        <span>OPERATIONS HUB</span>
+                    </div>
+                    <span class="text-[10px] font-mono text-[#10b981] font-bold">SAFE EXEC</span>
+                </div>
+
+                <div class="space-y-2 min-w-0">
+                    <!-- Dynamic Custom @AdminActions with Risk Classification -->
+                    <button th:each="action : ${actions}"
+                            type="button"
+                            data-modal-type="action"
+                            th:data-slug="${descriptor.slug}"
+                            th:data-action-id="${action.id}"
+                            th:data-label="${action.label}"
+                            th:data-title="${action.modalTitle}"
+                            th:data-desc="${action.modalDescription}"
+                            th:data-id="${encodedId}"
+                            class="w-full text-left bg-[#151821] hover:bg-[#1c202c] border border-white/5 hover:border-[#10b981]/50 rounded-lg transition group block">
+                        <div class="flex items-start justify-between p-2.5 min-w-0 w-full gap-2">
+                            <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                                <svg class="w-3.5 h-3.5 text-[#10b981] shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs font-semibold text-[#f3f4f6] group-hover:text-white whitespace-normal break-words leading-tight" th:text="${action.label}">Custom Action</div>
+                                    <div class="text-[10px] text-[#6b7280] whitespace-normal break-words leading-tight mt-0.5" th:text="${action.modalDescription ?: 'Execute domain workflow'}">Trigger operation</div>
+                                </div>
+                            </div>
+                            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold shrink-0 mt-0.5"
+                                  th:classappend="${action.riskLevel.name() == 'CRITICAL' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : (action.riskLevel.name() == 'HIGH' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : (action.riskLevel.name() == 'MODERATE' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20'))}"
+                                  th:text="${action.riskLevel.name()}">MODERATE</span>
+                        </div>
+                    </button>
+
+                    <!-- Destructive Action -->
+                    <button type="button"
+                            data-modal-type="delete"
+                            th:data-slug="${descriptor.slug}"
+                            th:data-id="${encodedId}"
+                            class="w-full flex items-center justify-between p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 rounded-lg transition text-left text-rose-400 text-xs font-semibold mt-3">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <span>Delete Record</span>
+                        </div>
+                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded risk-badge-danger font-bold">HIGH RISK</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Widget 2: Schema Metadata -->
+            <div class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-3 shadow-sm">
+                <div class="text-xs font-mono font-bold text-[#9ca3af] uppercase tracking-wider pb-2 border-b border-white/10">METADATA</div>
+                <dl class="space-y-2 text-xs font-mono">
+                    <div>
+                        <dt class="text-[#6b7280]">Primary Key</dt>
+                        <dd class="text-[#10b981] font-bold mt-0.5" th:text="${'#' + encodedId}">#1</dd>
+                    </div>
+                    <div>
+                        <dt class="text-[#6b7280]">Entity Type</dt>
+                        <dd class="text-[#f3f4f6] mt-0.5 font-medium" th:text="${descriptor.displayName}">Skill</dd>
+                    </div>
+                    <div>
+                        <dt class="text-[#6b7280]">Status</dt>
+                        <dd class="text-[#9ca3af] mt-0.5">Synced with your database</dd>
+                    </div>
+                </dl>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

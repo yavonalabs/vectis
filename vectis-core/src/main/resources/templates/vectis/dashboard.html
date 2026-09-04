@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{vectis/layout :: html(
+        pageTitle='Overview',
+        content=~{::content}
+      )}">
+<body>
+
+<div th:fragment="content" class="space-y-6 max-w-6xl mx-auto">
+    
+    <!-- Studio Header -->
+    <div class="pb-3 border-b border-white/10 flex items-center justify-between">
+        <div>
+            <h1 class="text-lg font-bold text-white tracking-tight">Overview</h1>
+            <p class="text-xs text-[#9ca3af] mt-0.5">Find records, review recent activity, and safely make changes.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#10b981]/10 border border-[#10b981]/25 rounded-lg text-[11px] font-mono text-[#10b981] font-bold">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
+                <span>SYSTEM ONLINE</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Data Studio Stats Bar -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-[#0f1117] border border-white/10 rounded-xl p-4 shadow-sm">
+            <div class="text-[10px] font-mono font-bold text-[#6b7280] uppercase tracking-wider">SECTIONS</div>
+            <div class="text-2xl font-bold text-white font-mono mt-1" th:text="${#lists.size(entities)}">3</div>
+            <div class="text-[11px] text-[#6b7280] mt-0.5 font-mono">Available for your team to manage</div>
+        </div>
+
+        <div class="bg-[#0f1117] border border-white/10 rounded-xl p-4 shadow-sm">
+            <div class="text-[10px] font-mono font-bold text-[#6b7280] uppercase tracking-wider">ACTIVITY LOGGED</div>
+            <div class="text-2xl font-bold text-[#10b981] font-mono mt-1" th:text="${#lists.size(recentAudits)}">0</div>
+            <div class="text-[11px] text-[#6b7280] mt-0.5 font-mono">Full history of every change</div>
+        </div>
+
+        <div class="bg-[#0f1117] border border-white/10 rounded-xl p-4 shadow-sm">
+            <div class="text-[10px] font-mono font-bold text-[#6b7280] uppercase tracking-wider">SAFETY CHECKS</div>
+            <div class="text-2xl font-bold text-white font-mono mt-1">ON</div>
+            <div class="text-[11px] text-[#10b981] mt-0.5 font-mono font-medium">Risky changes require a reason</div>
+        </div>
+    </div>
+
+    <!-- 2-Column: Sections list (Left 1/3) & Recent Activity (Right 2/3) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Data Sources Directory -->
+        <div class="bg-[#0f1117] border border-white/10 rounded-xl p-4 space-y-3 shadow-sm">
+            <div class="text-xs font-mono font-bold text-[#6b7280] uppercase tracking-wider pb-2 border-b border-white/10">
+                SECTIONS
+            </div>
+            <div class="space-y-1">
+                <a th:each="ent : ${entities}" 
+                   th:href="@{'/admin/' + ${ent.slug}}"
+                   class="flex items-center justify-between p-2.5 rounded-lg bg-[#151821] hover:bg-[#1c202c] border border-white/5 hover:border-white/15 transition group text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
+                        <span class="font-medium text-[#f3f4f6] group-hover:text-white" th:text="${ent.displayName}">Technical Skills</span>
+                    </div>
+                    <span class="text-[10px] font-mono text-[#6b7280]" th:text="${ent.slug}">skill</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Live Activity Explorer -->
+        <div class="lg:col-span-2 bg-[#0f1117] border border-white/10 rounded-xl p-4 space-y-3 shadow-sm">
+            <div class="flex items-center justify-between pb-2 border-b border-white/10">
+                <div class="text-xs font-mono font-bold text-[#6b7280] uppercase tracking-wider">
+                    RECENT ACTIVITY
+                </div>
+                <a href="/admin/audit" class="text-xs font-mono text-[#10b981] hover:underline font-medium">
+                    Explorer &rarr;
+                </a>
+            </div>
+
+            <div th:if="${#lists.isEmpty(recentAudits)}" class="py-12 text-center text-xs text-[#6b7280] font-mono">
+                No operational activity recorded yet. Events will appear here in real-time.
+            </div>
+
+            <div class="space-y-2">
+                <div th:each="audit : ${recentAudits}" 
+                     class="p-3 bg-[#151821] border border-white/5 rounded-lg flex items-center justify-between hover:border-white/15 transition text-xs">
+                    <div class="space-y-0.5">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-white" th:text="${audit.actorUsername ?: 'Operator'}">Admin</span>
+                            <span class="text-[#9ca3af] font-mono text-[11px]" th:text="${audit.actionName.toLowerCase()}">updated</span>
+                            <a th:href="@{'/admin/' + ${audit.entitySlug} + '/view/' + ${audit.encodedEntityId}}"
+                               class="font-mono text-[#10b981] hover:underline font-bold" 
+                               th:text="${audit.entitySlug + ' #' + audit.encodedEntityId}">employee #1</a>
+                        </div>
+                        <p th:if="${audit.reason != null && !audit.reason.isBlank()}" 
+                           class="text-[11px] text-[#9ca3af] italic" th:text="${'&ldquo;' + audit.reason + '&rdquo;'}">Reason</p>
+                    </div>
+                    <span class="text-[10px] font-mono text-[#6b7280] whitespace-nowrap ml-4" th:text="${#temporals.format(audit.timestamp, 'HH:mm:ss')}">12:00:00</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

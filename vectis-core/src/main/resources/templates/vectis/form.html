@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{vectis/layout :: html(
+        pageTitle=${(isNew ? 'New ' : 'Edit ') + descriptor.displayName},
+        content=~{::content}
+      )}">
+<body>
+
+<div th:fragment="content" class="space-y-6 max-w-4xl mx-auto">
+    
+    <!-- Top Header -->
+    <div class="flex items-center justify-between pb-4 border-b border-[var(--vx-border)]">
+        <div class="space-y-1">
+            <div class="flex items-center gap-2 text-xs text-[var(--vx-text-muted)] font-medium">
+                <a href="/admin" class="hover:text-[var(--vx-accent-main)] transition">Dashboard</a>
+                <span>/</span>
+                <a th:href="@{'/admin/' + ${descriptor.slug}}" class="hover:text-[var(--vx-accent-main)] transition" th:text="${descriptor.displayName}">List</a>
+                <span>/</span>
+                <span class="text-[var(--vx-text-main)] font-bold" th:text="${isNew ? 'New Record' : 'Edit #' + encodedId}">Action</span>
+            </div>
+            <h2 class="text-xl font-bold tracking-tight text-[var(--vx-text-main)]" th:text="${(isNew ? 'Create New ' : 'Edit ') + descriptor.displayName}">Edit Entity</h2>
+        </div>
+        <a th:href="@{'/admin/' + ${descriptor.slug}}" class="px-4 py-2 text-xs font-semibold text-[var(--vx-text-main)] hover:bg-[var(--vx-surface-active)] bg-[var(--vx-surface-overlay)] rounded-xl transition border border-[var(--vx-border)]">
+            Cancel
+        </a>
+    </div>
+
+    <!-- Replace with editFormFragment -->
+    <div th:replace="~{vectis/fragments/edit-form :: editFormFragment}"></div>
+</div>
+
+</body>
+</html>

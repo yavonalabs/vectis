@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{vectis/layout :: html(
+        pageTitle='Audit Trail',
+        content=~{::content}
+      )}">
+<body>
+
+<div th:fragment="content" class="space-y-6">
+    <div class="flex items-center justify-between pb-2 border-b border-[var(--vx-border)]">
+        <div>
+            <h2 class="text-xl font-bold tracking-tight text-[var(--vx-text-main)]">Immutable Operations Audit Trail</h2>
+            <p class="text-xs text-[var(--vx-text-muted)] mt-0.5">Permanent, verifiable record of every support action, modification, and deletion.</p>
+        </div>
+        <span class="text-xs font-mono text-[var(--vx-accent-main)] bg-[var(--vx-accent-main)]/10 px-3 py-1 rounded-full border border-[var(--vx-accent-main)]/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]">Compliance Mode Active</span>
+    </div>
+
+    <div class="border border-[var(--vx-border)] rounded-2xl overflow-x-auto bg-[var(--vx-surface-card)] shadow-xl shadow-black/20">
+        <table class="w-full text-left text-xs text-[var(--vx-text-main)] min-w-max">
+            <thead class="bg-[var(--vx-canvas)] text-[11px] uppercase font-semibold text-[var(--vx-text-muted)] border-b border-[var(--vx-border)]">
+                <tr>
+                    <th class="px-5 py-3 tracking-wider">Timestamp</th>
+                    <th class="px-5 py-3 tracking-wider">Operator</th>
+                    <th class="px-5 py-3 tracking-wider">Target Entity</th>
+                    <th class="px-5 py-3 tracking-wider">Operation / Action</th>
+                    <th class="px-5 py-3 tracking-wider">Justification Reason</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[var(--vx-border-subtle)] font-mono text-xs">
+                <tr th:if="${#lists.isEmpty(auditLogs)}">
+                    <td colspan="5" class="px-6 py-12 text-center text-[var(--vx-text-muted)] font-sans">
+                        No operational audit records logged yet.
+                    </td>
+                </tr>
+                <tr th:each="log : ${auditLogs}" class="hover:bg-[var(--vx-surface-active)] transition">
+                    <td class="px-5 py-3.5 text-[var(--vx-text-muted)]" th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}">2026-08-28 11:30:00</td>
+                    <td class="px-5 py-3.5">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-[var(--vx-surface-overlay)] text-[var(--vx-text-main)] border border-[var(--vx-border)] font-sans text-xs"
+                              th:text="${log.actorUsername ?: 'Operator'}">alice@example.com</span>
+                    </td>
+                    <td class="px-5 py-3.5 text-[var(--vx-accent-main)] font-semibold">
+                        <a th:href="@{'/admin/' + ${log.entitySlug} + '/view/' + ${log.encodedEntityId}}" 
+                           th:text="${log.entitySlug + ' #' + log.encodedEntityId}"
+                           class="hover:underline drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">customer #1821</a>
+                    </td>
+                    <td class="px-5 py-3.5">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase font-sans tracking-wider"
+                              th:classappend="${log.operation.name() == 'DELETE' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : (log.operation.name() == 'ACTION' ? 'bg-[var(--vx-accent-main)]/10 text-[var(--vx-accent-main)] border border-[var(--vx-accent-main)]/20' : 'bg-[var(--vx-surface-overlay)] text-[var(--vx-text-main)] border border-[var(--vx-border)]')}"
+                              th:text="${log.actionName}">Grant 15% Bonus</span>
+                    </td>
+                    <td class="px-5 py-3.5 text-[var(--vx-text-main)] font-sans truncate max-w-sm" th:text="${log.reason}">Standard operational edit</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

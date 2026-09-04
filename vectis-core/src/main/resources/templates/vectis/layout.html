@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="html(pageTitle, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle != null ? pageTitle + ' - ' + adminTitle : adminTitle}">Operations Console</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- htmx -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        :root {
+            --vx-canvas: #090a0f;
+            --vx-surface-base: #0f1117;
+            --vx-surface-card: #151821;
+            --vx-surface-overlay: #1c202c;
+            --vx-surface-active: #232838;
+            --vx-border: rgba(255, 255, 255, 0.08);
+            --vx-border-subtle: rgba(255, 255, 255, 0.04);
+            --vx-text-main: #f3f4f6;
+            --vx-text-muted: #9ca3af;
+            --vx-text-faint: #6b7280;
+            --vx-accent: #10b981;
+            --vx-accent-main: #10b981;
+            --vx-accent-hover: #059669;
+            --vx-accent-glow: rgba(16, 185, 129, 0.15);
+        }
+
+        body {
+            background-color: var(--vx-canvas);
+            color: var(--vx-text-main);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.011em;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Type Badges */
+        .type-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background-color: #1a1e29;
+            color: #9ca3af;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            text-transform: lowercase;
+            font-weight: 500;
+        }
+
+        /* Tiered Risk Badges */
+        .risk-badge-low { color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .risk-badge-moderate { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); }
+        .risk-badge-impact { color: #f97316; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.25); }
+        .risk-badge-danger { color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #151821;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 12px 18px;
+            border-radius: 10px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .toast.show { transform: translateX(0); }
+
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline-block; }
+        .htmx-request.htmx-indicator { display: inline-block; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row bg-[#090a0f] text-[#f3f4f6]" 
+      x-data="{ commandOpen: false, commandSearch: '', peekDrawerOpen: false, selectedRecord: {} }"
+      @open-peek-drawer.window="peekDrawerOpen = true">
+
+    <!-- Mobile Top Header -->
+    <div class="md:hidden flex items-center justify-between bg-[#0f1117] px-4 py-3 border-b border-white/10">
+        <a href="/admin" class="flex items-center gap-2 font-bold text-sm text-white">
+            <span class="w-2 h-2 rounded-full bg-[#10b981]"></span>
+            <span th:text="${adminTitle}">Operations Console</span>
+        </a>
+        <button onclick="document.getElementById('sidebar').classList.toggle('hidden')" class="p-1.5 text-[#9ca3af] hover:text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+    </div>
+
+    <!-- Sidebar: Obsidian Surface -->
+    <aside id="sidebar" class="hidden md:flex w-64 bg-[#0f1117] border-r border-white/10 flex-col shrink-0">
+        <!-- Brand Header -->
+        <div class="h-14 flex items-center px-4 border-b border-white/10 justify-between">
+            <a href="/admin" class="flex items-center gap-2.5 font-bold text-sm tracking-tight text-white">
+                <div class="w-6 h-6 rounded-lg bg-[#10b981] flex items-center justify-center text-[#090a0f] font-black text-xs shadow-lg shadow-[#10b981]/20"
+                     th:text="${#strings.toUpperCase(#strings.substring(adminTitle, 0, 1))}">
+                    O
+                </div>
+                <span th:text="${adminTitle}">Operations Console</span>
+            </a>
+        </div>
+
+        <!-- Navigation Sections -->
+        <nav class="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
+            
+            <!-- OVERVIEW -->
+            <div>
+                <a href="/admin" 
+                   th:classappend="${descriptor == null && pageTitle == 'Overview' ? 'bg-[#151821] text-[#10b981] font-semibold border-l-2 border-[#10b981]' : 'text-[#9ca3af] hover:bg-[#151821] hover:text-white'}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition">
+                    <svg class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                    </svg>
+                    <span>Overview</span>
+                </a>
+            </div>
+
+            <!-- TABLE EDITOR (DATA) -->
+            <div>
+                <div class="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest px-3 pb-2 flex items-center justify-between">
+                    <span>TABLE EXPLORER</span>
+                    <span class="text-[9px] font-mono text-[#9ca3af] bg-[#151821] px-1.5 py-0.5 rounded border border-white/5" th:text="${#lists.size(entities)}">3</span>
+                </div>
+                <div class="space-y-0.5">
+                    <a th:each="ent : ${entities}" 
+                       th:href="@{'/admin/' + ${ent.slug}}"
+                       th:classappend="${descriptor != null && descriptor.slug == ent.slug ? 'bg-[#151821] text-[#10b981] font-semibold border-l-2 border-[#10b981]' : 'text-[#9ca3af] hover:bg-[#151821] hover:text-white'}"
+                       class="flex items-center justify-between px-3 py-2 rounded-lg text-xs transition">
+                        <div class="flex items-center gap-2.5 truncate">
+                            <svg class="w-3.5 h-3.5 text-[#6b7280]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            <span class="truncate" th:text="${ent.displayName}">Technical Skills</span>
+                        </div>
+                        <span class="text-[10px] font-mono text-[#6b7280]" th:text="${ent.slug}">skill</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- SECURITY & AUDIT LOGS -->
+            <div>
+                <div class="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest px-3 pb-2">SECURITY & LOGS</div>
+                <div class="space-y-0.5">
+                    <a href="/admin/audit" 
+                       th:classappend="${pageTitle == 'Audit Trail' ? 'bg-[#151821] text-white font-semibold border-l-2 border-[#10b981]' : 'text-[#9ca3af] hover:bg-[#151821] hover:text-white'}"
+                       class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition">
+                        <svg class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Audit Explorer</span>
+                    </a>
+                </div>
+            </div>
+
+        </nav>
+
+        <!-- System Footnote -->
+        <div class="p-3 border-t border-white/10 text-xs text-[#9ca3af] bg-[#090a0f] flex items-center justify-between font-mono">
+            <span class="text-[10px]">OPERATOR: admin</span>
+            <span class="text-[10px] text-[#10b981] font-bold">&bull; ONLINE</span>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#090a0f]">
+        
+        <!-- Top App Bar with Command Palette & Environment Indicator -->
+        <header class="h-14 bg-[#0f1117] border-b border-white/10 flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <!-- Command Palette Trigger -->
+                <button @click="commandOpen = true" 
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#151821] border border-white/10 hover:border-white/20 text-xs text-[#9ca3af] hover:text-white transition w-56 md:w-64 justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <span>Search or run action...</span>
+                    </div>
+                    <kbd class="font-mono text-[10px] bg-[#090a0f] px-1.5 py-0.5 rounded border border-white/10">CTRL+K</kbd>
+                </button>
+
+                <div id="global-spinner" class="htmx-indicator">
+                    <svg class="animate-spin h-3.5 w-3.5 text-[#10b981]" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Environment Badge -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#151821] border border-white/10 text-[11px] text-[#f3f4f6]">
+                    <span class="w-2 h-2 rounded-full bg-[#10b981]"></span>
+                    <span class="font-medium">Production</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Body -->
+        <div class="flex-1 overflow-y-auto p-6 md:p-8">
+            <div th:replace="${content}"></div>
+        </div>
+    </main>
+
+    <!-- Global Peek Drawer (Side-Over Inspector for clicked rows) -->
+    <div id="peek-drawer" 
+         class="fixed inset-y-0 right-0 w-full max-w-xl bg-[#0f1117] border-l border-white/10 shadow-2xl z-50 flex flex-col"
+         x-show="peekDrawerOpen" 
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="translate-x-full"
+         style="display: none;">
+        
+        <!-- Drawer Header -->
+        <div class="h-14 px-6 border-b border-white/10 flex items-center justify-between bg-[#090a0f]">
+            <div class="flex items-center gap-2.5">
+                <span class="font-mono text-sm font-bold text-[#10b981]" id="drawer-id">#1</span>
+                <span class="text-xs text-[#6b7280]">&bull;</span>
+                <span class="text-xs font-semibold text-white" id="drawer-title">Record Details</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <a id="drawer-fullpage-link" href="#" class="px-2.5 py-1 text-xs text-[#9ca3af] hover:text-white bg-[#151821] hover:bg-[#1c202c] rounded-lg transition border border-white/5">
+                    Open Full Page &rarr;
+                </a>
+                <button @click="peekDrawerOpen = false" class="p-1.5 text-[#9ca3af] hover:text-white rounded-lg hover:bg-[#151821] transition font-bold">
+                    &times;
+                </button>
+            </div>
+        </div>
+
+        <!-- Drawer Body Tabs & Content -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div id="drawer-content-placeholder">
+                <p class="text-xs text-[#9ca3af]">Loading record inspection...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Safe Action Modal (Vectis Risk & Justification Flow) -->
+    <div id="action-modal" 
+         x-data="{
+             loadingPreview: false,
+             previewData: null,
+             actionId: '',
+             entityId: '',
+             slug: '',
+             reasonProvided: '',
+             
+             async fetchPreview() {
+                 this.loadingPreview = true;
+                 this.previewData = null;
+                 try {
+                     const formData = new FormData();
+                    const csrfInput = document.querySelector('#modal-action-form input[name=\\'_csrf\\']');
+                    if (csrfInput) {
+                        formData.append(csrfInput.name, csrfInput.value);
+                    }
+                    
+                    const response = await fetch(`/admin/api/${this.slug}/action/${this.actionId}/${this.entityId}/preview`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                     if (response.ok) {
+                         this.previewData = await response.json();
+                     } else {
+                         console.error('Preview request failed');
+                     }
+                 } catch (e) {
+                     console.error('Preview failed', e);
+                 } finally {
+                     this.loadingPreview = false;
+                 }
+             }
+         }"
+         @open-action-modal.window="slug = $event.detail.slug; actionId = $event.detail.actionId; entityId = $event.detail.entityId; fetchPreview(); $el.classList.remove('hidden');"
+         class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0f1117] border border-white/15 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+            <div class="flex items-start gap-3">
+                <div class="p-2.5 bg-[#10b981]/10 rounded-xl border border-[#10b981]/25 text-[#10b981]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <div>
+                    <h3 id="action-modal-title" class="text-sm font-semibold text-white">Execute Operation</h3>
+                    <p class="text-xs mt-0.5 font-bold" 
+                       :class="{
+                           'text-[#9ca3af]': !previewData || previewData.riskLevel === 'LOW',
+                           'text-amber-400': previewData?.riskLevel === 'MODERATE',
+                           'text-orange-400': previewData?.riskLevel === 'HIGH',
+                           'text-red-400': previewData?.riskLevel === 'CRITICAL'
+                       }"
+                       x-text="previewData ? `Risk Assessment: ${previewData.riskLevel}` : 'Risk Assessment: ...'">Risk Assessment: Moderate</p>
+                </div>
+            </div>
+            
+            <div class="p-3.5 bg-[#151821] rounded-xl border border-white/5 text-xs text-[#9ca3af] space-y-3">
+                <div>
+                    <div class="text-white font-medium mb-1">What will happen?</div>
+                    <p id="action-modal-desc" class="text-[11px] leading-relaxed mb-3">Operation will be executed with full transactional logging.</p>
+
+                    <div class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 text-[10px] text-amber-500/80 mb-3 leading-relaxed">
+                        <span class="font-bold text-amber-500">Note:</span> The preview below diffs the primary entity fields. It blocks known `@ExternalApiCall` endpoints (like Stripe), but <strong>custom unannotated side-effects, emails, or independent transactions (REQUIRES_NEW) may still execute during the dry run.</strong>
+                    </div>
+                </div>
+                
+                <!-- State Preview / Dry Run Box -->
+                <div class="space-y-2 pt-2 border-t border-white/5">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-[#6b7280] flex items-center justify-between">
+                        <span>State Preview</span>
+                        <!-- Loading Spinner -->
+                        <div x-show="loadingPreview" class="flex items-center gap-1.5 text-amber-500">
+                            <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                            <span>Simulating Dry Run...</span>
+                        </div>
+                    </div>
+
+                    <!-- Diff Results -->
+                    <div x-show="!loadingPreview && previewData" class="space-y-2 font-mono text-[10px]">
+                        <!-- Changes detected -->
+                        <template x-if="previewData?.hasChanges">
+                            <div class="space-y-1 bg-[#090a0f] p-2 rounded-lg border border-white/5 max-h-32 overflow-y-auto">
+                                <template x-for="(change, idx) in previewData.plainTextChanges" :key="idx">
+                                    <div class="flex items-center gap-2 py-1 border-b border-white/5 last:border-0">
+                                        <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        <span class="text-[#f3f4f6] text-xs font-medium" x-text="change"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- No changes -->
+                        <div x-show="previewData && !previewData.hasChanges" class="p-2 rounded bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] flex items-center gap-2 font-semibold">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            No database fields will be modified.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="modal-action-form" method="post" action="">
+                <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="space-y-1.5" x-show="previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL'">
+                    <label for="action-reason" class="text-xs font-medium text-white">
+                        Reason / Justification (Required for Audit) <span class="text-rose-400">*</span>
+                    </label>
+                    <input id="action-reason" name="_reason" x-model="reasonProvided" :required="previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL'" type="text" placeholder="e.g. Ticket #1042 - Approved by Operations" 
+                           class="w-full bg-[#090a0f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-[#6b7280] focus:outline-none focus:border-[#10b981] transition" />
+                </div>
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-white/10">
+                    <button type="button" onclick="document.getElementById('action-modal').classList.add('hidden')" class="px-3.5 py-1.5 bg-[#151821] hover:bg-[#1c202c] text-[#9ca3af] hover:text-white rounded-lg text-xs font-medium transition border border-white/5">
+                        Cancel
+                    </button>
+                    <button type="submit" id="action-modal-btn" 
+                            :disabled="loadingPreview || ((previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL') && !reasonProvided)"
+                            :class="(loadingPreview || ((previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL') && !reasonProvided)) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#059669] shadow-lg shadow-[#10b981]/20'"
+                            class="px-4 py-1.5 bg-[#10b981] text-[#090a0f] font-bold rounded-lg text-xs transition">
+                        Confirm &amp; Execute
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Themed Delete Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#0f1117] border border-rose-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center gap-3 text-rose-400">
+                <div class="p-2 bg-rose-500/10 rounded-xl border border-rose-500/25">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-white">Delete Record</h3>
+                    <p class="text-[11px] text-rose-400 font-bold">Destructive - Permanent Removal</p>
+                </div>
+            </div>
+            <p class="text-xs text-[#9ca3af]">Are you sure you want to delete record <span id="modal-record-id" class="font-mono font-bold text-white"></span>?</p>
+            <form id="modal-delete-form" method="post" action="">
+                <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="space-y-1.5">
+                    <label for="delete-reason" class="text-xs font-medium text-white">Reason for Deletion <span class="text-rose-400">*</span></label>
+                    <input id="delete-reason" name="_reason" required type="text" placeholder="e.g. User account closed" 
+                           class="w-full bg-[#090a0f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-[#6b7280] focus:outline-none focus:border-rose-500 transition" />
+                </div>
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-white/10">
+                    <button type="button" onclick="closeDeleteModal()" class="px-3.5 py-1.5 bg-[#151821] hover:bg-[#1c202c] text-[#9ca3af] rounded-lg text-xs font-medium transition border border-white/5">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-lg text-xs transition shadow-lg shadow-rose-600/30">
+                        Confirm Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Global Command Palette Modal (Ctrl+K) -->
+    <div x-show="commandOpen" 
+         @keydown.window.meta.k.prevent="commandOpen = !commandOpen"
+         @keydown.window.ctrl.k.prevent="commandOpen = !commandOpen"
+         @keydown.escape.window="commandOpen = false"
+         class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-start justify-center pt-24 p-4"
+         style="display: none;">
+        
+        <div class="bg-[#0f1117] border border-white/15 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden divide-y divide-white/10"
+             @click.away="commandOpen = false">
+            <div class="p-3.5 flex items-center gap-3">
+                <svg class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" placeholder="Click a section below to jump to it..." 
+                       x-model="commandSearch"
+                       class="w-full bg-transparent text-xs text-white placeholder-[#6b7280] focus:outline-none"
+                       @keydown.enter="commandOpen = false" autofocus />
+                <kbd class="font-mono text-[10px] text-[#9ca3af] bg-[#151821] px-1.5 py-0.5 rounded border border-white/10">ESC</kbd>
+            </div>
+            
+            <div class="max-h-72 overflow-y-auto p-2 text-xs space-y-1">
+                <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider">TABLES</div>
+                <a th:each="ent : ${entities}" 
+                   th:href="@{'/admin/' + ${ent.slug}}"
+                   @click="commandOpen = false"
+                   x-show="commandSearch === '' || '[(${ent.displayName})]'.toLowerCase().includes(commandSearch.toLowerCase()) || '[(${ent.slug})]'.toLowerCase().includes(commandSearch.toLowerCase())"
+                   class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition">
+                    <span th:text="${ent.displayName}">Technical Skills</span>
+                    <span class="font-mono text-[10px] text-[#6b7280]" th:text="${'/admin/' + ent.slug}">/admin/slug</span>
+                </a>
+
+                <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider pt-2">SECURITY & LOGS</div>
+                <a href="/admin/audit" @click="commandOpen = false" 
+                   x-show="commandSearch === '' || 'Audit Explorer'.toLowerCase().includes(commandSearch.toLowerCase())"
+                   class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition">
+                    <span>Audit Explorer</span>
+                    <span class="font-mono text-[10px] text-[#6b7280]">/admin/audit</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let borderColor = 'border-[#10b981]/40';
+            let iconColor = 'text-[#10b981]';
+            let icon = '&check;';
+            
+            if (type === 'error') {
+                borderColor = 'border-rose-500/40';
+                iconColor = 'text-rose-400';
+                icon = '&times;';
+            } else if (type === 'info') {
+                borderColor = 'border-blue-500/40';
+                iconColor = 'text-blue-400';
+                icon = '&#8505;';
+            }
+
+            toast.className = `toast ${borderColor}`;
+            toast.innerHTML = `
+                <div class="flex items-center gap-2.5 text-xs font-medium text-white">
+                    <span class="${iconColor} font-bold text-sm leading-none">${icon}</span>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-[#9ca3af] hover:text-white font-bold">&times;</button>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 50);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 250);
+            }, 3000);
+        }
+
+        document.addEventListener('click', function(e) {
+            const deleteBtn = e.target.closest('[data-modal-type="delete"]');
+            if (deleteBtn) {
+                const slug = deleteBtn.getAttribute('data-slug');
+                const encodedId = deleteBtn.getAttribute('data-id');
+                document.getElementById('modal-record-id').innerText = '#' + encodedId;
+                document.getElementById('modal-delete-form').action = '/admin/' + slug + '/delete/' + encodedId;
+                document.getElementById('delete-modal').classList.remove('hidden');
+                return;
+            }
+
+            const actionBtn = e.target.closest('[data-modal-type="action"]');
+            if (actionBtn) {
+                const slug = actionBtn.getAttribute('data-slug');
+                const actionId = actionBtn.getAttribute('data-action-id');
+                const label = actionBtn.getAttribute('data-label');
+                const title = actionBtn.getAttribute('data-title');
+                const desc = actionBtn.getAttribute('data-desc');
+                const encodedId = actionBtn.getAttribute('data-id');
+
+                document.getElementById('action-modal-title').innerText = title || label;
+                document.getElementById('action-modal-desc').innerHTML = 'You are executing <strong>"' + label + '"</strong> on record <code>#' + encodedId + '</code>. ' + (desc || '');
+                document.getElementById('action-modal-btn').innerText = label;
+                document.getElementById('modal-action-form').action = '/admin/' + slug + '/action/' + actionId + '/' + encodedId;
+                
+                window.dispatchEvent(new CustomEvent('open-action-modal', {
+                    detail: { slug: slug, actionId: actionId, entityId: encodedId }
+                }));
+                return;
+            }
+        });
+
+        function closeDeleteModal() { document.getElementById('delete-modal').classList.add('hidden'); }
+        function closeActionModal() { document.getElementById('action-modal').classList.add('hidden'); }
+    </script>
+</body>
+</html>
