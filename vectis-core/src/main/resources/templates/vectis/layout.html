@@ -90,7 +90,7 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col md:flex-row bg-[#090a0f] text-[#f3f4f6]" 
-      x-data="{ commandOpen: false, commandSearch: '', peekDrawerOpen: false, selectedRecord: {} }"
+      x-data="globalSearch()"
       @open-peek-drawer.window="peekDrawerOpen = true">
 
     <!-- Mobile Top Header -->
@@ -423,9 +423,10 @@
         
         <div class="bg-[#0f1117] border border-white/15 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden divide-y divide-white/10"
              @click.away="commandOpen = false">
-            <div class="p-3.5 flex items-center gap-3">
-                <svg class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <input type="text" placeholder="Click a section below to jump to it..." 
+            <div class="p-3.5 flex items-center gap-3 relative">
+                <svg x-show="!isSearching" class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <svg x-show="isSearching" class="w-4 h-4 text-[#10b981] animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                <input type="text" placeholder="Search records or jump to a table..." 
                        x-model="commandSearch"
                        class="w-full bg-transparent text-xs text-white placeholder-[#6b7280] focus:outline-none"
                        @keydown.enter="commandOpen = false" autofocus />
@@ -433,28 +434,81 @@
             </div>
             
             <div class="max-h-72 overflow-y-auto p-2 text-xs space-y-1">
-                <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider">TABLES</div>
-                <a th:each="ent : ${entities}" 
-                   th:href="@{'/admin/' + ${ent.slug}}"
-                   @click="commandOpen = false"
-                   x-show="commandSearch === '' || '[(${ent.displayName})]'.toLowerCase().includes(commandSearch.toLowerCase()) || '[(${ent.slug})]'.toLowerCase().includes(commandSearch.toLowerCase())"
-                   class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition">
-                    <span th:text="${ent.displayName}">Technical Skills</span>
-                    <span class="font-mono text-[10px] text-[#6b7280]" th:text="${'/admin/' + ent.slug}">/admin/slug</span>
-                </a>
+                <!-- STATIC NAVIGATION (when search is empty) -->
+                <div x-show="commandSearch === '' || searchResults.length === 0">
+                    <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider">TABLES</div>
+                    <a th:each="ent : ${entities}" 
+                       th:href="@{'/admin/' + ${ent.slug}}"
+                       @click="commandOpen = false"
+                       x-show="commandSearch === '' || '[(${ent.displayName})]'.toLowerCase().includes(commandSearch.toLowerCase()) || '[(${ent.slug})]'.toLowerCase().includes(commandSearch.toLowerCase())"
+                       class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition">
+                        <span th:text="${ent.displayName}">Technical Skills</span>
+                        <span class="font-mono text-[10px] text-[#6b7280]" th:text="${'/admin/' + ent.slug}">/admin/slug</span>
+                    </a>
 
-                <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider pt-2">SECURITY & LOGS</div>
-                <a href="/admin/audit" @click="commandOpen = false" 
-                   x-show="commandSearch === '' || 'Audit Explorer'.toLowerCase().includes(commandSearch.toLowerCase())"
-                   class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition">
-                    <span>Audit Explorer</span>
-                    <span class="font-mono text-[10px] text-[#6b7280]">/admin/audit</span>
-                </a>
+                    <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider pt-2">SECURITY & LOGS</div>
+                    <a href="/admin/audit" @click="commandOpen = false" 
+                       x-show="commandSearch === '' || 'Audit Explorer'.toLowerCase().includes(commandSearch.toLowerCase())"
+                       class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition">
+                        <span>Audit Explorer</span>
+                        <span class="font-mono text-[10px] text-[#6b7280]">/admin/audit</span>
+                    </a>
+                </div>
+
+                <!-- GLOBAL SEARCH RESULTS -->
+                <template x-if="commandSearch !== '' && searchResults.length > 0">
+                    <div>
+                        <template x-for="group in searchResults" :key="group.slug">
+                            <div class="mb-2">
+                                <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider pt-2" x-text="group.category"></div>
+                                <template x-for="item in group.items" :key="item.url">
+                                    <a :href="item.url"
+                                       @click="commandOpen = false"
+                                       class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition group">
+                                        <div class="flex items-center gap-2 overflow-hidden">
+                                            <svg class="w-3.5 h-3.5 text-[#9ca3af] group-hover:text-[#10b981]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            <span x-text="item.title" class="truncate"></span>
+                                        </div>
+                                    </a>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
 
     <script>
+        function globalSearch() {
+            return {
+                commandOpen: false,
+                commandSearch: '',
+                peekDrawerOpen: false,
+                selectedRecord: {},
+                searchResults: [],
+                isSearching: false,
+                init() {
+                    let debounceTimer;
+                    this.$watch('commandSearch', value => {
+                        clearTimeout(debounceTimer);
+                        if (!value || value.trim().length < 2) {
+                            this.searchResults = [];
+                            this.isSearching = false;
+                            return;
+                        }
+                        this.isSearching = true;
+                        debounceTimer = setTimeout(() => {
+                            fetch('/admin/api/search?q=' + encodeURIComponent(value))
+                                .then(res => res.json())
+                                .then(data => { this.searchResults = data; })
+                                .finally(() => { this.isSearching = false; });
+                        }, 300);
+                    });
+                }
+            };
+        }
+
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');

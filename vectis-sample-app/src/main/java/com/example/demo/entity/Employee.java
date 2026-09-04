@@ -26,10 +26,12 @@ public class Employee {
 
     @NotBlank
     @Column(nullable = false)
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Legal last name")
     private String lastName;
 
     @Email
     @Column(nullable = false, unique = true)
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Corporate email address")
     private String email;
 
     @jakarta.validation.constraints.Min(30000)
@@ -39,10 +41,12 @@ public class Employee {
     private BigDecimal salary;
 
     @Enumerated(EnumType.STRING)
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Current operational status")
     private EmploymentStatus status = EmploymentStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Assigned organizational unit")
     private Department department;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})

@@ -1,0 +1,18 @@
+image: maven:3.9.4-eclipse-temurin-17
+
+variables:
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  paths:
+    - .m2/repository/
+    - target/
+
+stages:
+  - test
+
+test:
+  stage: test
+  script:
+    - mvn $MAVEN_CLI_OPTS clean test -pl vectis-core,vectis-sample-app -am

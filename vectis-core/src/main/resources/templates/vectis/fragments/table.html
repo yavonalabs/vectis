@@ -216,7 +216,9 @@
                                             <svg class="w-3.5 h-3.5 text-[#10b981]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                             <span th:text="${action.label}">Action</span>
                                         </div>
-                                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded risk-badge-moderate font-semibold">MODERATE</span>
+                                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded font-semibold"
+                                              th:classappend="${action.riskLevel.name() == 'CRITICAL' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : (action.riskLevel.name() == 'HIGH' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : (action.riskLevel.name() == 'MODERATE' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20'))}"
+                                              th:text="${action.riskLevel.name()}">MODERATE</span>
                                     </button>
                                 </div>
 

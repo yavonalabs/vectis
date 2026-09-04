@@ -65,11 +65,6 @@
                         class="px-3 py-2 transition">
                     RELATIONSHIPS
                 </button>
-                <button @click="activeTab = 'activity'" 
-                        :class="activeTab === 'activity' ? 'text-[#10b981] border-b-2 border-[#10b981] font-bold' : 'text-[#9ca3af] hover:text-white'"
-                        class="px-3 py-2 transition">
-                    ACTIVITY TIMELINE
-                </button>
             </div>
 
             <!-- Tab 1: Attributes -->
@@ -133,26 +128,6 @@
                             </a>
                         </div>
                         <p th:unless="${collectionDetails.containsKey(assoc.name) && !#lists.isEmpty(collectionDetails.get(assoc.name))}" class="text-xs text-[#6b7280] font-mono">Empty collection</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 3: Activity Timeline -->
-            <div x-show="activeTab === 'activity'" class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-3 shadow-sm" style="display: none;">
-                <div th:if="${#lists.isEmpty(entityAudits)}" class="py-8 text-xs text-[#6b7280] text-center font-mono">
-                    No activity recorded for this entity yet.
-                </div>
-                <div class="space-y-2.5">
-                    <div th:each="audit : ${entityAudits}" class="p-3 bg-[#151821] border border-white/5 rounded-lg space-y-1 text-xs">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="font-semibold text-white" th:text="${audit.actionName}">Operation</span>
-                                <span class="text-[10px] font-mono text-[#9ca3af]" th:text="${'by ' + (audit.actorUsername ?: 'Operator')}">by admin</span>
-                            </div>
-                            <span class="font-mono text-[10px] text-[#6b7280]" th:text="${#temporals.format(audit.timestamp, 'HH:mm:ss')}">Time</span>
-                        </div>
-                        <p th:if="${audit.reason != null && !audit.reason.isBlank()}" 
-                           class="text-[11px] text-[#9ca3af] italic" th:text="${'&ldquo;' + audit.reason + '&rdquo;'}">Reason</p>
                     </div>
                 </div>
             </div>
@@ -229,6 +204,27 @@
                         <dd class="text-[#9ca3af] mt-0.5">Synced with your database</dd>
                     </div>
                 </dl>
+            </div>
+
+            <!-- Widget 3: Activity Timeline -->
+            <div class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-3 shadow-sm">
+                <div class="text-xs font-mono font-bold text-[#9ca3af] uppercase tracking-wider pb-2 border-b border-white/10">ACTIVITY TIMELINE</div>
+                <div th:if="${#lists.isEmpty(entityAudits)}" class="py-4 text-xs text-[#6b7280] text-center font-mono">
+                    No activity recorded yet.
+                </div>
+                <div class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                    <div th:each="audit : ${entityAudits}" class="p-2.5 bg-[#151821] border border-white/5 rounded-lg space-y-1 text-xs">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-semibold text-white" th:text="${audit.actionName}">Operation</span>
+                                <span class="text-[9px] font-mono text-[#9ca3af]" th:text="${'by ' + (audit.actorUsername ?: 'Operator')}">by admin</span>
+                            </div>
+                            <span class="font-mono text-[9px] text-[#6b7280]" th:text="${#temporals.format(audit.timestamp, 'MM/dd HH:mm')}">Time</span>
+                        </div>
+                        <p th:if="${audit.reason != null && !audit.reason.isBlank()}" 
+                           class="text-[10px] text-[#9ca3af] italic" th:text="${'&ldquo;' + audit.reason + '&rdquo;'}">Reason</p>
+                    </div>
+                </div>
             </div>
 
         </div>
