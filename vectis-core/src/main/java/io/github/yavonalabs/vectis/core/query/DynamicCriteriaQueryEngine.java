@@ -194,6 +194,8 @@ public class DynamicCriteriaQueryEngine {
         for (FieldDescriptor field : descriptor.fields()) {
             if (field.isString()) {
                 predicates.add(cb.like(cb.lower(root.get(field.name())), pattern));
+            } else if (field.isEnum()) {
+                predicates.add(cb.like(cb.lower(root.get(field.name()).as(String.class)), pattern));
             }
         }
 

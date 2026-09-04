@@ -17,7 +17,7 @@
                        type="text" 
                        name="search" 
                        th:value="${search}"
-                       placeholder="Filter records (name, email, #ID)..." 
+                       placeholder="Search records or filter by status..." 
                        th:attr="hx-get=@{'/admin/' + ${descriptor.slug}}"
                        hx-trigger="keyup changed delay:300ms, search"
                        hx-target="#table-container"
@@ -28,13 +28,26 @@
             </div>
 
             <!-- Quick Status Filter Pills -->
-            <div class="hidden md:flex items-center gap-1.5 text-xs">
+            <div class="hidden md:flex items-center gap-1.5 text-xs overflow-x-auto whitespace-nowrap hide-scrollbar">
                 <a th:href="@{'/admin/' + ${descriptor.slug}(size=${size})}"
                    th:attr="hx-get=@{'/admin/' + ${descriptor.slug}(size=${size})}"
                    hx-target="#table-container"
-                   class="px-2.5 py-1 rounded-lg text-xs transition font-mono bg-[#151821] text-white border border-white/15 font-semibold">
+                   class="px-2.5 py-1 rounded-lg text-xs transition font-mono font-semibold"
+                   th:classappend="${search == null || search.isBlank() ? 'bg-[#151821] text-white border border-white/15' : 'text-[#9ca3af] hover:text-white border border-transparent hover:bg-white/5'}">
                     all
                 </a>
+                
+                <th:block th:each="field : ${descriptor.fields}" th:if="${field.isEnum()}">
+                    <a th:each="enumVal : ${field.getEnumConstants()}"
+                       th:href="@{'/admin/' + ${descriptor.slug}(search=${enumVal.name()}, size=${size})}"
+                       th:attr="hx-get=@{'/admin/' + ${descriptor.slug}(search=${enumVal.name()}, size=${size})}"
+                       hx-target="#table-container"
+                       class="px-2.5 py-1 rounded-lg text-xs transition font-mono font-semibold"
+                       th:classappend="${search == enumVal.name() ? 'bg-[#151821] text-[#10b981] border border-[#10b981]/30' : 'text-[#9ca3af] hover:text-white border border-transparent hover:bg-white/5'}"
+                       th:text="${#strings.toLowerCase(enumVal.name())}">
+                        status
+                    </a>
+                </th:block>
             </div>
         </div>
 

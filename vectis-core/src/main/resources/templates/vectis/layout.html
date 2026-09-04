@@ -318,8 +318,11 @@
                     <div class="text-white font-medium mb-1">What will happen?</div>
                     <p id="action-modal-desc" class="text-[11px] leading-relaxed mb-3">Operation will be executed with full transactional logging.</p>
 
-                    <div class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 text-[10px] text-amber-500/80 mb-3 leading-relaxed">
-                        <span class="font-bold text-amber-500">Note:</span> The preview below diffs the primary entity fields. It blocks known `@ExternalApiCall` endpoints (like Stripe), but <strong>custom unannotated side-effects, emails, or independent transactions (REQUIRES_NEW) may still execute during the dry run.</strong>
+                    <div class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-[10.5px] text-amber-500/90 mb-3 leading-relaxed flex gap-2">
+                        <span class="text-base leading-none">⚠️</span>
+                        <div>
+                            <span class="font-bold text-amber-500">Preview Warning:</span> This dry run simulates the action and safely rolls back all database changes. However, <strong>any external side-effects (like emails or APIs) coded into this action by your developers may still execute.</strong> Use with caution.
+                        </div>
                     </div>
                 </div>
                 

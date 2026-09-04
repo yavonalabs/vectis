@@ -7,13 +7,19 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @ControllerAdvice(basePackages = "io.github.yavonalabs.vectis.core.web")
 public class VectisExceptionHandler {
+
+    @Value("${vectis.title:Operations Console}")
+    private String adminTitle;
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(VectisExceptionHandler.class);
 
     @ExceptionHandler(ResponseStatusException.class)
     public String handleResponseStatusException(ResponseStatusException ex, Model model, HttpServletRequest request) {
+        model.addAttribute("adminTitle", adminTitle);
         model.addAttribute("status", ex.getStatusCode().value());
         model.addAttribute("errorTitle", ex.getStatusCode().equals(HttpStatus.FORBIDDEN) ? "Access Forbidden" :
                                          (ex.getStatusCode().equals(HttpStatus.NOT_FOUND) ? "Record Not Found" : "Request Error"));
@@ -23,6 +29,7 @@ public class VectisExceptionHandler {
 
     @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
     public String handleConstraintViolationException(jakarta.validation.ConstraintViolationException ex, Model model, HttpServletRequest request) {
+        model.addAttribute("adminTitle", adminTitle);
         model.addAttribute("status", 400);
         model.addAttribute("errorTitle", "Validation Failed");
         
@@ -38,6 +45,7 @@ public class VectisExceptionHandler {
     @ExceptionHandler(Exception.class)
     public String handleGenericException(Exception ex, Model model, HttpServletRequest request) {
         log.error("Unhandled exception in Vectis Admin", ex);
+        model.addAttribute("adminTitle", adminTitle);
         model.addAttribute("status", 500);
         model.addAttribute("errorTitle", "Internal Server Error");
         model.addAttribute("errorMessage", "An unexpected internal error occurred. Please contact the system administrator.");
