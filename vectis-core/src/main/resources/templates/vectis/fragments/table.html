@@ -111,9 +111,12 @@
                                hx-target="#table-container"
                                hx-indicator="#global-spinner"
                                hx-push-url="true"
-                               class="group inline-flex items-center gap-1.5 hover:text-white transition cursor-pointer">
+                               class="group inline-flex items-center gap-1 hover:text-white transition cursor-pointer">
                                 <span class="font-sans font-medium text-white text-xs" th:text="${field.displayName}">Field</span>
-                                <span th:if="${sort == field.name}" th:text="${dir == 'asc' ? '&uarr;' : '&darr;'}" class="text-[#10b981] text-[10px]"></span>
+                                <div class="flex flex-col items-center justify-center -space-y-[3px] text-[#6b7280] group-hover:text-[#9ca3af] transition">
+                                    <svg class="w-2.5 h-2.5" th:classappend="${sort == field.name and dir == 'asc' ? 'text-[#10b981]' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>
+                                    <svg class="w-2.5 h-2.5" th:classappend="${sort == field.name and dir == 'desc' ? 'text-[#10b981]' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
                             </a>
                             <!-- Type Badge -->
                             <span class="type-badge" 
@@ -196,8 +199,9 @@
 
                     <!-- Dynamic Actions Dropdown with Vector SVGs -->
                     <td class="px-4 py-2.5 text-right whitespace-nowrap actions-dropdown no-row-click" x-data="{ open: false }">
-                        <div class="relative inline-block text-left">
-                            <button @click="open = !open" 
+                        <div class="inline-block text-left">
+                            <button x-ref="actionBtn"
+                                    @click="open = !open" 
                                     class="p-1 hover:bg-[#151821] rounded-lg transition text-[#9ca3af] hover:text-white">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="1"></circle>
@@ -206,14 +210,16 @@
                                 </svg>
                             </button>
 
-                            <div x-show="open" 
-                                 @click.away="open = false"
-                                 class="absolute right-0 top-full mt-1 w-52 bg-[#0f1117] border border-white/15 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-white/10"
-                                 style="display: none;">
-                                
-                                <!-- Domain Operations with Risk Classification -->
-                                <div class="py-1" th:if="${!#lists.isEmpty(actions)}">
-                                    <div class="px-3 py-1 text-[9px] font-mono uppercase tracking-widest text-[#6b7280]">OPERATIONS</div>
+                            <template x-teleport="body">
+                                <div x-show="open" 
+                                     x-anchor.bottom-end.offset.4="$refs.actionBtn"
+                                     @click.away="open = false"
+                                     class="fixed w-52 bg-[#0f1117] border border-white/15 rounded-xl shadow-2xl z-[100] overflow-hidden divide-y divide-white/10"
+                                     style="display: none;">
+                                    
+                                    <!-- Domain Operations with Risk Classification -->
+                                    <div class="py-1" th:if="${!#lists.isEmpty(actions)}">
+                                        <div class="px-3 py-1 text-[9px] font-mono uppercase tracking-widest text-[#6b7280]">OPERATIONS</div>
                                     <button th:each="action : ${actions}"
                                             type="button"
                                             @click="open = false"
@@ -265,6 +271,7 @@
                                     </button>
                                 </div>
                             </div>
+                            </template>
                         </div>
                     </td>
                 </tr>
