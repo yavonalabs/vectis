@@ -16,4 +16,6 @@ spring:
 vectis:
   enabled: true
   path: /admin
-  title: Vectis Console
+  title: Vectis Studio
+  read-only-roles: [ROLE_USER]
+  environment: Demo — local sample data

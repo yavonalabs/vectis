@@ -9,7 +9,7 @@
 <div th:fragment="content" class="space-y-6">
     <div class="flex items-center justify-between pb-2 border-b border-[var(--vx-border)]">
         <div>
-            <h2 class="text-xl font-bold tracking-tight text-[var(--vx-text-main)]">Immutable Operations Audit Trail</h2>
+            <h2 class="text-xl font-bold tracking-tight text-[var(--vx-text-main)]">Operations activity history</h2>
             <p class="text-xs text-[var(--vx-text-muted)] mt-0.5">Permanent, verifiable record of every support action, modification, and deletion.</p>
         </div>
         <span class="text-xs font-mono text-[var(--vx-accent-main)] bg-[var(--vx-accent-main)]/10 px-3 py-1 rounded-full border border-[var(--vx-accent-main)]/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]">Compliance Mode Active</span>
@@ -39,7 +39,7 @@
                               th:text="${log.actorUsername ?: 'Operator'}">alice@example.com</span>
                     </td>
                     <td class="px-5 py-3.5 text-[var(--vx-accent-main)] font-semibold">
-                        <a th:href="@{'/admin/' + ${log.entitySlug} + '/view/' + ${log.encodedEntityId}}" 
+                        <a th:href="@{${adminPath} + '/' + ${log.entitySlug} + '/view/' + ${log.encodedEntityId}}"
                            th:text="${log.entitySlug + ' #' + log.encodedEntityId}"
                            class="hover:underline drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">customer #1821</a>
                     </td>

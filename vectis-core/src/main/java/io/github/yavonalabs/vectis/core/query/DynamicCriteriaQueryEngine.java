@@ -38,15 +38,30 @@ public class DynamicCriteriaQueryEngine {
             String sortProperty,
             String sortDirection
     ) {
+        return findPage(descriptor, page, size, search, sortProperty, sortDirection, List.of());
+    }
+
+    @Transactional(readOnly = true)
+    public <T> PageResult<T> findPage(EntityDescriptor descriptor, int page, int size,
+            String search, String sortProperty, String sortDirection, List<RecordFilter> filters) {
         @SuppressWarnings("unchecked")
         Class<T> javaType = (Class<T>) descriptor.javaType();
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 
+        if (page < 0 || size < 1 || size > 100 || (long) page * size > Integer.MAX_VALUE) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Page must be nonnegative and page size must be between 1 and 100.");
+        }
+        if (sortProperty != null && !sortProperty.isBlank() && descriptor.fields().stream().noneMatch(f -> f.name().equals(sortProperty))) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Unknown sort field.");
+        }
+        if (sortDirection != null && !sortDirection.equalsIgnoreCase("asc") && !sortDirection.equalsIgnoreCase("desc")) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Sort direction must be asc or desc.");
+        }
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<T> countRoot = countQuery.from(javaType);
         countQuery.select(cb.count(countRoot));
 
-        Predicate countPredicate = buildSearchPredicate(cb, countRoot, descriptor, search);
+        Predicate countPredicate = buildPredicate(cb, countRoot, descriptor, search, filters);
         if (countPredicate != null) {
             countQuery.where(countPredicate);
         }
@@ -64,7 +79,7 @@ public class DynamicCriteriaQueryEngine {
 
         query.select(root).distinct(true);
 
-        Predicate searchPredicate = buildSearchPredicate(cb, root, descriptor, search);
+        Predicate searchPredicate = buildPredicate(cb, root, descriptor, search, filters);
         if (searchPredicate != null) {
             query.where(searchPredicate);
         }
@@ -76,9 +91,9 @@ public class DynamicCriteriaQueryEngine {
         if (sortProperty != null && validFields.contains(sortProperty)) {
             Path<?> sortPath = root.get(sortProperty);
             if ("desc".equalsIgnoreCase(sortDirection)) {
-                query.orderBy(cb.desc(sortPath));
+                query.orderBy(cb.desc(sortPath), cb.asc(root.get(descriptor.idField().name())));
             } else {
-                query.orderBy(cb.asc(sortPath));
+                query.orderBy(cb.asc(sortPath), cb.asc(root.get(descriptor.idField().name())));
             }
         } else if (descriptor.idField() != null) {
             query.orderBy(cb.asc(root.get(descriptor.idField().name())));
@@ -188,21 +203,50 @@ public class DynamicCriteriaQueryEngine {
             return null;
         }
 
-        String pattern = "%" + search.toLowerCase().trim() + "%";
+        String pattern = "%" + escapeLike(search.toLowerCase(Locale.ROOT).trim()) + "%";
         List<Predicate> predicates = new ArrayList<>();
 
         for (FieldDescriptor field : descriptor.fields()) {
             if (field.isString()) {
-                predicates.add(cb.like(cb.lower(root.get(field.name())), pattern));
+                predicates.add(cb.like(cb.lower(root.get(field.name())), pattern, '\\'));
             } else if (field.isEnum()) {
-                predicates.add(cb.like(cb.lower(root.get(field.name()).as(String.class)), pattern));
+                predicates.add(cb.like(cb.lower(root.get(field.name()).as(String.class)), pattern, '\\'));
             }
         }
 
         if (predicates.isEmpty()) {
-            return null;
+            return cb.disjunction();
         }
 
         return cb.or(predicates.toArray(new Predicate[0]));
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private <T> Predicate buildPredicate(CriteriaBuilder cb, Root<T> root, EntityDescriptor descriptor,
+            String search, List<RecordFilter> filters) {
+        List<Predicate> conditions = new ArrayList<>();
+        Predicate text = buildSearchPredicate(cb, root, descriptor, search);
+        if (text != null) conditions.add(text);
+        for (RecordFilter filter : filters) {
+            Path path = root.get(filter.field());
+            Object value = filter.value();
+            conditions.add(switch (filter.operator()) {
+                case "eq" -> cb.equal(path, value);
+                case "ne" -> cb.notEqual(path, value);
+                case "contains" -> cb.like(cb.lower(path), "%" + escapeLike(value.toString().toLowerCase(Locale.ROOT)) + "%", '\\');
+                case "gt" -> cb.greaterThan(path, (Comparable) value);
+                case "gte" -> cb.greaterThanOrEqualTo(path, (Comparable) value);
+                case "lt" -> cb.lessThan(path, (Comparable) value);
+                case "lte" -> cb.lessThanOrEqualTo(path, (Comparable) value);
+                case "empty" -> cb.isNull(path);
+                case "notEmpty" -> cb.isNotNull(path);
+                default -> throw new IllegalArgumentException("Unsupported filter operator");
+            });
+        }
+        return conditions.isEmpty() ? null : cb.and(conditions.toArray(new Predicate[0]));
+    }
+
+    private static String escapeLike(String value) {
+        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 }

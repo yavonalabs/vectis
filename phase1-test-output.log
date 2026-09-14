@@ -1,0 +1,285 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] Vectis Parent                                                      [pom]
+[INFO] Vectis Core                                                        [jar]
+[INFO] Vectis AutoConfigure                                               [jar]
+[INFO] Vectis Spring Boot Starter                                         [jar]
+[INFO] Vectis Sample Test App                                             [jar]
+[INFO] 
+[INFO] -----------------< io.github.yavonalabs:vectis-parent >-----------------
+[INFO] Building Vectis Parent 0.1.0-SNAPSHOT                              [1/5]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] ------------------< io.github.yavonalabs:vectis-core >------------------
+[INFO] Building Vectis Core 0.1.0-SNAPSHOT                                [2/5]
+[INFO]   from vectis-core\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ vectis-core ---
+[INFO] Copying 10 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ vectis-core ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 34 source files with javac [debug parameters target 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ vectis-core ---
+[INFO] skip non existing resourceDirectory D:\EntityAdmin\vectis-core\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ vectis-core ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 1 source file with javac [debug parameters target 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ vectis-core ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running io.github.yavonalabs.vectis.core.metadata.EntityMetadataRegistryTest
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.449 s -- in io.github.yavonalabs.vectis.core.metadata.EntityMetadataRegistryTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.5.0:jar (default-jar) @ vectis-core ---
+[INFO] Building jar: D:\EntityAdmin\vectis-core\target\vectis-core-0.1.0-SNAPSHOT.jar
+[INFO] 
+[INFO] -------------< io.github.yavonalabs:vectis-autoconfigure >--------------
+[INFO] Building Vectis AutoConfigure 0.1.0-SNAPSHOT                       [3/5]
+[INFO]   from vectis-autoconfigure\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ vectis-autoconfigure ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ vectis-autoconfigure ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 2 source files with javac [debug parameters target 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ vectis-autoconfigure ---
+[INFO] skip non existing resourceDirectory D:\EntityAdmin\vectis-autoconfigure\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ vectis-autoconfigure ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ vectis-autoconfigure ---
+[INFO] No tests to run.
+[INFO] 
+[INFO] --- jar:3.5.0:jar (default-jar) @ vectis-autoconfigure ---
+[INFO] Building jar: D:\EntityAdmin\vectis-autoconfigure\target\vectis-autoconfigure-0.1.0-SNAPSHOT.jar
+[INFO] 
+[INFO] ----------< io.github.yavonalabs:vectis-spring-boot-starter >-----------
+[INFO] Building Vectis Spring Boot Starter 0.1.0-SNAPSHOT                 [4/5]
+[INFO]   from vectis-spring-boot-starter\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ vectis-spring-boot-starter ---
+[INFO] skip non existing resourceDirectory D:\EntityAdmin\vectis-spring-boot-starter\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ vectis-spring-boot-starter ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ vectis-spring-boot-starter ---
+[INFO] skip non existing resourceDirectory D:\EntityAdmin\vectis-spring-boot-starter\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ vectis-spring-boot-starter ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ vectis-spring-boot-starter ---
+[INFO] No tests to run.
+[INFO] 
+[INFO] --- jar:3.5.0:jar (default-jar) @ vectis-spring-boot-starter ---
+[WARNING] JAR will be empty - no content was marked for inclusion!
+[INFO] 
+[INFO] ---------------< io.github.yavonalabs:vectis-sample-app >---------------
+[INFO] Building Vectis Sample Test App 0.1.0-SNAPSHOT                     [5/5]
+[INFO]   from vectis-sample-app\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.4.0:resources (default-resources) @ vectis-sample-app ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ vectis-sample-app ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 8 source files with javac [debug parameters target 17] to target\classes
+[INFO] /D:/EntityAdmin/vectis-sample-app/src/main/java/com/example/demo/SecurityConfig.java: D:\EntityAdmin\vectis-sample-app\src\main\java\com\example\demo\SecurityConfig.java uses or overrides a deprecated API.
+[INFO] /D:/EntityAdmin/vectis-sample-app/src/main/java/com/example/demo/SecurityConfig.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- resources:3.4.0:testResources (default-testResources) @ vectis-sample-app ---
+[INFO] skip non existing resourceDirectory D:\EntityAdmin\vectis-sample-app\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ vectis-sample-app ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 4 source files with javac [debug parameters target 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ vectis-sample-app ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.demo.ActionPreviewIntegrationTest
+15:14:13.922 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.demo.ActionPreviewIntegrationTest]: ActionPreviewIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+15:14:14.451 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.demo.SampleApplication for test class com.example.demo.ActionPreviewIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.3)
+
+2026-09-13T15:14:16.435+05:30  INFO 20088 --- [           main] c.e.demo.ActionPreviewIntegrationTest    : Starting ActionPreviewIntegrationTest using Java 17.0.12 with PID 20088 (started by yadav in D:\EntityAdmin\vectis-sample-app)
+2026-09-13T15:14:16.435+05:30  INFO 20088 --- [           main] c.e.demo.ActionPreviewIntegrationTest    : No active profile set, falling back to 1 default profile: "default"
+2026-09-13T15:14:23.239+05:30  INFO 20088 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-13T15:14:23.559+05:30  INFO 20088 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 123 ms. Found 0 JPA repository interfaces.
+2026-09-13T15:14:32.099+05:30  INFO 20088 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-09-13T15:14:32.515+05:30  INFO 20088 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.2.Final
+2026-09-13T15:14:32.731+05:30  INFO 20088 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-09-13T15:14:34.854+05:30  INFO 20088 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-13T15:14:34.985+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-13T15:14:35.912+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:vectisdb user=SA
+2026-09-13T15:14:35.920+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-13T15:14:39.807+05:30  INFO 20088 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-13T15:14:39.987+05:30  INFO 20088 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-13T15:14:41.214+05:30  WARN 20088 --- [           main] o.s.security.core.userdetails.User       : User.withDefaultPasswordEncoder() is considered unsafe for production and is only intended for sample applications.
+2026-09-13T15:14:41.566+05:30  WARN 20088 --- [           main] o.s.security.core.userdetails.User       : User.withDefaultPasswordEncoder() is considered unsafe for production and is only intended for sample applications.
+2026-09-13T15:14:41.956+05:30  INFO 20088 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService
+2026-09-13T15:14:51.225+05:30  INFO 20088 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-09-13T15:14:51.225+05:30  INFO 20088 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-09-13T15:14:51.236+05:30  INFO 20088 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 11 ms
+2026-09-13T15:14:51.397+05:30  INFO 20088 --- [           main] c.e.demo.ActionPreviewIntegrationTest    : Started ActionPreviewIntegrationTest in 36.401 seconds (process running for 39.948)
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 44.78 s -- in com.example.demo.ActionPreviewIntegrationTest
+[INFO] Running com.example.demo.EntityPermissionIntegrationTest
+2026-09-13T15:14:58.257+05:30  INFO 20088 --- [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.demo.EntityPermissionIntegrationTest]: EntityPermissionIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T15:14:58.279+05:30  INFO 20088 --- [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.demo.SampleApplication for test class com.example.demo.EntityPermissionIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.3)
+
+2026-09-13T15:14:58.453+05:30  INFO 20088 --- [           main] c.e.d.EntityPermissionIntegrationTest    : Starting EntityPermissionIntegrationTest using Java 17.0.12 with PID 20088 (started by yadav in D:\EntityAdmin\vectis-sample-app)
+2026-09-13T15:14:58.461+05:30  INFO 20088 --- [           main] c.e.d.EntityPermissionIntegrationTest    : No active profile set, falling back to 1 default profile: "default"
+2026-09-13T15:14:59.620+05:30  INFO 20088 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-13T15:14:59.628+05:30  INFO 20088 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 7 ms. Found 0 JPA repository interfaces.
+2026-09-13T15:15:00.316+05:30  INFO 20088 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-09-13T15:15:00.324+05:30  INFO 20088 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-09-13T15:15:00.372+05:30  INFO 20088 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-13T15:15:00.372+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-09-13T15:15:00.380+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:entitypermissions user=SA
+2026-09-13T15:15:00.380+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-09-13T15:15:00.937+05:30  INFO 20088 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-13T15:15:00.985+05:30  INFO 20088 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-13T15:15:01.555+05:30  WARN 20088 --- [           main] o.s.security.core.userdetails.User       : User.withDefaultPasswordEncoder() is considered unsafe for production and is only intended for sample applications.
+2026-09-13T15:15:01.747+05:30  WARN 20088 --- [           main] o.s.security.core.userdetails.User       : User.withDefaultPasswordEncoder() is considered unsafe for production and is only intended for sample applications.
+2026-09-13T15:15:01.951+05:30  INFO 20088 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService
+2026-09-13T15:15:06.408+05:30  INFO 20088 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-09-13T15:15:06.408+05:30  INFO 20088 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-09-13T15:15:06.424+05:30  INFO 20088 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 16 ms
+2026-09-13T15:15:06.687+05:30  INFO 20088 --- [           main] c.e.d.EntityPermissionIntegrationTest    : Started EntityPermissionIntegrationTest in 8.398 seconds (process running for 55.238)
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 12.68 s -- in com.example.demo.EntityPermissionIntegrationTest
+[INFO] Running com.example.demo.ReviewCustomPathTest
+2026-09-13T15:15:10.984+05:30  INFO 20088 --- [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.example.demo.ReviewCustomPathTest]: ReviewCustomPathTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-13T15:15:11.005+05:30  INFO 20088 --- [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.demo.SampleApplication for test class com.example.demo.ReviewCustomPathTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.3)
+
+2026-09-13T15:15:11.176+05:30  INFO 20088 --- [           main] com.example.demo.ReviewCustomPathTest    : Starting ReviewCustomPathTest using Java 17.0.12 with PID 20088 (started by yadav in D:\EntityAdmin\vectis-sample-app)
+2026-09-13T15:15:11.176+05:30  INFO 20088 --- [           main] com.example.demo.ReviewCustomPathTest    : No active profile set, falling back to 1 default profile: "default"
+2026-09-13T15:15:12.661+05:30  INFO 20088 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-13T15:15:12.685+05:30  INFO 20088 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 23 ms. Found 0 JPA repository interfaces.
+2026-09-13T15:15:13.873+05:30  INFO 20088 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-09-13T15:15:13.897+05:30  INFO 20088 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-09-13T15:15:14.001+05:30  INFO 20088 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-13T15:15:14.009+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2026-09-13T15:15:14.009+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection conn20: url=jdbc:h2:mem:reviewpath user=SA
+2026-09-13T15:15:14.009+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2026-09-13T15:15:14.709+05:30  INFO 20088 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-13T15:15:14.765+05:30  INFO 20088 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-13T15:15:16.220+05:30  WARN 20088 --- [           main] o.s.security.core.userdetails.User       : User.withDefaultPasswordEncoder() is considered unsafe for production and is only intended for sample applications.
+2026-09-13T15:15:16.699+05:30  WARN 20088 --- [           main] o.s.security.core.userdetails.User       : User.withDefaultPasswordEncoder() is considered unsafe for production and is only intended for sample applications.
+2026-09-13T15:15:17.515+05:30  INFO 20088 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService
+2026-09-13T15:15:22.906+05:30  INFO 20088 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-09-13T15:15:22.906+05:30  INFO 20088 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-09-13T15:15:22.923+05:30  INFO 20088 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 17 ms
+2026-09-13T15:15:22.955+05:30  INFO 20088 --- [           main] com.example.demo.ReviewCustomPathTest    : Started ReviewCustomPathTest in 11.925 seconds (process running for 71.501)
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 14.12 s -- in com.example.demo.ReviewCustomPathTest
+[INFO] Running com.example.demo.ReviewRegressionTest
+2026-09-13T15:15:25.243+05:30  INFO 20088 --- [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.example.demo.SampleApplication for test class com.example.demo.ReviewRegressionTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.3)
+
+2026-09-13T15:15:25.467+05:30  INFO 20088 --- [           main] com.example.demo.ReviewRegressionTest    : Starting ReviewRegressionTest using Java 17.0.12 with PID 20088 (started by yadav in D:\EntityAdmin\vectis-sample-app)
+2026-09-13T15:15:25.472+05:30  INFO 20088 --- [           main] com.example.demo.ReviewRegressionTest    : No active profile set, falling back to 1 default profile: "default"
+2026-09-13T15:15:27.976+05:30  INFO 20088 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-13T15:15:28.164+05:30  INFO 20088 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 185 ms. Found 0 JPA repository interfaces.
+2026-09-13T15:15:30.858+05:30  INFO 20088 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-09-13T15:15:31.050+05:30  INFO 20088 --- [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-09-13T15:15:31.106+05:30  INFO 20088 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-13T15:15:31.106+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Starting...
+2026-09-13T15:15:31.129+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-4 - Added connection conn30: url=jdbc:h2:mem:vectisdb user=SA
+2026-09-13T15:15:31.139+05:30  INFO 20088 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Start completed.
+2026-09-13T15:15:32.383+05:30  INFO 20088 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-13T15:15:32.484+05:30  INFO 20088 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-13T15:15:33.158+05:30  WARN 20088 --- [           main] o.s.security.core.userdetails.User       : User.withDefaultPasswordEncoder() is considered unsafe for production and is only intended for sample applications.
+2026-09-13T15:15:33.956+05:30  WARN 20088 --- [           main] o.s.security.core.userdetails.User       : User.withDefaultPasswordEncoder() is considered unsafe for production and is only intended for sample applications.
+2026-09-13T15:15:34.402+05:30  INFO 20088 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService
+2026-09-13T15:15:38.023+05:30  INFO 20088 --- [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-09-13T15:15:38.031+05:30  INFO 20088 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-09-13T15:15:38.039+05:30  INFO 20088 --- [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 8 ms
+2026-09-13T15:15:38.063+05:30  INFO 20088 --- [           main] com.example.demo.ReviewRegressionTest    : Started ReviewRegressionTest in 12.754 seconds (process running for 86.615)
+[INFO] Tests run: 26, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 19.95 s -- in com.example.demo.ReviewRegressionTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 32, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.5.0:jar (default-jar) @ vectis-sample-app ---
+[INFO] Building jar: D:\EntityAdmin\vectis-sample-app\target\vectis-sample-app-0.1.0-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot:3.3.3:repackage (default) @ vectis-sample-app ---
+[INFO] Replacing main artifact D:\EntityAdmin\vectis-sample-app\target\vectis-sample-app-0.1.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to D:\EntityAdmin\vectis-sample-app\target\vectis-sample-app-0.1.0-SNAPSHOT.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for Vectis Parent 0.1.0-SNAPSHOT:
+[INFO] 
+[INFO] Vectis Parent ...................................... SUCCESS [  0.000 s]
+[INFO] Vectis Core ........................................ SUCCESS [ 24.878 s]
+[INFO] Vectis AutoConfigure ............................... SUCCESS [  2.870 s]
+[INFO] Vectis Spring Boot Starter ......................... SUCCESS [  0.247 s]
+[INFO] Vectis Sample Test App ............................. SUCCESS [01:43 min]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  02:12 min
+[INFO] Finished at: 2026-09-13T15:15:49+05:30
+[INFO] ------------------------------------------------------------------------

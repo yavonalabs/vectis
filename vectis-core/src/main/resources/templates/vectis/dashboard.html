@@ -17,7 +17,7 @@
         <div class="flex items-center gap-2">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#10b981]/10 border border-[#10b981]/25 rounded-lg text-[11px] font-mono text-[#10b981] font-bold">
                 <span class="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
-                <span>SYSTEM ONLINE</span>
+                <span>Workspace</span>
             </span>
         </div>
     </div>
@@ -33,12 +33,12 @@
         <div class="bg-[#0f1117] border border-white/10 rounded-xl p-4 shadow-sm">
             <div class="text-[10px] font-mono font-bold text-[#6b7280] uppercase tracking-wider">ACTIVITY LOGGED</div>
             <div class="text-2xl font-bold text-[#10b981] font-mono mt-1" th:text="${#lists.size(recentAudits)}">0</div>
-            <div class="text-[11px] text-[#6b7280] mt-0.5 font-mono">Full history of every change</div>
+            <div class="text-[11px] text-[#6b7280] mt-0.5 font-mono">Recent activity you can access</div>
         </div>
 
         <div class="bg-[#0f1117] border border-white/10 rounded-xl p-4 shadow-sm">
-            <div class="text-[10px] font-mono font-bold text-[#6b7280] uppercase tracking-wider">SAFETY CHECKS</div>
-            <div class="text-2xl font-bold text-white font-mono mt-1">ON</div>
+            <div class="text-[10px] font-mono font-bold text-[#6b7280] uppercase tracking-wider">CHANGE REASONS</div>
+            <div class="text-2xl font-bold text-white font-mono mt-1">Required</div>
             <div class="text-[11px] text-[#10b981] mt-0.5 font-mono font-medium">Risky changes require a reason</div>
         </div>
     </div>
@@ -53,13 +53,13 @@
             </div>
             <div class="space-y-1">
                 <a th:each="ent : ${entities}" 
-                   th:href="@{'/admin/' + ${ent.slug}}"
+                   th:href="@{${adminPath} + '/' + ${ent.slug}}"
                    class="flex items-center justify-between p-2.5 rounded-lg bg-[#151821] hover:bg-[#1c202c] border border-white/5 hover:border-white/15 transition group text-xs">
                     <div class="flex items-center gap-2">
                         <span class="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
                         <span class="font-medium text-[#f3f4f6] group-hover:text-white" th:text="${ent.displayName}">Technical Skills</span>
                     </div>
-                    <span class="text-[10px] font-mono text-[#6b7280]" th:text="${ent.slug}">skill</span>
+                    <span class="text-[10px] font-mono text-[#6b7280]" th:text="${'Browse →'}">skill</span>
                 </a>
             </div>
         </div>
@@ -70,13 +70,13 @@
                 <div class="text-xs font-mono font-bold text-[#6b7280] uppercase tracking-wider">
                     RECENT ACTIVITY
                 </div>
-                <a href="/admin/audit" class="text-xs font-mono text-[#10b981] hover:underline font-medium">
+                <a th:if="${canViewAudit}" th:href="@{${adminPath} + '/audit'}" class="text-xs font-mono text-[#10b981] hover:underline font-medium">
                     Explorer &rarr;
                 </a>
             </div>
 
             <div th:if="${#lists.isEmpty(recentAudits)}" class="py-12 text-center text-xs text-[#6b7280] font-mono">
-                No operational activity recorded yet. Events will appear here in real-time.
+                No operational activity recorded yet. Refresh this page to see new activity.
             </div>
 
             <div class="space-y-2">
@@ -86,7 +86,7 @@
                         <div class="flex items-center gap-2">
                             <span class="font-semibold text-white" th:text="${audit.actorUsername ?: 'Operator'}">Admin</span>
                             <span class="text-[#9ca3af] font-mono text-[11px]" th:text="${audit.actionName.toLowerCase()}">updated</span>
-                            <a th:href="@{'/admin/' + ${audit.entitySlug} + '/view/' + ${audit.encodedEntityId}}"
+                            <a th:href="@{${adminPath} + '/' + ${audit.entitySlug} + '/view/' + ${audit.encodedEntityId}}"
                                class="font-mono text-[#10b981] hover:underline font-bold" 
                                th:text="${audit.entitySlug + ' #' + audit.encodedEntityId}">employee #1</a>
                         </div>

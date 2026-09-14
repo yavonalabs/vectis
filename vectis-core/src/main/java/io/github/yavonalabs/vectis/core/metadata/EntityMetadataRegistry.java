@@ -74,7 +74,7 @@ public class EntityMetadataRegistry {
 
         for (Attribute<?, ?> attr : entityType.getAttributes()) {
             Member member = attr.getJavaMember();
-            Field field = member instanceof Field ? (Field) member : null;
+            java.lang.reflect.AnnotatedElement field = member instanceof java.lang.reflect.AnnotatedElement element ? element : null;
 
             if (field != null && field.isAnnotationPresent(AdminIgnore.class)) {
                 continue;
@@ -88,6 +88,14 @@ public class EntityMetadataRegistry {
             Long minVal = null;
             Long maxVal = null;
             String adminFieldDescription = null;
+            AdminField presentation = field == null ? null : field.getAnnotation(AdminField.class);
+            if (presentation != null && !presentation.currency().isBlank()) {
+                Currency.getInstance(presentation.currency());
+                if (!Number.class.isAssignableFrom(attr.getJavaType())
+                        && !Set.of(byte.class, short.class, int.class, long.class, float.class, double.class).contains(attr.getJavaType())) {
+                    throw new IllegalArgumentException("Currency requires a numeric field: " + attr.getName());
+                }
+            }
 
             if (field != null) {
                 isId = field.isAnnotationPresent(Id.class) || field.isAnnotationPresent(EmbeddedId.class);
@@ -127,7 +135,7 @@ public class EntityMetadataRegistry {
 
                 associations.add(new AssociationDescriptor(
                         attr.getName(),
-                        splitCamelCase(attr.getName()),
+                        presentation != null && !presentation.label().isBlank() ? presentation.label() : splitCamelCase(attr.getName()),
                         targetClass,
                         targetSlug,
                         assocType
@@ -135,7 +143,7 @@ public class EntityMetadataRegistry {
             } else {
                 FieldDescriptor fd = new FieldDescriptor(
                         attr.getName(),
-                        splitCamelCase(attr.getName()),
+                        presentation != null && !presentation.label().isBlank() ? presentation.label() : splitCamelCase(attr.getName()),
                         attr.getJavaType(),
                         isId,
                         isEmbeddedId,
@@ -145,7 +153,10 @@ public class EntityMetadataRegistry {
                         validationRules,
                         minVal,
                         maxVal,
-                        adminFieldDescription
+                        adminFieldDescription,
+                        presentation == null ? 100 : presentation.order(),
+                        presentation == null || presentation.showInList(),
+                        presentation == null ? "" : presentation.currency()
                 );
 
                 if (isId) {
@@ -158,6 +169,8 @@ public class EntityMetadataRegistry {
             }
         }
 
+        fields.sort(Comparator.comparingInt(FieldDescriptor::order).thenComparing(FieldDescriptor::name));
+        associations.sort(Comparator.comparing(AssociationDescriptor::name));
         return new EntityDescriptor(
                 entityType.getName(),
                 slug,

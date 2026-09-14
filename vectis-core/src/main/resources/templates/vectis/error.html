@@ -28,7 +28,7 @@
         <div class="flex items-center justify-between pt-4 border-t border-slate-800 text-xs">
             <span class="text-slate-500 font-mono" th:text="${'Timestamp: ' + #dates.format(#dates.createNow(), 'yyyy-MM-dd HH:mm:ss')}">Timestamp</span>
             <div class="flex items-center gap-3">
-                <a href="/admin" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-xl transition shadow-lg shadow-emerald-600/20">
+                <a th:href="@{${adminPath}}" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-xl transition shadow-lg shadow-emerald-600/20">
                     Return to Dashboard
                 </a>
             </div>

@@ -12,6 +12,7 @@ public class VectisProperties {
     private String path = "/admin";
     private String title = "Vectis";
     private List<String> roles = List.of("ROLE_ADMIN");
+    private List<String> readOnlyRoles = List.of();
     private List<String> allowedEntities = new ArrayList<>();
 
     public boolean isEnabled() {
@@ -41,6 +42,8 @@ public class VectisProperties {
     public List<String> getRoles() {
         return roles;
     }
+    public List<String> getReadOnlyRoles() { return readOnlyRoles; }
+    public void setReadOnlyRoles(List<String> roles) { this.readOnlyRoles = roles; }
 
     public void setRoles(List<String> roles) {
         this.roles = roles;

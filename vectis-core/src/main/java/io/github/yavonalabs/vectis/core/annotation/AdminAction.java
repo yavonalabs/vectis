@@ -13,4 +13,6 @@ public @interface AdminAction {
     String confirmMessage() default "Are you sure you want to execute this action?";
     String requiredRole() default "";
     RiskLevel risk() default RiskLevel.MODERATE;
+    /** Public method on this class returning proposed scalar values without side effects. */
+    String previewMethod() default "";
 }

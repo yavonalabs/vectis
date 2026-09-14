@@ -22,13 +22,16 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/admin/api/search")
+@RequestMapping("${vectis.path:/admin}/api/search")
 public class GlobalSearchController {
 
     private final EntityMetadataRegistry registry;
     private final EntityManager entityManager;
+    private final io.github.yavonalabs.vectis.core.security.AdminPermissionEvaluator permissions;
+    @org.springframework.beans.factory.annotation.Value("${vectis.path:/admin}") private String adminPath;
 
-    public GlobalSearchController(EntityMetadataRegistry registry, EntityManager entityManager) {
+    public GlobalSearchController(EntityMetadataRegistry registry, EntityManager entityManager, io.github.yavonalabs.vectis.core.security.AdminPermissionEvaluator permissions) {
+        this.permissions = permissions;
         this.registry = registry;
         this.entityManager = entityManager;
     }
@@ -36,7 +39,9 @@ public class GlobalSearchController {
     @GetMapping
     @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
-    public List<Map<String, Object>> search(@RequestParam("q") String query) {
+    public List<Map<String, Object>> search(@RequestParam("q") String query, java.security.Principal principal, jakarta.servlet.http.HttpServletRequest request) {
+        if (!permissions.canAccessAdmin(principal)) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN);
+        if (query != null && query.length() > 200) throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Search is too long.");
         List<Map<String, Object>> results = new ArrayList<>();
         if (query == null || query.trim().length() < 2) {
             return results;
@@ -45,6 +50,7 @@ public class GlobalSearchController {
         String searchTerm = "%" + query.trim().toLowerCase() + "%";
 
         for (EntityDescriptor descriptor : registry.getAllDescriptors()) {
+            if (!permissions.canViewEntity(descriptor.slug(), principal)) continue;
             CriteriaBuilder cb = entityManager.getCriteriaBuilder();
             CriteriaQuery<Object> cq = (CriteriaQuery<Object>) cb.createQuery(descriptor.javaType());
             Root<Object> root = (Root<Object>) cq.from(descriptor.javaType());
@@ -68,8 +74,8 @@ public class GlobalSearchController {
                         String encodedId = IdCodec.encode(rawId, descriptor.idField().isEmbeddedId());
                         
                         items.add(Map.of(
-                                "title", entity.toString(),
-                                "url", "/admin/" + descriptor.slug() + "/view/" + encodedId
+                                "title", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity),
+                                "url", request.getContextPath() + adminPath + "/" + descriptor.slug() + "/view/" + encodedId
                         ));
                     }
                     results.add(Map.of(

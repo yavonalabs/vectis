@@ -12,7 +12,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "employees")
-@AdminEntity(label = "Team Members", group = "HR Operations")
+@AdminEntity(label = "Team Members", singularLabel = "Team member", group = "HR Operations")
 public class Employee {
 
     @Id
@@ -21,27 +21,27 @@ public class Employee {
 
     @NotBlank
     @Column(nullable = false)
-    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Legal first name")
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Legal first name", order = 10, showInList = false)
     private String firstName;
 
     @NotBlank
     @Column(nullable = false)
-    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Legal last name")
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Legal last name", order = 20, showInList = false)
     private String lastName;
 
     @Email
     @Column(nullable = false, unique = true)
-    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Corporate email address")
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Corporate email address", order = 30)
     private String email;
 
     @jakarta.validation.constraints.Min(30000)
     @jakarta.validation.constraints.Max(500000)
     @Column(precision = 10, scale = 2)
-    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Annual base salary in USD")
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Annual base salary in USD", currency = "USD", order = 40, showInList = false)
     private BigDecimal salary;
 
     @Enumerated(EnumType.STRING)
-    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Current operational status")
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Current employment status", order = 50)
     private EmploymentStatus status = EmploymentStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -78,9 +78,10 @@ public class Employee {
     }
 
     @AdminAction(
-        label = "Grant 15% Bonus",
+        label = "Increase annual salary by 15%",
         color = "indigo",
-        confirmMessage = "Grant a 15% merit salary increase to this team member?"
+        confirmMessage = "Increase this team member's annual base salary by 15%? This changes the recorded salary; it does not issue a bonus payment.",
+        previewMethod = "previewMeritBonus"
     )
     public void grantMeritBonus() {
         if (this.salary != null) {
@@ -89,9 +90,10 @@ public class Employee {
     }
 
     @AdminAction(
-        label = "Toggle Leave",
+        label = "Change leave status",
         color = "amber",
-        confirmMessage = "Switch status between ACTIVE and ON_LEAVE."
+        confirmMessage = "Switch between active employment and on leave. Review the proposed status below.",
+        previewMethod = "previewLeaveStatus"
     )
     public void toggleLeaveStatus() {
         if (this.status == EmploymentStatus.ACTIVE) {
@@ -99,6 +101,16 @@ public class Employee {
         } else if (this.status == EmploymentStatus.ON_LEAVE) {
             this.status = EmploymentStatus.ACTIVE;
         }
+    }
+
+    public java.util.Map<String, Object> previewMeritBonus() {
+        return salary == null ? java.util.Map.of() : java.util.Map.of("salary", salary.multiply(new BigDecimal("1.15")));
+    }
+
+    public java.util.Map<String, Object> previewLeaveStatus() {
+        if (status == EmploymentStatus.ACTIVE) return java.util.Map.of("status", EmploymentStatus.ON_LEAVE);
+        if (status == EmploymentStatus.ON_LEAVE) return java.util.Map.of("status", EmploymentStatus.ACTIVE);
+        return java.util.Map.of();
     }
 
     public Long getId() { return id; }

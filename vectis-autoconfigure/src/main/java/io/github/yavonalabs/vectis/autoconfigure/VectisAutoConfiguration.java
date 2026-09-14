@@ -54,14 +54,14 @@ public class VectisAutoConfiguration {
     @ConditionalOnMissingBean
     public AdminPermissionEvaluator springSecurityPermissionEvaluator(
             EntityMetadataRegistry metadataRegistry,
-            EntityActionRegistry actionRegistry) {
-        return new io.github.yavonalabs.vectis.core.security.SpringSecurityPermissionEvaluator(metadataRegistry, actionRegistry);
+            EntityActionRegistry actionRegistry, VectisProperties properties) {
+        return new io.github.yavonalabs.vectis.core.security.SpringSecurityPermissionEvaluator(metadataRegistry, actionRegistry, properties.getRoles(), properties.getReadOnlyRoles());
     }
 
     @Bean
     @ConditionalOnMissingBean
     public AdminPermissionEvaluator defaultPermissionEvaluator() {
-        return new AllowAllPermissionEvaluator();
+        return new io.github.yavonalabs.vectis.core.security.DenyAllPermissionEvaluator();
     }
 
     @Bean
@@ -104,18 +104,27 @@ public class VectisAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public io.github.yavonalabs.vectis.core.web.ActionPreviewController actionPreviewController(
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper,
-            EntityActionRegistry actionRegistry,
-            EntityMetadataRegistry descriptorRegistry,
-            DynamicCriteriaQueryEngine queryEngine,
-            EntityManager entityManager
-    ) {
-        return new io.github.yavonalabs.vectis.core.web.ActionPreviewController(
-                objectMapper,
-                actionRegistry,
-                descriptorRegistry,
-                queryEngine,
-                entityManager
-        );
+            EntityActionRegistry actions, EntityMetadataRegistry registry, DynamicCriteriaQueryEngine queries,
+            AdminPermissionEvaluator permissions, jakarta.validation.Validator validator) {
+        return new io.github.yavonalabs.vectis.core.web.ActionPreviewController(actions, registry, queries, permissions, validator);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.web.GlobalSearchController globalSearchController(
+            EntityMetadataRegistry registry, EntityManager entityManager, AdminPermissionEvaluator permissions) {
+        return new io.github.yavonalabs.vectis.core.web.GlobalSearchController(registry, entityManager, permissions);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.web.VectisExceptionHandler vectisExceptionHandler() {
+        return new io.github.yavonalabs.vectis.core.web.VectisExceptionHandler();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.context.DryRunProtectionAspect dryRunProtectionAspect() {
+        return new io.github.yavonalabs.vectis.core.context.DryRunProtectionAspect();
     }
 }

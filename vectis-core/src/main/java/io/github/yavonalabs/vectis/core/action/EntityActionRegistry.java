@@ -76,9 +76,9 @@ public class EntityActionRegistry {
 
         for (Object bean : serviceBeans.values()) {
             if (bean == this) continue;
-            Class<?> beanClass = org.springframework.util.ClassUtils.getUserClass(bean);
+            Class<?> beanClass = org.springframework.aop.support.AopUtils.getTargetClass(bean);
 
-            for (Method method : beanClass.getDeclaredMethods()) {
+            for (Method method : beanClass.getMethods()) {
                 if (method.isAnnotationPresent(AdminAction.class)) {
                     Class<?>[] paramTypes = method.getParameterTypes();
                     if (paramTypes.length >= 1) {
@@ -87,6 +87,7 @@ public class EntityActionRegistry {
                         String id = method.getName();
                         String label = !ann.label().isBlank() ? ann.label() : splitCamelCase(method.getName());
                         String preAuth = extractPreAuthorize(method);
+                        Method invocable = org.springframework.aop.support.AopUtils.selectInvocableMethod(method, bean.getClass());
 
                         EntityAction<Object> action = EntityAction.make(id)
                                 .label(label)
@@ -102,9 +103,9 @@ public class EntityActionRegistry {
                                     try {
                                         method.setAccessible(true);
                                         if (method.getParameterCount() == 1) {
-                                            method.invoke(bean, entity);
+                                            invocable.invoke(bean, entity);
                                         } else if (method.getParameterCount() == 2 && method.getParameterTypes()[1].equals(Map.class)) {
-                                            method.invoke(bean, entity, params);
+                                            invocable.invoke(bean, entity, params);
                                         } else {
                                             throw new IllegalArgumentException("Unsupported @AdminAction method parameters on Spring bean: " + method.getName());
                                         }
@@ -113,6 +114,10 @@ public class EntityActionRegistry {
                                     }
                                 });
 
+                        if (!ann.previewMethod().isBlank()) {
+                            Method preview = org.springframework.aop.support.AopUtils.selectInvocableMethod(resolvePreview(beanClass, ann.previewMethod(), method.getParameterTypes()), bean.getClass());
+                            action.preview((entity, params) -> invokePreview(preview, bean, entity, params, true));
+                        }
                         actionsByClass.computeIfAbsent(targetEntityClass, k -> new ArrayList<>()).add(action);
                     }
                 }
@@ -122,7 +127,7 @@ public class EntityActionRegistry {
 
     private List<EntityAction<?>> scanEntityMethods(Class<?> clazz) {
         List<EntityAction<?>> discovered = new ArrayList<>();
-        for (Method method : clazz.getDeclaredMethods()) {
+        for (Method method : clazz.getMethods()) {
             if (method.isAnnotationPresent(AdminAction.class)) {
                 AdminAction ann = method.getAnnotation(AdminAction.class);
                 String id = method.getName();
@@ -154,14 +159,46 @@ public class EntityActionRegistry {
                             }
                         });
 
+                if (!ann.previewMethod().isBlank()) {
+                    Method preview = resolvePreview(clazz, ann.previewMethod(), method.getParameterTypes());
+                    action.preview((entity, params) -> invokePreview(preview, entity, entity, params, false));
+                }
                 discovered.add(action);
             }
         }
         return discovered;
     }
 
+    private Method resolvePreview(Class<?> type, String name, Class<?>[] parameterTypes) {
+        try {
+            Method method = type.getMethod(name, parameterTypes);
+            if (!Map.class.isAssignableFrom(method.getReturnType())) {
+                throw new IllegalArgumentException("Preview method must return Map: " + name);
+            }
+            return method;
+        } catch (NoSuchMethodException ex) {
+            throw new IllegalArgumentException("Missing public preview method: " + type.getName() + "." + name, ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> invokePreview(Method method, Object target, Object entity,
+            Map<String, String> params, boolean service) {
+        try {
+            method.setAccessible(true);
+            Object result = service
+                    ? (method.getParameterCount() == 1 ? method.invoke(target, entity) : method.invoke(target, entity, params))
+                    : (method.getParameterCount() == 0 ? method.invoke(target) : method.invoke(target, params));
+            return (Map<String, Object>) result;
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Preview method failed", ex);
+        }
+    }
+
     private String extractPreAuthorize(Method method) {
-        for (java.lang.annotation.Annotation a : method.getAnnotations()) {
+        List<java.lang.annotation.Annotation> annotations = new ArrayList<>(Arrays.asList(method.getAnnotations()));
+        annotations.addAll(Arrays.asList(method.getDeclaringClass().getAnnotations()));
+        for (java.lang.annotation.Annotation a : annotations) {
             if (a.annotationType().getName().equals("org.springframework.security.access.prepost.PreAuthorize")) {
                 try {
                     Method valueMethod = a.annotationType().getMethod("value");

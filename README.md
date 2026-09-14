@@ -59,11 +59,16 @@ public class Customer {
     @AdminAction(
         label = "Suspend Account",
         color = "rose",
+        previewMethod = "previewSuspension",
         confirmMessage = "Are you sure you want to suspend this customer? They will lose access immediately."
     )
     public void suspendAccount() {
         this.status = AccountStatus.SUSPENDED;
         // Triggers your domain service, notifications, and events!
+    }
+
+    public java.util.Map<String, Object> previewSuspension() {
+        return java.util.Map.of("status", AccountStatus.SUSPENDED);
     }
 }
 ```
@@ -72,6 +77,11 @@ public class Customer {
 
 Start your Spring Boot app and navigate to:
 👉 **`http://localhost:8080/admin`**
+
+Configure the host application's authentication and CSRF protection first. The default
+Vectis policy requires `ROLE_ADMIN`; read-only roles can be configured below. See
+[access and preview configuration](docs/SAFE_ACTIONS.md) for upgrade requirements,
+explicit preview methods, and current limitations.
 
 ---
 
@@ -82,6 +92,9 @@ vectis:
   enabled: true
   path: /admin
   title: ACME Support Console
+  environment: Staging
+  roles: [ROLE_ADMIN]
+  read-only-roles: [ROLE_SUPPORT]
   allowed-entities:
     - com.example.demo.entity.Customer
     - com.example.demo.entity.Order

@@ -49,6 +49,8 @@ public class AdminController {
 
     @Value("${vectis.title:Operations Console}")
     private String adminTitle;
+    @Value("${vectis.path:/admin}") private String adminPath;
+    @Value("${vectis.environment:Not specified}") private String environmentLabel;
 
     public AdminController(
             EntityMetadataRegistry registry,
@@ -74,7 +76,14 @@ public class AdminController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied to Admin Console");
         }
         model.addAttribute("adminTitle", adminTitle);
-        model.addAttribute("entities", registry.getAllDescriptors());
+        model.addAttribute("adminPath", adminPath);
+        model.addAttribute("environmentLabel", environmentLabel);
+        model.addAttribute("operatorName", principal == null ? "Unknown" : principal.getName());
+        model.addAttribute("canViewAudit", permissionEvaluator.canViewAuditLogs(principal));
+        model.addAttribute("fieldErrors", Map.of());
+        model.addAttribute("submittedValues", Map.of());
+        model.addAttribute("entities", registry.getAllDescriptors().stream()
+                .filter(d -> permissionEvaluator.canViewEntity(d.slug(), principal)).toList());
     }
 
     @GetMapping
@@ -84,7 +93,8 @@ public class AdminController {
             stats.addAll(provider.getStatCards());
         }
         model.addAttribute("statCards", stats);
-        model.addAttribute("recentAudits", auditLogService.findRecent(10));
+        model.addAttribute("recentAudits", permissionEvaluator.canViewAuditLogs(principal)
+                ? auditLogService.findRecent(10).stream().filter(a -> permissionEvaluator.canViewEntity(a.getEntitySlug(), principal)).toList() : List.of());
         return "vectis/dashboard";
     }
 
@@ -93,7 +103,7 @@ public class AdminController {
         if (!permissionEvaluator.canViewAuditLogs(principal)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied to Audit Trail");
         }
-        model.addAttribute("auditLogs", auditLogService.findRecent(100));
+        model.addAttribute("auditLogs", auditLogService.findRecent(100).stream().filter(a -> permissionEvaluator.canViewEntity(a.getEntitySlug(), principal)).toList());
         return "vectis/audit";
     }
 
@@ -101,13 +111,15 @@ public class AdminController {
     public String listView(
             @PathVariable String slug,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "asc") String dir,
+            @RequestParam org.springframework.util.MultiValueMap<String, String> parameters,
             Model model,
             Principal principal,
-            HttpServletRequest request
+            HttpServletRequest request,
+            jakarta.servlet.http.HttpServletResponse response
     ) {
         EntityDescriptor descriptor = getDescriptorOrThrow(slug);
 
@@ -115,10 +127,53 @@ public class AdminController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        PageResult<?> pageResult = queryEngine.findPage(descriptor, page, size, search, sort, dir);
+        List<String> filterFields = parameters.getOrDefault("filterField", List.of());
+        List<String> filterOperators = parameters.getOrDefault("filterOp", List.of());
+        List<String> filterValues = parameters.getOrDefault("filterValue", List.of());
+        PageResult<?> pageResult;
+        try {
+            if (search != null && search.length() > 200) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search is limited to 200 characters.");
+            var filters = io.github.yavonalabs.vectis.core.query.RecordFilter.parse(descriptor, filterFields, filterOperators, filterValues);
+            pageResult = queryEngine.findPage(descriptor, page, size, search, sort, dir, filters);
+            model.addAttribute("filterCount", filters.size());
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode() != HttpStatus.BAD_REQUEST) throw ex;
+            response.setStatus(400);
+            response.setHeader("X-Vectis-Filter-Error", "true");
+            model.addAttribute("filterError", ex.getReason());
+            model.addAttribute("filterCount", 0);
+            pageResult = new PageResult<>(List.of(), 0, Math.max(1, size), 0, 0);
+        }
+        model.addAttribute("filterFields", filterFields);
+        model.addAttribute("filterOperators", filterOperators);
+        model.addAttribute("filterValues", filterValues);
+        model.addAttribute("filterableFields", descriptor.fields().stream().filter(io.github.yavonalabs.vectis.core.query.RecordFilter::supported).toList());
+        List<Map<String, String>> filterRows = new ArrayList<>();
+        for (int i = 0; i < 3; i++) filterRows.add(Map.of("field", i < filterFields.size() ? filterFields.get(i) : "",
+                "operator", i < filterOperators.size() ? filterOperators.get(i) : "eq", "value", i < filterValues.size() ? filterValues.get(i) : ""));
+        model.addAttribute("filterRows", filterRows);
 
         model.addAttribute("descriptor", descriptor);
         model.addAttribute("pageResult", pageResult);
+        Map<Object, Map<String, String>> associationLabels = new HashMap<>();
+        Map<Object, String> recordLabels = new HashMap<>();
+        for (Object row : pageResult.content()) {
+            recordLabels.put(row, io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, row));
+            Map<String, String> labels = new HashMap<>();
+            BeanWrapper rowWrapper = PropertyAccessorFactory.forBeanPropertyAccess(row);
+            for (AssociationDescriptor assoc : descriptor.associations()) {
+                if (!assoc.isSingleValued()) continue;
+                var target = registry.getByClass(assoc.targetEntityClass()).orElse(null);
+                if (target == null || !permissionEvaluator.canViewEntity(target.slug(), principal)) continue;
+                Object value = rowWrapper.getPropertyValue(assoc.name());
+                if (value != null) labels.put(assoc.name(), io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(target, value));
+            }
+            associationLabels.put(row, labels);
+        }
+        model.addAttribute("associationLabels", associationLabels);
+        model.addAttribute("recordLabels", recordLabels);
+        model.addAttribute("canEdit", permissionEvaluator.canEditEntity(slug, principal));
+        model.addAttribute("canDelete", permissionEvaluator.canDeleteEntity(slug, principal));
         model.addAttribute("search", search);
         model.addAttribute("sort", sort);
         model.addAttribute("dir", dir);
@@ -145,7 +200,7 @@ public class AdminController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        Object id = IdCodec.decode(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
+        Object id = decodeId(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
         Object entity = queryEngine.findById(descriptor, id);
         if (entity == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found: " + encodedId);
@@ -157,6 +212,7 @@ public class AdminController {
 
         for (AssociationDescriptor assoc : descriptor.associations()) {
             EntityDescriptor targetDesc = registry.getByClass(assoc.targetEntityClass()).orElse(null);
+            if (targetDesc == null || !permissionEvaluator.canViewEntity(targetDesc.slug(), principal)) continue;
 
             if (assoc.isSingleValued()) {
                 Object assocVal = wrapper.getPropertyValue(assoc.name());
@@ -165,7 +221,7 @@ public class AdminController {
                     Object targetId = targetWrapper.getPropertyValue(targetDesc.idField().name());
                     String targetEncodedId = IdCodec.encode(targetId, targetDesc.idField().isEmbeddedId());
                     singleAssocDetails.put(assoc.name(), Map.of(
-                            "display", assocVal.toString(),
+                            "display", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(targetDesc, assocVal),
                             "slug", targetDesc.slug(),
                             "encodedId", targetEncodedId
                     ));
@@ -180,7 +236,7 @@ public class AdminController {
                             Object itemId = itemWrapper.getPropertyValue(targetDesc.idField().name());
                             String itemEncodedId = IdCodec.encode(itemId, targetDesc.idField().isEmbeddedId());
                             items.add(Map.of(
-                                    "display", item.toString(),
+                                    "display", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(targetDesc, item),
                                     "slug", targetDesc.slug(),
                                     "encodedId", itemEncodedId
                             ));
@@ -198,7 +254,10 @@ public class AdminController {
         model.addAttribute("singleAssocDetails", singleAssocDetails);
         model.addAttribute("collectionDetails", collectionDetails);
         model.addAttribute("actions", getAllowedActions(slug, descriptor, principal));
-        model.addAttribute("entityAudits", auditLogService.findByEntity(slug, encodedId));
+        model.addAttribute("entityAudits", permissionEvaluator.canViewAuditLogs(principal) ? auditLogService.findByEntity(slug, encodedId) : List.of());
+        model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity));
+        model.addAttribute("canEdit", permissionEvaluator.canEditEntity(slug, principal));
+        model.addAttribute("canDelete", permissionEvaluator.canDeleteEntity(slug, principal));
 
         return "vectis/detail";
     }
@@ -225,7 +284,7 @@ public class AdminController {
     ) {
         EntityDescriptor descriptor = getDescriptorOrThrow(slug);
 
-        if (!permissionEvaluator.canEditEntity(slug, principal)) {
+        if (!permissionEvaluator.canViewEntity(slug, principal) || !permissionEvaluator.canEditEntity(slug, principal)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
@@ -234,7 +293,7 @@ public class AdminController {
             model.addAttribute("descriptor", descriptor);
             model.addAttribute("entity", entity);
             model.addAttribute("isNew", true);
-            model.addAttribute("formOptions", loadFormAssociationOptions(descriptor));
+            model.addAttribute("formOptions", loadFormAssociationOptions(descriptor, principal, entity));
             return "vectis/form";
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Cannot instantiate entity: " + slug, e);
@@ -250,11 +309,11 @@ public class AdminController {
     ) {
         EntityDescriptor descriptor = getDescriptorOrThrow(slug);
 
-        if (!permissionEvaluator.canEditEntity(slug, principal)) {
+        if (!permissionEvaluator.canViewEntity(slug, principal) || !permissionEvaluator.canEditEntity(slug, principal)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        Object id = IdCodec.decode(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
+        Object id = decodeId(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
         Object entity = queryEngine.findById(descriptor, id);
         if (entity == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found: " + encodedId);
@@ -264,7 +323,8 @@ public class AdminController {
         model.addAttribute("entity", entity);
         model.addAttribute("encodedId", encodedId);
         model.addAttribute("isNew", false);
-        model.addAttribute("formOptions", loadFormAssociationOptions(descriptor));
+        model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity));
+        model.addAttribute("formOptions", loadFormAssociationOptions(descriptor, principal, entity));
 
         return "vectis/form";
     }
@@ -275,14 +335,17 @@ public class AdminController {
             @RequestParam Map<String, String> formParams,
             RedirectAttributes redirectAttributes,
             Model model,
+            HttpServletRequest request,
+            jakarta.servlet.http.HttpServletResponse response,
             Principal principal
     ) {
         EntityDescriptor descriptor = getDescriptorOrThrow(slug);
 
-        if (!permissionEvaluator.canEditEntity(slug, principal)) {
+        if (!permissionEvaluator.canViewEntity(slug, principal) || !permissionEvaluator.canEditEntity(slug, principal)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
+        requireReason(formParams);
         String rawId = formParams.get("__id");
         boolean isNew = rawId == null || rawId.isBlank();
         Object entity = null;
@@ -293,7 +356,7 @@ public class AdminController {
             if (isNew) {
                 entity = descriptor.javaType().getDeclaredConstructor().newInstance();
             } else {
-                Object id = IdCodec.decode(rawId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
+                Object id = decodeId(rawId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
                 entity = queryEngine.findById(descriptor, id);
                 if (entity == null) {
                     throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found: " + rawId);
@@ -329,15 +392,26 @@ public class AdminController {
 
             for (AssociationDescriptor assoc : descriptor.associations()) {
                 if (assoc.isSingleValued()) {
+                    EntityDescriptor target = registry.getByClass(assoc.targetEntityClass()).orElse(null);
+                    if (target == null || !permissionEvaluator.canViewEntity(target.slug(), principal)) {
+                        if (formParams.containsKey(assoc.name())) {
+                            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot change this relationship.");
+                        }
+                        continue;
+                    }
                     String assocId = formParams.get(assoc.name());
                     if (assocId != null && !assocId.isBlank()) {
                         EntityDescriptor targetDesc = registry.getByClass(assoc.targetEntityClass()).orElse(null);
                         if (targetDesc != null && targetDesc.idField() != null) {
-                            Object decodedTargetId = IdCodec.decode(assocId, targetDesc.idField().type(), targetDesc.idField().isEmbeddedId());
+                            if (!permissionEvaluator.canViewEntity(targetDesc.slug(), principal)) {
+                                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to related record.");
+                            }
+                            Object decodedTargetId = decodeId(assocId, targetDesc.idField().type(), targetDesc.idField().isEmbeddedId());
                             Object targetEntity = queryEngine.findById(targetDesc, decodedTargetId);
+                            if (targetEntity == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Related record does not exist.");
                             wrapper.setPropertyValue(assoc.name(), targetEntity);
                         }
-                    } else {
+                    } else if (assocId != null) {
                         wrapper.setPropertyValue(assoc.name(), null);
                     }
                 }
@@ -372,28 +446,46 @@ public class AdminController {
 
             redirectAttributes.addFlashAttribute("flashMessage",
                     "Record successfully " + (isNew ? "created" : "updated") + "!");
-            return "redirect:/admin/" + slug;
+            if ("true".equalsIgnoreCase(request.getHeader("HX-Request"))) {
+                response.setHeader("HX-Redirect", request.getContextPath() + adminPath + "/" + slug + "/view/" + normalizedEncodedId);
+                // A 200 response is required: browsers consume headers on a 302 internally.
+                org.springframework.web.servlet.support.RequestContextUtils.getOutputFlashMap(request)
+                        .put("flashMessage", "Record successfully " + (isNew ? "created" : "updated") + "!");
+                org.springframework.web.servlet.support.RequestContextUtils.saveOutputFlashMap(
+                        request.getContextPath() + adminPath + "/" + slug + "/view/" + normalizedEncodedId, request, response);
+                return null;
+            }
+            return "redirect:" + adminPath + "/" + slug;
 
+        } catch (ResponseStatusException e) { throw e;
         } catch (OptimisticLockException e) {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "Conflict: This record was modified by another user while you were editing it. Please refresh and try again.");
-            return isNew ? "redirect:/admin/" + slug + "/create" : "redirect:/admin/" + slug + "/edit/" + rawId;
+            return isNew ? "redirect:" + adminPath + "/" + slug + "/create" : "redirect:" + adminPath + "/" + slug + "/edit/" + rawId;
         } catch (jakarta.validation.ConstraintViolationException e) {
             model.addAttribute("descriptor", descriptor);
             model.addAttribute("entity", entity);
             model.addAttribute("isNew", isNew);
             model.addAttribute("encodedId", isNew ? null : rawId);
-            model.addAttribute("formOptions", loadFormAssociationOptions(descriptor));
+            model.addAttribute("formOptions", loadFormAssociationOptions(descriptor, principal, entity));
             
-            StringBuilder sb = new StringBuilder("The following validation constraints were violated:\n");
+            Map<String, String> fieldErrors = new LinkedHashMap<>();
             e.getConstraintViolations().forEach(violation -> {
-                sb.append("- ").append(violation.getPropertyPath()).append(": ").append(violation.getMessage()).append("\n");
+                String fieldName = violation.getPropertyPath().toString();
+                if (descriptor.fields().stream().anyMatch(f -> f.name().equals(fieldName))) {
+                    fieldErrors.merge(fieldName, violation.getMessage(), (a, b) -> a + "; " + b);
+                }
             });
-            model.addAttribute("errorMessage", sb.toString());
-            return "vectis/form";
+            model.addAttribute("errorMessage", "Please correct the fields below before saving.");
+            model.addAttribute("fieldErrors", fieldErrors);
+            model.addAttribute("submittedValues", formParams);
+            model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity));
+            model.addAttribute("changeReason", formParams.get("_reason"));
+            return "true".equalsIgnoreCase(request.getHeader("HX-Request"))
+                    ? "vectis/fragments/edit-form :: editFormFragment" : "vectis/form";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Failed to save record: " + e.getMessage());
-            return isNew ? "redirect:/admin/" + slug + "/create" : "redirect:/admin/" + slug + "/edit/" + rawId;
+            redirectAttributes.addFlashAttribute("errorMessage", "The record could not be saved. Check its values and try again.");
+            return isNew ? "redirect:" + adminPath + "/" + slug + "/create" : "redirect:" + adminPath + "/" + slug + "/edit/" + rawId;
         }
     }
 
@@ -416,18 +508,23 @@ public class AdminController {
 
         EntityAction<Object> action = (EntityAction<Object>) actionOpt.get();
 
-        if (action.getRequiredRole() != null && !action.getRequiredRole().isBlank()) {
-            if (!permissionEvaluator.canExecuteAction(slug, actionId, principal)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: Requires role " + action.getRequiredRole());
-            }
+        if (!permissionEvaluator.canViewEntity(slug, principal) || !permissionEvaluator.canExecuteAction(slug, actionId, principal)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot execute this action.");
         }
+        if (action.getRiskLevel() != io.github.yavonalabs.vectis.core.annotation.RiskLevel.LOW) requireReason(allParams);
 
-        Object id = IdCodec.decode(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
+        Object id = decodeId(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
         Object entity = queryEngine.findById(descriptor, id);
         if (entity == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found: " + encodedId);
         }
 
+        if (descriptor.hasVersion() && allParams.containsKey("_version")) {
+            Object currentVersion = PropertyAccessorFactory.forBeanPropertyAccess(entity).getPropertyValue(descriptor.versionField().name());
+            if (!Objects.equals(String.valueOf(currentVersion), allParams.get("_version"))) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "This record changed after the preview. Refresh and review the action again.");
+            }
+        }
         Map<String, Object> beforeSnapshot = takeSnapshot(entity, descriptor);
 
         try {
@@ -456,14 +553,17 @@ public class AdminController {
         } catch (jakarta.validation.ConstraintViolationException e) {
             StringBuilder sb = new StringBuilder("Action validation failed:\n");
             e.getConstraintViolations().forEach(violation -> {
-                sb.append("- ").append(violation.getPropertyPath()).append(": ").append(violation.getMessage()).append("\n");
+                String fieldName = violation.getPropertyPath().toString();
+                if (descriptor.fields().stream().anyMatch(f -> f.name().equals(fieldName))) {
+                    sb.append(fieldName).append(": ").append(violation.getMessage()).append("\n");
+                }
             });
             redirectAttributes.addFlashAttribute("errorMessage", sb.toString());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Action failed: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "The action could not be completed. Refresh the record and try again.");
         }
 
-        return "redirect:/admin/" + slug;
+        return "redirect:" + adminPath + "/" + slug;
     }
 
     @PostMapping("/{slug}/delete/{encodedId}")
@@ -476,16 +576,17 @@ public class AdminController {
     ) {
         EntityDescriptor descriptor = getDescriptorOrThrow(slug);
 
-        if (!permissionEvaluator.canDeleteEntity(slug, principal)) {
+        if (!permissionEvaluator.canViewEntity(slug, principal) || !permissionEvaluator.canDeleteEntity(slug, principal)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        Object id = IdCodec.decode(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
+        Object id = decodeId(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
         Object entity = queryEngine.findById(descriptor, id);
         if (entity == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found: " + encodedId);
         }
 
+        requireReason(allParams);
         Map<String, Object> beforeSnapshot = takeSnapshot(entity, descriptor);
         queryEngine.deleteById(descriptor, id);
 
@@ -506,13 +607,26 @@ public class AdminController {
         ));
 
         redirectAttributes.addFlashAttribute("flashMessage", "Record #" + encodedId + " was successfully deleted.");
-        return "redirect:/admin/" + slug;
+        return "redirect:" + adminPath + "/" + slug;
+    }
+
+    private Object decodeId(String value, Class<?> type, boolean embedded) {
+        try { return IdCodec.decode(value, type, embedded); }
+        catch (Exception ex) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid record identifier."); }
+    }
+
+    private void requireReason(Map<String, String> params) {
+        String reason = params == null ? null : params.get("_reason");
+        if (reason == null || reason.isBlank() || reason.length() > 1000) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Enter a reason for this change (1–1000 characters).");
+        }
     }
 
     private List<EntityAction<?>> getAllowedActions(String slug, EntityDescriptor descriptor, Principal principal) {
         return actionRegistry.getActionsForEntity(descriptor.javaType())
                 .stream()
                 .filter(action -> permissionEvaluator.canExecuteAction(slug, action.getId(), principal))
+                .sorted(Comparator.comparing((EntityAction<?> action) -> action.getRiskLevel().ordinal()).thenComparing(EntityAction::getLabel))
                 .collect(Collectors.toList());
     }
 
@@ -534,26 +648,51 @@ public class AdminController {
         return snapshot;
     }
 
-    private Map<String, List<Map<String, String>>> loadFormAssociationOptions(EntityDescriptor descriptor) {
+    @GetMapping("/{slug}/relationships/{association}/options")
+    @ResponseBody
+    public Map<String, Object> relationshipOptions(@PathVariable String slug, @PathVariable String association,
+            @RequestParam(defaultValue = "") String search, @RequestParam(defaultValue = "0") int page,
+            Principal principal) {
+        EntityDescriptor source = getDescriptorOrThrow(slug);
+        if (!permissionEvaluator.canViewEntity(slug, principal) || !permissionEvaluator.canEditEntity(slug, principal))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot edit this relationship.");
+        var assoc = source.associations().stream().filter(a -> a.name().equals(association) && a.isSingleValued())
+                .findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var target = registry.getByClass(assoc.targetEntityClass()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!permissionEvaluator.canViewEntity(target.slug(), principal)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        if (search.length() > 200) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search is limited to 200 characters.");
+        var results = queryEngine.findPage(target, page, 25, search, null, "asc");
+        return Map.of("items", results.content().stream().map(item -> relationshipOption(target, item)).toList(),
+                "page", page, "hasNext", results.hasNext());
+    }
+
+    private Map<String, String> relationshipOption(EntityDescriptor target, Object entity) {
+        var wrapper = PropertyAccessorFactory.forBeanPropertyAccess(entity);
+        return Map.of("id", IdCodec.encode(wrapper.getPropertyValue(target.idField().name()), target.idField().isEmbeddedId()),
+                "label", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(target, entity));
+    }
+
+    private Map<String, List<Map<String, String>>> loadFormAssociationOptions(EntityDescriptor descriptor, Principal principal, Object entity) {
         Map<String, List<Map<String, String>>> options = new HashMap<>();
+        var sourceWrapper = PropertyAccessorFactory.forBeanPropertyAccess(entity);
         for (AssociationDescriptor assoc : descriptor.associations()) {
-            if (assoc.isSingleValued()) {
-                EntityDescriptor targetDesc = registry.getByClass(assoc.targetEntityClass()).orElse(null);
-                if (targetDesc != null && targetDesc.idField() != null) {
-                    List<?> targetEntities = queryEngine.findAll(targetDesc);
-                    List<Map<String, String>> optionList = new ArrayList<>();
-                    for (Object target : targetEntities) {
-                        BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(target);
-                        Object targetId = bw.getPropertyValue(targetDesc.idField().name());
-                        String encodedTargetId = IdCodec.encode(targetId, targetDesc.idField().isEmbeddedId());
-                        optionList.add(Map.of(
-                                "id", encodedTargetId,
-                                "label", target.toString()
-                        ));
-                    }
-                    options.put(assoc.name(), optionList);
-                }
+            if (!assoc.isSingleValued()) continue;
+            EntityDescriptor target = registry.getByClass(assoc.targetEntityClass()).orElse(null);
+            if (target == null || target.idField() == null || !permissionEvaluator.canViewEntity(target.slug(), principal)) continue;
+            List<Map<String, String>> choices = new ArrayList<>(queryEngine.findPage(target, 0, 25, null, null, "asc")
+                    .content().stream().map(item -> relationshipOption(target, item)).toList());
+            Object current = sourceWrapper.getPropertyValue(assoc.name());
+            if (current != null) {
+                Map<String, String> selected = relationshipOption(target, current);
+                if (choices.stream().noneMatch(option -> option.get("id").equals(selected.get("id")))) choices.add(selected);
+                // Render selection from the target's ID metadata, not the source entity's ID name.
+                choices = choices.stream().map(option -> {
+                    Map<String, String> result = new HashMap<>(option);
+                    result.put("selected", String.valueOf(option.get("id").equals(selected.get("id"))));
+                    return result;
+                }).toList();
             }
+            options.put(assoc.name(), choices);
         }
         return options;
     }

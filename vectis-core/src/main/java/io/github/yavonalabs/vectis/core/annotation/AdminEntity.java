@@ -7,6 +7,7 @@ import java.lang.annotation.*;
 @Documented
 public @interface AdminEntity {
     String label() default "";
+    String singularLabel() default "";
     String group() default "General";
     boolean readOnly() default false;
 }

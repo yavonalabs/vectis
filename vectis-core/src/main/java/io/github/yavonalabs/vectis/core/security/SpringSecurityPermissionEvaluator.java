@@ -18,9 +18,22 @@ public class SpringSecurityPermissionEvaluator implements AdminPermissionEvaluat
 
     private final EntityMetadataRegistry metadataRegistry;
     private final EntityActionRegistry actionRegistry;
+    private final java.util.List<String> roles;
+    private final java.util.List<String> readOnlyRoles;
     private final ExpressionParser parser = new SpelExpressionParser();
 
     public SpringSecurityPermissionEvaluator(EntityMetadataRegistry metadataRegistry, EntityActionRegistry actionRegistry) {
+        this(metadataRegistry, actionRegistry, java.util.List.of("ROLE_ADMIN"));
+    }
+
+    public SpringSecurityPermissionEvaluator(EntityMetadataRegistry metadataRegistry, EntityActionRegistry actionRegistry, java.util.List<String> roles) {
+        this(metadataRegistry, actionRegistry, roles, java.util.List.of());
+    }
+
+    public SpringSecurityPermissionEvaluator(EntityMetadataRegistry metadataRegistry, EntityActionRegistry actionRegistry,
+            java.util.List<String> roles, java.util.List<String> readOnlyRoles) {
+        this.roles = java.util.List.copyOf(roles);
+        this.readOnlyRoles = java.util.List.copyOf(readOnlyRoles);
         this.metadataRegistry = metadataRegistry;
         this.actionRegistry = actionRegistry;
     }
@@ -31,7 +44,10 @@ public class SpringSecurityPermissionEvaluator implements AdminPermissionEvaluat
 
     @Override
     public boolean canAccessAdmin(Principal principal) {
-        return getAuthentication() != null && getAuthentication().isAuthenticated();
+        Authentication auth = getAuthentication();
+        return auth != null && auth.isAuthenticated()
+                && !(auth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)
+                && java.util.stream.Stream.concat(roles.stream(), readOnlyRoles.stream()).anyMatch(role -> hasRole(auth, role));
     }
 
     @Override
@@ -41,18 +57,18 @@ public class SpringSecurityPermissionEvaluator implements AdminPermissionEvaluat
 
     @Override
     public boolean canEditEntity(String entitySlug, Principal principal) {
-        return canAccessAdmin(principal);
+        return canAccessAdmin(principal) && roles.stream().anyMatch(role -> hasRole(getAuthentication(), role));
     }
 
     @Override
     public boolean canDeleteEntity(String entitySlug, Principal principal) {
-        return canAccessAdmin(principal);
+        return canEditEntity(entitySlug, principal);
     }
 
     @Override
     public boolean canExecuteAction(String entitySlug, String actionId, Principal principal) {
         Authentication auth = getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
+        if (!canEditEntity(entitySlug, principal) || !canViewEntity(entitySlug, principal)) {
             return false;
         }
 
@@ -68,7 +84,7 @@ public class SpringSecurityPermissionEvaluator implements AdminPermissionEvaluat
         if (action == null) return false;
 
         if (action.getRequiresPreAuthorize() != null && !action.getRequiresPreAuthorize().isBlank()) {
-            return evaluateSpel(action.getRequiresPreAuthorize(), auth);
+            if (!evaluateSpel(action.getRequiresPreAuthorize(), auth)) return false;
         }
 
         if (action.getRequiredRole() != null && !action.getRequiredRole().isBlank()) {
@@ -80,7 +96,7 @@ public class SpringSecurityPermissionEvaluator implements AdminPermissionEvaluat
 
     @Override
     public boolean canViewAuditLogs(Principal principal) {
-        return canAccessAdmin(principal);
+        return canAccessAdmin(principal) && roles.stream().anyMatch(role -> hasRole(getAuthentication(), role));
     }
 
     private boolean hasRole(Authentication auth, String role) {

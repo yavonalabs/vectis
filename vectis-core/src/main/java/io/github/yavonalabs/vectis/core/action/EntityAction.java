@@ -2,6 +2,7 @@ package io.github.yavonalabs.vectis.core.action;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 public class EntityAction<T> {
 
@@ -16,6 +17,7 @@ public class EntityAction<T> {
     private boolean requiresConfirmation = true;
     private io.github.yavonalabs.vectis.core.annotation.RiskLevel riskLevel = io.github.yavonalabs.vectis.core.annotation.RiskLevel.MODERATE;
     private BiConsumer<T, Map<String, String>> handler;
+    private BiFunction<T, Map<String, String>, Map<String, Object>> previewHandler;
 
     private EntityAction(String id) {
         this.id = id;
@@ -77,6 +79,12 @@ public class EntityAction<T> {
     }
 
     public String getId() { return id; }
+    /** A side-effect-free projection of proposed scalar values; never the execute handler. */
+    public EntityAction<T> preview(BiFunction<T, Map<String, String>, Map<String, Object>> previewHandler) {
+        this.previewHandler = previewHandler;
+        return this;
+    }
+    public BiFunction<T, Map<String, String>, Map<String, Object>> getPreviewHandler() { return previewHandler; }
     public String getLabel() { return label; }
     public String getColor() { return color; }
     public String getIcon() { return icon; }

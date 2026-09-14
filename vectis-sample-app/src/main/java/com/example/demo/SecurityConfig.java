@@ -12,17 +12,18 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, @org.springframework.beans.factory.annotation.Value("${vectis.path:/admin}") String adminPath) throws Exception {
         http
             .authorizeHttpRequests((requests) -> requests
                 .requestMatchers("/h2-console/**").permitAll() // Allow H2 console
-                .requestMatchers("/admin/**").authenticated()
+                .requestMatchers(adminPath, adminPath + "/**").authenticated()
                 .anyRequest().permitAll()
             )
-            .formLogin((form) -> form.loginPage("/login").defaultSuccessUrl("/admin", true).permitAll())
+            .formLogin((form) -> form.loginPage("/login").defaultSuccessUrl(adminPath, true).permitAll())
             .logout((logout) -> logout.permitAll())
             .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin())); // Allow H2 console frames

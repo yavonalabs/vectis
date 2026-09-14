@@ -16,6 +16,7 @@
     <!-- htmx -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     
+    <script th:src="@{/vectis-assets/vectis.js}"></script>
     <!-- Alpine.js Plugins -->
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/anchor@3.x.x/dist/cdn.min.js"></script>
     <!-- Alpine.js Core -->
@@ -90,18 +91,21 @@
         .htmx-request .htmx-indicator { display: inline-block; }
         .htmx-request.htmx-indicator { display: inline-block; }
     </style>
+    <link rel="stylesheet" th:href="@{/vectis-assets/operator.css}">
 </head>
 <body class="min-h-screen flex flex-col md:flex-row bg-[#090a0f] text-[#f3f4f6]" 
+      th:data-admin-base="@{${adminPath}}"
       x-data="globalSearch()"
       @open-peek-drawer.window="peekDrawerOpen = true">
 
+    <a href="#main-content" class="vx-skip-link">Skip to content</a>
     <!-- Mobile Top Header -->
     <div class="md:hidden flex items-center justify-between bg-[#0f1117] px-4 py-3 border-b border-white/10">
-        <a href="/admin" class="flex items-center gap-2 font-bold text-sm text-white">
+        <a th:href="@{${adminPath}}" class="flex items-center gap-2 font-bold text-sm text-white">
             <span class="w-2 h-2 rounded-full bg-[#10b981]"></span>
             <span th:text="${adminTitle}">Operations Console</span>
         </a>
-        <button onclick="document.getElementById('sidebar').classList.toggle('hidden')" class="p-1.5 text-[#9ca3af] hover:text-white">
+        <button aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="false" onclick="document.getElementById('sidebar').classList.toggle('hidden'); this.setAttribute('aria-expanded', !document.getElementById('sidebar').classList.contains('hidden'))" class="p-1.5 text-[#9ca3af] hover:text-white">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
     </div>
@@ -110,7 +114,7 @@
     <aside id="sidebar" class="hidden md:flex w-64 bg-[#0f1117] border-r border-white/10 flex-col shrink-0">
         <!-- Brand Header -->
         <div class="h-14 flex items-center px-4 border-b border-white/10 justify-between">
-            <a href="/admin" class="flex items-center gap-2.5 font-bold text-sm tracking-tight text-white">
+            <a th:href="@{${adminPath}}" class="flex items-center gap-2.5 font-bold text-sm tracking-tight text-white">
                 <div class="w-6 h-6 rounded-lg bg-[#10b981] flex items-center justify-center text-[#090a0f] font-black text-xs shadow-lg shadow-[#10b981]/20"
                      th:text="${#strings.toUpperCase(#strings.substring(adminTitle, 0, 1))}">
                     O
@@ -124,7 +128,7 @@
             
             <!-- OVERVIEW -->
             <div>
-                <a href="/admin" 
+                <a th:href="@{${adminPath}}"
                    th:classappend="${descriptor == null && pageTitle == 'Overview' ? 'bg-[#151821] text-[#10b981] font-semibold border-l-2 border-[#10b981]' : 'text-[#9ca3af] hover:bg-[#151821] hover:text-white'}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition">
                     <svg class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
@@ -137,12 +141,12 @@
             <!-- TABLE EDITOR (DATA) -->
             <div>
                 <div class="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest px-3 pb-2 flex items-center justify-between">
-                    <span>TABLE EXPLORER</span>
+                    <span>RECORDS</span>
                     <span class="text-[9px] font-mono text-[#9ca3af] bg-[#151821] px-1.5 py-0.5 rounded border border-white/5" th:text="${#lists.size(entities)}">3</span>
                 </div>
                 <div class="space-y-0.5">
                     <a th:each="ent : ${entities}" 
-                       th:href="@{'/admin/' + ${ent.slug}}"
+                       th:href="@{${adminPath} + '/' + ${ent.slug}}"
                        th:classappend="${descriptor != null && descriptor.slug == ent.slug ? 'bg-[#151821] text-[#10b981] font-semibold border-l-2 border-[#10b981]' : 'text-[#9ca3af] hover:bg-[#151821] hover:text-white'}"
                        class="flex items-center justify-between px-3 py-2 rounded-lg text-xs transition">
                         <div class="flex items-center gap-2.5 truncate">
@@ -151,22 +155,22 @@
                             </svg>
                             <span class="truncate" th:text="${ent.displayName}">Technical Skills</span>
                         </div>
-                        <span class="text-[10px] font-mono text-[#6b7280]" th:text="${ent.slug}">skill</span>
+
                     </a>
                 </div>
             </div>
 
             <!-- SECURITY & AUDIT LOGS -->
             <div>
-                <div class="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest px-3 pb-2">SECURITY & LOGS</div>
+                <div class="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest px-3 pb-2">Activity</div>
                 <div class="space-y-0.5">
-                    <a href="/admin/audit" 
+                    <a th:if="${canViewAudit}" th:href="@{${adminPath} + '/audit'}"
                        th:classappend="${pageTitle == 'Audit Trail' ? 'bg-[#151821] text-white font-semibold border-l-2 border-[#10b981]' : 'text-[#9ca3af] hover:bg-[#151821] hover:text-white'}"
                        class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition">
                         <svg class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <span>Audit Explorer</span>
+                        <span>Activity</span>
                     </a>
                 </div>
             </div>
@@ -175,13 +179,13 @@
 
         <!-- System Footnote -->
         <div class="p-3 border-t border-white/10 text-xs text-[#9ca3af] bg-[#090a0f] flex items-center justify-between font-mono">
-            <span class="text-[10px]">OPERATOR: admin</span>
+            <span class="text-[10px]" th:text="${'OPERATOR: ' + operatorName}">Operator</span>
             <span class="text-[10px] text-[#10b981] font-bold">&bull; ONLINE</span>
         </div>
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#090a0f]">
+    <main id="main-content" class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#090a0f]">
         
         <!-- Top App Bar with Command Palette & Environment Indicator -->
         <header class="h-14 bg-[#0f1117] border-b border-white/10 flex items-center justify-between px-6 shrink-0">
@@ -191,7 +195,7 @@
                         class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#151821] border border-white/10 hover:border-white/20 text-xs text-[#9ca3af] hover:text-white transition w-56 md:w-64 justify-between">
                     <div class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        <span>Search or run action...</span>
+                        <span>Search records...</span>
                     </div>
                     <kbd class="font-mono text-[10px] bg-[#090a0f] px-1.5 py-0.5 rounded border border-white/10">CTRL+K</kbd>
                 </button>
@@ -208,13 +212,15 @@
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#151821] border border-white/10 text-[11px] text-[#f3f4f6]">
                     <span class="w-2 h-2 rounded-full bg-[#10b981]"></span>
-                    <span class="font-medium">Production</span>
+                    <span class="font-medium" th:text="${environmentLabel}">Environment</span>
                 </div>
             </div>
         </header>
 
         <!-- Dynamic Content Body -->
         <div class="flex-1 overflow-y-auto p-6 md:p-8">
+            <p th:if="${flashMessage != null}" th:text="${flashMessage}" role="status" class="mb-4 p-3 rounded-lg bg-emerald-500/10 text-emerald-300"></p>
+            <p th:if="${errorMessage != null && pageTitle != 'Error Encountered'}" th:text="${errorMessage}" role="alert" class="mb-4 p-3 rounded-lg bg-rose-500/10 text-rose-300"></p>
             <div th:replace="${content}"></div>
         </div>
     </main>
@@ -261,41 +267,10 @@
 
     <!-- Safe Action Modal (Vectis Risk & Justification Flow) -->
     <div id="action-modal" 
-         x-data="{
-             loadingPreview: false,
-             previewData: null,
-             actionId: '',
-             entityId: '',
-             slug: '',
-             reasonProvided: '',
-             
-             async fetchPreview() {
-                 this.loadingPreview = true;
-                 this.previewData = null;
-                 try {
-                     const formData = new FormData();
-                    const csrfInput = document.querySelector('#modal-action-form input[name=\\'_csrf\\']');
-                    if (csrfInput) {
-                        formData.append(csrfInput.name, csrfInput.value);
-                    }
-                    
-                    const response = await fetch(`/admin/api/${this.slug}/action/${this.actionId}/${this.entityId}/preview`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                     if (response.ok) {
-                         this.previewData = await response.json();
-                     } else {
-                         console.error('Preview request failed');
-                     }
-                 } catch (e) {
-                     console.error('Preview failed', e);
-                 } finally {
-                     this.loadingPreview = false;
-                 }
-             }
-         }"
-         @open-action-modal.window="slug = $event.detail.slug; actionId = $event.detail.actionId; entityId = $event.detail.entityId; fetchPreview(); $el.classList.remove('hidden');"
+         role="dialog" aria-modal="true" aria-labelledby="action-modal-title"
+         x-data="actionModal()"
+         @open-action-modal.window="openAction($event.detail)"
+         @keydown.escape.window="closeActionModal()"
          class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#0f1117] border border-white/15 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
             <div class="flex items-start gap-3">
@@ -311,34 +286,30 @@
                            'text-orange-400': previewData?.riskLevel === 'HIGH',
                            'text-red-400': previewData?.riskLevel === 'CRITICAL'
                        }"
-                       x-text="previewData ? `Risk Assessment: ${previewData.riskLevel}` : 'Risk Assessment: ...'">Risk Assessment: Moderate</p>
+                       x-text="previewData ? `Change level: ${previewData.riskLevel}` : 'Change level: ...'">Change level: Moderate</p>
                 </div>
             </div>
             
             <div class="p-3.5 bg-[#151821] rounded-xl border border-white/5 text-xs text-[#9ca3af] space-y-3">
                 <div>
                     <div class="text-white font-medium mb-1">What will happen?</div>
-                    <p id="action-modal-desc" class="text-[11px] leading-relaxed mb-3">Operation will be executed with full transactional logging.</p>
+                    <p id="action-modal-desc" class="text-[11px] leading-relaxed mb-3">Review the task and its proposed changes.</p>
 
-                    <div class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-[10.5px] text-amber-500/90 mb-3 leading-relaxed flex gap-2">
-                        <span class="text-base leading-none">⚠️</span>
-                        <div>
-                            <span class="font-bold text-amber-500">Preview Warning:</span> This dry run simulates the action and safely rolls back all database changes. However, <strong>any external side-effects (like emails or APIs) coded into this action by your developers may still execute.</strong> Use with caution.
-                        </div>
-                    </div>
+                    <p class="text-xs text-[#9ca3af]">Review the proposed changes before confirming.</p>
                 </div>
-                
-                <!-- State Preview / Dry Run Box -->
+
+                <!-- Proposed changes / Dry Run Box -->
                 <div class="space-y-2 pt-2 border-t border-white/5">
                     <div class="text-[10px] font-bold uppercase tracking-wider text-[#6b7280] flex items-center justify-between">
-                        <span>State Preview</span>
+                        <span>Proposed changes</span>
                         <!-- Loading Spinner -->
                         <div x-show="loadingPreview" class="flex items-center gap-1.5 text-amber-500">
                             <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                            <span>Simulating Dry Run...</span>
+                            <span>Preparing preview...</span>
                         </div>
                     </div>
 
+                    <p x-show="previewError" x-text="previewError" role="alert" class="text-xs text-rose-400"></p>
                     <!-- Diff Results -->
                     <div x-show="!loadingPreview && previewData" class="space-y-2 font-mono text-[10px]">
                         <!-- Changes detected -->
@@ -356,28 +327,29 @@
                         <!-- No changes -->
                         <div x-show="previewData && !previewData.hasChanges" class="p-2 rounded bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] flex items-center gap-2 font-semibold">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            No database fields will be modified.
+                            No visible field changes are proposed.
                         </div>
                     </div>
                 </div>
             </div>
 
-            <form id="modal-action-form" method="post" action="">
+            <form id="modal-action-form" method="post" action="" @submit="if (!canSubmit) { $event.preventDefault(); } else { submitting = true; }">
+                <input type="hidden" name="_version" :value="previewData?.version || ''" />
                 <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="space-y-1.5" x-show="previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL'">
                     <label for="action-reason" class="text-xs font-medium text-white">
-                        Reason / Justification (Required for Audit) <span class="text-rose-400">*</span>
+                        Why are you making this change? <span class="text-rose-400">*</span>
                     </label>
-                    <input id="action-reason" name="_reason" x-model="reasonProvided" :required="previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL'" type="text" placeholder="e.g. Ticket #1042 - Approved by Operations" 
+                    <input id="action-reason" name="_reason" maxlength="1000" x-model="reasonProvided" :required="previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL'" type="text" placeholder="e.g. Ticket #1042 - Approved by Operations"
                            class="w-full bg-[#090a0f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-[#6b7280] focus:outline-none focus:border-[#10b981] transition" />
                 </div>
                 <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-white/10">
-                    <button type="button" onclick="document.getElementById('action-modal').classList.add('hidden')" class="px-3.5 py-1.5 bg-[#151821] hover:bg-[#1c202c] text-[#9ca3af] hover:text-white rounded-lg text-xs font-medium transition border border-white/5">
+                    <button id="action-cancel" type="button" onclick="closeActionModal()" class="px-3.5 py-1.5 bg-[#151821] hover:bg-[#1c202c] text-[#9ca3af] hover:text-white rounded-lg text-xs font-medium transition border border-white/5">
                         Cancel
                     </button>
                     <button type="submit" id="action-modal-btn" 
-                            :disabled="loadingPreview || ((previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL') && !reasonProvided)"
-                            :class="(loadingPreview || ((previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL') && !reasonProvided)) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#059669] shadow-lg shadow-[#10b981]/20'"
+                            :disabled="!canSubmit"
+                            :class="!canSubmit ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#059669]'"
                             class="px-4 py-1.5 bg-[#10b981] text-[#090a0f] font-bold rounded-lg text-xs transition">
                         Confirm &amp; Execute
                     </button>
@@ -387,14 +359,14 @@
     </div>
 
     <!-- Themed Delete Modal -->
-    <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div id="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-[#0f1117] border border-rose-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div class="flex items-center gap-3 text-rose-400">
                 <div class="p-2 bg-rose-500/10 rounded-xl border border-rose-500/25">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </div>
                 <div>
-                    <h3 class="text-sm font-semibold text-white">Delete Record</h3>
+                    <h3 id="delete-modal-title" class="text-sm font-semibold text-white">Delete record</h3>
                     <p class="text-[11px] text-rose-400 font-bold">Destructive - Permanent Removal</p>
                 </div>
             </div>
@@ -443,27 +415,30 @@
                 <div x-show="commandSearch === '' || searchResults.length === 0">
                     <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider">TABLES</div>
                     <a th:each="ent : ${entities}" 
-                       th:href="@{'/admin/' + ${ent.slug}}"
+                       th:href="@{${adminPath} + '/' + ${ent.slug}}"
                        @click="commandOpen = false"
-                       x-show="commandSearch === '' || '[(${ent.displayName})]'.toLowerCase().includes(commandSearch.toLowerCase()) || '[(${ent.slug})]'.toLowerCase().includes(commandSearch.toLowerCase())"
+                       th:data-search-label="${ent.displayName + ' ' + ent.slug}"
+                       x-show="commandSearch === '' || $el.dataset.searchLabel.toLowerCase().includes(commandSearch.toLowerCase())"
                        class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition">
                         <span th:text="${ent.displayName}">Technical Skills</span>
-                        <span class="font-mono text-[10px] text-[#6b7280]" th:text="${'/admin/' + ent.slug}">/admin/slug</span>
+                        <span class="font-mono text-[10px] text-[#6b7280]" th:text="${adminPath + '/' + ent.slug}">/admin/slug</span>
                     </a>
 
-                    <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider pt-2">SECURITY & LOGS</div>
-                    <a href="/admin/audit" @click="commandOpen = false" 
-                       x-show="commandSearch === '' || 'Audit Explorer'.toLowerCase().includes(commandSearch.toLowerCase())"
+                    <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider pt-2">Activity</div>
+                    <a th:if="${canViewAudit}" th:href="@{${adminPath} + '/audit'}" @click="commandOpen = false"
+                       x-show="commandSearch === '' || 'Activity'.toLowerCase().includes(commandSearch.toLowerCase())"
                        class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition">
-                        <span>Audit Explorer</span>
-                        <span class="font-mono text-[10px] text-[#6b7280]">/admin/audit</span>
+                        <span>Activity</span>
+                        <span class="font-mono text-[10px] text-[#6b7280]" th:text="${adminPath + '/audit'}">Activity</span>
                     </a>
                 </div>
 
+                <p x-show="searchError" x-text="searchError" role="alert" class="text-xs text-rose-400 p-3"></p>
+                <p x-show="commandSearch.trim().length >= 2 && !isSearching && !searchError && searchResults.length === 0" class="text-xs text-[#9ca3af] p-3">No matching records found.</p>
                 <!-- GLOBAL SEARCH RESULTS -->
                 <template x-if="commandSearch !== '' && searchResults.length > 0">
                     <div>
-                        <template x-for="group in searchResults" :key="group.slug">
+                <template x-for="group in searchResults" :key="group.slug">
                             <div class="mb-2">
                                 <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider pt-2" x-text="group.category"></div>
                                 <template x-for="item in group.items" :key="item.url">
@@ -484,104 +459,6 @@
         </div>
     </div>
 
-    <script>
-        function globalSearch() {
-            return {
-                commandOpen: false,
-                commandSearch: '',
-                peekDrawerOpen: false,
-                selectedRecord: {},
-                searchResults: [],
-                isSearching: false,
-                init() {
-                    let debounceTimer;
-                    this.$watch('commandSearch', value => {
-                        clearTimeout(debounceTimer);
-                        if (!value || value.trim().length < 2) {
-                            this.searchResults = [];
-                            this.isSearching = false;
-                            return;
-                        }
-                        this.isSearching = true;
-                        debounceTimer = setTimeout(() => {
-                            fetch('/admin/api/search?q=' + encodeURIComponent(value))
-                                .then(res => res.json())
-                                .then(data => { this.searchResults = data; })
-                                .finally(() => { this.isSearching = false; });
-                        }, 300);
-                    });
-                }
-            };
-        }
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            let borderColor = 'border-[#10b981]/40';
-            let iconColor = 'text-[#10b981]';
-            let icon = '&check;';
-            
-            if (type === 'error') {
-                borderColor = 'border-rose-500/40';
-                iconColor = 'text-rose-400';
-                icon = '&times;';
-            } else if (type === 'info') {
-                borderColor = 'border-blue-500/40';
-                iconColor = 'text-blue-400';
-                icon = '&#8505;';
-            }
-
-            toast.className = `toast ${borderColor}`;
-            toast.innerHTML = `
-                <div class="flex items-center gap-2.5 text-xs font-medium text-white">
-                    <span class="${iconColor} font-bold text-sm leading-none">${icon}</span>
-                    <span>${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-[#9ca3af] hover:text-white font-bold">&times;</button>
-                </div>
-            `;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 50);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 250);
-            }, 3000);
-        }
-
-        document.addEventListener('click', function(e) {
-            const deleteBtn = e.target.closest('[data-modal-type="delete"]');
-            if (deleteBtn) {
-                const slug = deleteBtn.getAttribute('data-slug');
-                const encodedId = deleteBtn.getAttribute('data-id');
-                document.getElementById('modal-record-id').innerText = '#' + encodedId;
-                document.getElementById('modal-delete-form').action = '/admin/' + slug + '/delete/' + encodedId;
-                document.getElementById('delete-modal').classList.remove('hidden');
-                return;
-            }
-
-            const actionBtn = e.target.closest('[data-modal-type="action"]');
-            if (actionBtn) {
-                const slug = actionBtn.getAttribute('data-slug');
-                const actionId = actionBtn.getAttribute('data-action-id');
-                const label = actionBtn.getAttribute('data-label');
-                const title = actionBtn.getAttribute('data-title');
-                const desc = actionBtn.getAttribute('data-desc');
-                const encodedId = actionBtn.getAttribute('data-id');
-
-                document.getElementById('action-modal-title').innerText = title || label;
-                document.getElementById('action-modal-desc').innerHTML = 'You are executing <strong>"' + label + '"</strong> on record <code>#' + encodedId + '</code>. ' + (desc || '');
-                document.getElementById('action-modal-btn').innerText = label;
-                document.getElementById('modal-action-form').action = '/admin/' + slug + '/action/' + actionId + '/' + encodedId;
-                
-                window.dispatchEvent(new CustomEvent('open-action-modal', {
-                    detail: { slug: slug, actionId: actionId, entityId: encodedId }
-                }));
-                return;
-            }
-        });
-
-        function closeDeleteModal() { document.getElementById('delete-modal').classList.add('hidden'); }
-        function closeActionModal() { document.getElementById('action-modal').classList.add('hidden'); }
-    </script>
 </body>
 </html>

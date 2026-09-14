@@ -14,10 +14,11 @@ public class EmployeeOperationsService {
 
     @PreAuthorize("hasRole('ADMIN')")
     @AdminAction(
-        label = "Grant 20% Promotion",
+        label = "Increase annual salary by 20%",
         color = "emerald",
-        confirmMessage = "Grant a 20% promotion raise through the Spring service layer?",
-        risk = RiskLevel.MODERATE
+        confirmMessage = "Increase the recorded annual base salary by 20%? This does not issue a payment.",
+        risk = RiskLevel.MODERATE,
+        previewMethod = "previewPromotion"
     )
     public void promoteEmployee(Employee employee, Map<String, String> params) {
         if (employee.getSalary() != null) {
@@ -25,14 +26,22 @@ public class EmployeeOperationsService {
         }
     }
 
+    public Map<String, Object> previewPromotion(Employee employee, Map<String, String> params) {
+        return employee.getSalary() == null ? Map.of() : Map.of("salary", employee.getSalary().multiply(new BigDecimal("1.20")));
+    }
+
+    public Map<String, Object> previewTermination(Employee employee, Map<String, String> params) {
+        return Map.of("status", Employee.EmploymentStatus.TERMINATED);
+    }
+
     @AdminAction(
         label = "Terminate Employee",
         color = "rose",
-        confirmMessage = "Terminate this employee and revoke system access immediately?",
-        risk = RiskLevel.CRITICAL
+        confirmMessage = "Mark this team member as terminated? The recorded salary is retained. This action does not revoke access in other systems.",
+        risk = RiskLevel.CRITICAL,
+        previewMethod = "previewTermination"
     )
     public void terminateEmployee(Employee employee, Map<String, String> params) {
         employee.setStatus(Employee.EmploymentStatus.TERMINATED);
-        employee.setSalary(BigDecimal.ZERO);
     }
 }
