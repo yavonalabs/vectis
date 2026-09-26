@@ -130,25 +130,25 @@ function actionModal() {
             const toast = document.createElement('div');
             
             let borderColor = 'border-[#10b981]/40';
-            let iconColor = 'text-[#10b981]';
+            let iconColor = 'text-[var(--vx-accent-main)]';
             let icon = '&check;';
             
             if (type === 'error') {
                 borderColor = 'border-rose-500/40';
-                iconColor = 'text-rose-400';
+                iconColor = 'text-rose-800';
                 icon = '&times;';
             } else if (type === 'info') {
                 borderColor = 'border-blue-500/40';
-                iconColor = 'text-blue-400';
+                iconColor = 'text-blue-800';
                 icon = '&#8505;';
             }
 
             toast.className = `toast ${borderColor}`;
             toast.innerHTML = `
-                <div class="flex items-center gap-2.5 text-xs font-medium text-white">
+                <div class="flex items-center gap-2.5 text-xs font-medium text-[var(--vx-text-main)]">
                     <span class="${iconColor} font-bold text-sm leading-none">${icon}</span>
                     <span><span class="toast-message"></span></span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-[#9ca3af] hover:text-white font-bold">&times;</button>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)] font-bold">&times;</button>
                 </div>
             `;
             toast.querySelector('.toast-message').textContent = message;
@@ -240,13 +240,15 @@ function actionModal() {
                     // Update Drawer Header dynamically
                     document.getElementById('drawer-id').innerText = '#' + id;
                     document.getElementById('drawer-title').innerText = slug.toUpperCase();
-                    document.getElementById('drawer-fullpage-link').href = adminBase() + '/' + slug + '/view/' + id;
+                    const listContext = window.location.pathname === adminBase() + '/' + slug ? window.location.search.slice(1) : '';
+                    const contextQuery = listContext ? '?_list=' + encodeURIComponent(listContext) : '';
+                    document.getElementById('drawer-fullpage-link').href = adminBase() + '/' + slug + '/view/' + id + contextQuery;
 
                     // Show a loading spinner in the drawer content
-                    document.getElementById('drawer-content-placeholder').innerHTML = '<div class="flex justify-center items-center h-48"><svg class="animate-spin h-6 w-6 text-[#10b981]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg></div>';
+                    document.getElementById('drawer-content-placeholder').innerHTML = '<div class="flex justify-center items-center h-48"><svg class="animate-spin h-6 w-6 text-[var(--vx-accent-main)]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg></div>';
                     
                     // Fetch the content
-                    htmx.ajax('GET', adminBase() + '/' + slug + '/peek/' + id, {target: '#drawer-content-placeholder', swap: 'innerHTML'});
+                    htmx.ajax('GET', adminBase() + '/' + slug + '/peek/' + id + contextQuery, {target: '#drawer-content-placeholder', swap: 'innerHTML'});
                 }
             }
         });

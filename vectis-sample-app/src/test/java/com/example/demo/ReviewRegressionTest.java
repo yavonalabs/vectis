@@ -42,6 +42,93 @@ class ReviewRegressionTest {
 
     Employee employee(long id) { return engine.findById(registry.getBySlug("employee").orElseThrow(), id); }
 
+    @Test void relatedCollectionsAreBoundedAndDoNotInitializeSourceCollection() {
+        tx.executeWithoutResult(transaction -> {
+            try {
+                var descriptor = registry.getBySlug("employee").orElseThrow();
+                Employee employee = employee(1);
+                employee.getSkills().clear();
+                for (int i = 0; i < 31; i++) {
+                    var skill = new com.example.demo.entity.Skill("Paged skill " + i);
+                    engine.persist(skill);
+                    employee.getSkills().add(skill);
+                }
+                engine.save(employee);
+                var em = context.getBean(jakarta.persistence.EntityManager.class);
+                em.flush(); em.clear();
+                Employee unloaded = engine.findById(descriptor, 1L, false);
+                assertThat(org.hibernate.Hibernate.isInitialized(unloaded.getSkills())).isFalse();
+                var association = descriptor.associations().stream().filter(a -> a.name().equals("skills")).findFirst().orElseThrow();
+                var target = registry.getBySlug("skill").orElseThrow();
+                var first = engine.findRelatedPage(descriptor, 1L, association, target, 0);
+                var second = engine.findRelatedPage(descriptor, 1L, association, target, 1);
+                assertThat(first.content()).hasSize(25);
+                assertThat(first.totalElements()).isEqualTo(31);
+                assertThat(second.content()).hasSize(6).doesNotContainAnyElementsOf(first.content());
+                assertThat(org.hibernate.Hibernate.isInitialized(unloaded.getSkills())).isFalse();
+                mvc.perform(get("/admin/employee/view/1/related/skills").with(user("user").roles("USER")))
+                        .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("Next page")));
+                mvc.perform(get("/admin/employee/view/1/related/skills").param("page", "1").with(user("admin").roles("ADMIN")))
+                        .andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("Previous page")));
+            } catch (Exception ex) { throw new RuntimeException(ex); }
+            finally { transaction.setRollbackOnly(); }
+        });
+    }
+
+    @Test void relatedCollectionEndpointsValidateSourceAssociationAndPage() throws Exception {
+        for (String suffix : new String[]{"?page=-1", "?page=2147483647"})
+            mvc.perform(get("/admin/employee/view/1/related/skills" + suffix).with(user("admin").roles("ADMIN")))
+                    .andExpect(status().isBadRequest());
+        for (String path : new String[]{"/admin/employee/view/999999/related/skills", "/admin/employee/view/1/related/department",
+                "/admin/employee/view/1/related/internalSecurityToken"})
+            mvc.perform(get(path).with(user("admin").roles("ADMIN"))).andExpect(status().isNotFound());
+    }
+
+    @Test void recordNavigationPreservesListContext() throws Exception {
+        String query = "page=1&size=10&search=Alice&sort=email&dir=desc&filterField=status&filterOp=eq&filterValue=ACTIVE";
+        for (String path : new String[]{"/admin/employee/view/1", "/admin/employee/edit/1", "/admin/employee/peek/1"}) {
+            var result = mvc.perform(get(path).param("_list", query).with(user("admin").roles("ADMIN")))
+                    .andExpect(status().isOk()).andReturn();
+            assertThat(result.getModelAndView().getModel().get("listUrl")).isEqualTo("/admin/employee?" + query);
+            assertThat(result.getResponse().getContentAsString()).contains("/admin/employee?page=1&amp;size=10&amp;search=Alice");
+        }
+        var listing = mvc.perform(get("/admin/employee?" + query).with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk()).andReturn();
+        assertThat(listing.getResponse().getContentAsString()).contains("_list=page%3D1");
+    }
+
+    @Test void saveAndValidationKeepListContext() {
+        tx.executeWithoutResult(transaction -> {
+            try {
+                String query = "search=Alice&sort=email&dir=desc";
+                mvc.perform(post("/admin/employee/save").param("__id", "1").param("firstName", "Alice")
+                        .param("_reason", "Navigation test").param("_list", query).with(user("admin").roles("ADMIN")).with(csrf()))
+                        .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/admin/employee?" + query));
+                mvc.perform(post("/admin/employee/save").header("HX-Request", "true").param("__id", "1")
+                        .param("firstName", "Alice").param("_reason", "Navigation test").param("_list", query)
+                        .with(user("admin").roles("ADMIN")).with(csrf()))
+                        .andExpect(status().isOk()).andExpect(header().string("HX-Redirect", "/admin/employee/view/1?_list=search%3DAlice%26sort%3Demail%26dir%3Ddesc"));
+                var invalid = mvc.perform(post("/admin/employee/save").header("HX-Request", "true").param("__id", "1")
+                        .param("firstName", "").param("_reason", "Navigation test").param("_list", query)
+                        .with(user("admin").roles("ADMIN")).with(csrf())).andReturn();
+                assertThat(invalid.getResponse().getContentAsString()).contains("name=\"_list\"", "search=Alice&amp;sort=email&amp;dir=desc");
+            } catch (Exception ex) { throw new RuntimeException(ex); }
+            finally { transaction.setRollbackOnly(); }
+        });
+    }
+
+    @Test void expiredHtmxSessionRedirectsTheWholePage() throws Exception {
+        mvc.perform(get("/admin/employee").header("HX-Request", "true"))
+                .andExpect(status().isUnauthorized()).andExpect(header().string("HX-Redirect", "/login?expired"))
+                .andExpect(header().string("Cache-Control", "no-store")).andExpect(content().string(""));
+        mvc.perform(post("/admin/employee/save").header("HX-Request", "true").param("firstName", "Never saved"))
+                .andExpect(status().isUnauthorized()).andExpect(header().string("HX-Redirect", "/login?expired"));
+        mvc.perform(post("/admin/employee/save").header("HX-Request", "true").with(user("admin").roles("ADMIN")))
+                .andExpect(status().isForbidden()).andExpect(header().doesNotExist("HX-Redirect"));
+        mvc.perform(get("/login?expired")).andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Your session has ended")));
+    }
+
     @Test void anonymousDashboardRequiresLogin() throws Exception {
         mvc.perform(get("/admin")).andExpect(status().is3xxRedirection());
     }

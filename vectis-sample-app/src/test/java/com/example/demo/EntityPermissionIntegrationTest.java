@@ -21,6 +21,28 @@ class EntityPermissionIntegrationTest {
     @Autowired MockMvc mvc;
     @SpyBean AdminPermissionEvaluator permissions;
 
+    @Test void restrictedActivityIsUnavailableRatherThanFalselyEmpty() throws Exception {
+        for (String path : new String[]{"/admin", "/admin/employee/view/1", "/admin/employee/peek/1"}) {
+            String restricted = mvc.perform(get(path).with(user("user").roles("USER")))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+            assertThat(restricted).contains("Activity history is unavailable for your account.")
+                    .doesNotContain("No activity recorded yet.", "No operational activity recorded yet.");
+            String permitted = mvc.perform(get(path).with(user("admin").roles("ADMIN")))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+            assertThat(permitted).doesNotContain("Activity history is unavailable for your account.");
+        }
+    }
+
+    @Test void collectionPagesRequireSourceAndTargetViewPermission() throws Exception {
+        doReturn(false).when(permissions).canViewEntity(eq("skill"), any());
+        mvc.perform(get("/admin/employee/view/1/related/skills").with(user("admin").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+        doReturn(true).when(permissions).canViewEntity(eq("skill"), any());
+        doReturn(false).when(permissions).canViewEntity(eq("employee"), any());
+        mvc.perform(get("/admin/employee/view/1/related/skills").with(user("admin").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+    }
+
     @Test void deniedEntityCannotLeakThroughSearchRelationshipsOrEdits() throws Exception {
         doReturn(false).when(permissions).canViewEntity(eq("department"), any());
         for (String path : new String[]{"/admin/employee", "/admin/employee/view/1", "/admin/employee/edit/1"}) {

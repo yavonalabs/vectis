@@ -10,6 +10,14 @@ Operator UI implementation: [the first UI milestone](docs/OPERATOR_UI_MILESTONE.
 
 14 September update: [typed filters and relationship lookup](docs/FILTERS_AND_RELATIONSHIPS_MILESTONE.md) adds combined scalar conditions, preserved query state, and bounded relationship selectors.
 
+20 September update: [paged related-record browsing](docs/RELATED_RECORDS_MILESTONE.md) replaces full collection loading on detail pages with bounded pages and permission-checked navigation.
+
+Navigation update: [list context preservation](docs/LIST_NAVIGATION_MILESTONE.md) restores search, filters, sorting and paging through detail/edit/create journeys.
+
+Session recovery update: [expired-session handling](docs/SESSION_RECOVERY_MILESTONE.md) prevents the sample login page from being inserted into HTMX fragments.
+
+Deployment update: [first-release hosting decision and runbook](docs/DEPLOYMENT.md) records GitHub, Render and the proposed YavonaLabs subdomains. [Component theme](docs/design/COMPONENT_THEME_MILESTONE.md) tracks the shared visual treatment and verification limits.
+
 ## 1. Product outcome and scope
 
 **Make Vectis the place where a support operator can find a record, understand its state, perform an approved business task, and verify the result without writing SQL.**

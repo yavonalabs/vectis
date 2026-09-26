@@ -71,10 +71,22 @@ public class AdminController {
     }
 
     @ModelAttribute
-    public void addGlobalAttributes(Model model, Principal principal) {
+    public void addGlobalAttributes(Model model, Principal principal, HttpServletRequest request) {
         if (!permissionEvaluator.canAccessAdmin(principal)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied to Admin Console");
         }
+        @SuppressWarnings("unchecked")
+        Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(
+                org.springframework.web.servlet.HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+        String navigationSlug = pathVariables == null ? null : pathVariables.get("slug");
+        String listQuery = ListNavigation.sanitize(request.getParameter("_list"));
+        if (navigationSlug != null) {
+            String listPath = adminPath + "/" + navigationSlug;
+            if (request.getRequestURI().equals(request.getContextPath() + listPath))
+                listQuery = ListNavigation.sanitize(request.getQueryString());
+            model.addAttribute("listUrl", listPath + ListNavigation.querySuffix(listQuery));
+        }
+        model.addAttribute("listQuery", listQuery.isEmpty() ? null : listQuery);
         model.addAttribute("adminTitle", adminTitle);
         model.addAttribute("adminPath", adminPath);
         model.addAttribute("environmentLabel", environmentLabel);
@@ -201,7 +213,7 @@ public class AdminController {
         }
 
         Object id = decodeId(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
-        Object entity = queryEngine.findById(descriptor, id);
+        Object entity = queryEngine.findById(descriptor, id, false);
         if (entity == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found: " + encodedId);
         }
@@ -227,24 +239,7 @@ public class AdminController {
                     ));
                 }
             } else {
-                try {
-                    Object assocVal = wrapper.getPropertyValue(assoc.name());
-                    if (assocVal instanceof Collection<?> col && targetDesc != null && targetDesc.idField() != null) {
-                        List<Map<String, String>> items = new ArrayList<>();
-                        for (Object item : col) {
-                            BeanWrapper itemWrapper = PropertyAccessorFactory.forBeanPropertyAccess(item);
-                            Object itemId = itemWrapper.getPropertyValue(targetDesc.idField().name());
-                            String itemEncodedId = IdCodec.encode(itemId, targetDesc.idField().isEmbeddedId());
-                            items.add(Map.of(
-                                    "display", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(targetDesc, item),
-                                    "slug", targetDesc.slug(),
-                                    "encodedId", itemEncodedId
-                            ));
-                        }
-                        collectionDetails.put(assoc.name(), items);
-                    }
-                } catch (Exception ignored) {
-                }
+                collectionDetails.put(assoc.name(), queryEngine.findRelatedPage(descriptor, id, assoc, targetDesc, 0).content());
             }
         }
 
@@ -260,6 +255,31 @@ public class AdminController {
         model.addAttribute("canDelete", permissionEvaluator.canDeleteEntity(slug, principal));
 
         return "vectis/detail";
+    }
+
+    @GetMapping("/{slug}/view/{encodedId}/related/{association}")
+    public String relatedRecords(@PathVariable String slug, @PathVariable String encodedId,
+            @PathVariable String association, @RequestParam(defaultValue = "0") int page,
+            Model model, Principal principal) {
+        EntityDescriptor source = getDescriptorOrThrow(slug);
+        if (!permissionEvaluator.canViewEntity(slug, principal))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
+        AssociationDescriptor assoc = source.associations().stream()
+                .filter(a -> a.name().equals(association) && !a.isSingleValued()).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Relationship not found"));
+        EntityDescriptor target = registry.getByClass(assoc.targetEntityClass())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Relationship unavailable"));
+        if (!permissionEvaluator.canViewEntity(target.slug(), principal))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
+        Object id = decodeId(encodedId, source.idField().type(), source.idField().isEmbeddedId());
+        Object entity = queryEngine.findById(source, id, false);
+        if (entity == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found");
+        model.addAttribute("descriptor", source);
+        model.addAttribute("encodedId", encodedId);
+        model.addAttribute("association", assoc);
+        model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(source, entity));
+        model.addAttribute("relatedPage", queryEngine.findRelatedPage(source, id, assoc, target, page));
+        return "vectis/related";
     }
 
     @GetMapping("/{slug}/peek/{encodedId}")
@@ -447,21 +467,21 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("flashMessage",
                     "Record successfully " + (isNew ? "created" : "updated") + "!");
             if ("true".equalsIgnoreCase(request.getHeader("HX-Request"))) {
-                response.setHeader("HX-Redirect", request.getContextPath() + adminPath + "/" + slug + "/view/" + normalizedEncodedId);
+                response.setHeader("HX-Redirect", request.getContextPath() + adminPath + "/" + slug + "/view/" + normalizedEncodedId + ListNavigation.contextSuffix(request.getParameter("_list")));
                 // A 200 response is required: browsers consume headers on a 302 internally.
                 org.springframework.web.servlet.support.RequestContextUtils.getOutputFlashMap(request)
                         .put("flashMessage", "Record successfully " + (isNew ? "created" : "updated") + "!");
                 org.springframework.web.servlet.support.RequestContextUtils.saveOutputFlashMap(
-                        request.getContextPath() + adminPath + "/" + slug + "/view/" + normalizedEncodedId, request, response);
+                        request.getContextPath() + adminPath + "/" + slug + "/view/" + normalizedEncodedId + ListNavigation.contextSuffix(request.getParameter("_list")), request, response);
                 return null;
             }
-            return "redirect:" + adminPath + "/" + slug;
+            return "redirect:" + adminPath + "/" + slug + ListNavigation.querySuffix(request.getParameter("_list"));
 
         } catch (ResponseStatusException e) { throw e;
         } catch (OptimisticLockException e) {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "Conflict: This record was modified by another user while you were editing it. Please refresh and try again.");
-            return isNew ? "redirect:" + adminPath + "/" + slug + "/create" : "redirect:" + adminPath + "/" + slug + "/edit/" + rawId;
+            return (isNew ? "redirect:" + adminPath + "/" + slug + "/create" : "redirect:" + adminPath + "/" + slug + "/edit/" + rawId) + ListNavigation.contextSuffix(request.getParameter("_list"));
         } catch (jakarta.validation.ConstraintViolationException e) {
             model.addAttribute("descriptor", descriptor);
             model.addAttribute("entity", entity);
@@ -485,7 +505,7 @@ public class AdminController {
                     ? "vectis/fragments/edit-form :: editFormFragment" : "vectis/form";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "The record could not be saved. Check its values and try again.");
-            return isNew ? "redirect:" + adminPath + "/" + slug + "/create" : "redirect:" + adminPath + "/" + slug + "/edit/" + rawId;
+            return (isNew ? "redirect:" + adminPath + "/" + slug + "/create" : "redirect:" + adminPath + "/" + slug + "/edit/" + rawId) + ListNavigation.contextSuffix(request.getParameter("_list"));
         }
     }
 

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{vectis/layout :: html(pageTitle=${association.displayName}, content=~{::content})}">
+<body><section th:fragment="content" class="space-y-4 max-w-6xl mx-auto">
+<a class="vx-secondary" th:href="@{${adminPath} + '/' + ${descriptor.slug} + '/view/' + ${encodedId}(_list=${listQuery})}">Back to record</a>
+<h1 class="text-xl font-bold" th:text="${association.displayName + ' for ' + recordLabel}"></h1>
+<p th:text="${relatedPage.totalElements + ' related records · 25 per page'}"></p>
+<p th:if="${#lists.isEmpty(relatedPage.content)}">No related records on this page.</p>
+<ul class="space-y-3"><li th:each="item : ${relatedPage.content}">
+<a class="vx-secondary" th:href="@{${adminPath} + '/' + ${item.slug} + '/view/' + ${item.encodedId}}" th:text="${item.display}"></a>
+</li></ul>
+<nav aria-label="Related record pages" class="flex gap-4 items-center">
+<a th:if="${relatedPage.page > 0}" class="vx-secondary" th:href="@{${adminPath} + '/' + ${descriptor.slug} + '/view/' + ${encodedId} + '/related/' + ${association.name}(page=${relatedPage.page - 1},_list=${listQuery})}">Previous page</a>
+<span th:text="${'Page ' + (relatedPage.page + 1)}"></span>
+<a th:if="${relatedPage.page + 1 < relatedPage.totalPages}" class="vx-secondary" th:href="@{${adminPath} + '/' + ${descriptor.slug} + '/view/' + ${encodedId} + '/related/' + ${association.name}(page=${relatedPage.page + 1},_list=${listQuery})}">Next page</a>
+</nav></section></body></html>

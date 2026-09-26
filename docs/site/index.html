@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Vectis Studio brings record search, forms and configured business actions into your Spring Boot application. An operations workspace by YavonaLabs.">
+  <title>Vectis Studio — A little less admin</title>
+  <link rel="icon" type="image/svg+xml" href="assets/vectis-favicon.svg">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="header wrap">
+    <a class="brand" href="#main" aria-label="Vectis Studio home"><img src="assets/vectis-mark.svg" width="40" height="40" alt=""> vectis <small>by YavonaLabs</small></a>
+    <nav aria-label="Main navigation"><a href="#workflow">How it helps</a><a href="#setup">Get started</a><a href="#questions">Questions</a></nav>
+  </header>
+  <main id="main">
+    <section class="hero wrap">
+      <div>
+        <p class="eyebrow">FOR SPRING BOOT TEAMS · EARLY PREVIEW</p>
+        <h1>A little less admin.<br>A little more <em>possibility.</em></h1>
+        <p class="intro">Give your operations team a place to find records and run the tasks your developers have configured. Keep everyday work moving inside your application.</p>
+        <div class="actions"><a class="button" href="#setup">Run the sample <span aria-hidden="true">↗</span></a><a class="text-link" href="#workflow">See the workflow <span aria-hidden="true">↓</span></a></div>
+        <p class="fine">Java 17 · Spring Boot 3 · Your application, your infrastructure</p>
+      </div>
+      <div class="illustration" aria-hidden="true"><div class="orbit"></div><span class="spark">✳</span><div class="character"><div class="eyes">••</div><div class="smile"></div></div><span class="art-note">Room for the work that matters.</span></div>
+    </section>
+    <section class="wrap scenario" id="workflow" aria-labelledby="workflow-title">
+      <div class="section-heading"><p class="eyebrow">FROM REQUEST TO RECORDED CHANGE</p><h2 id="workflow-title">“Could you update this record?”<br>There’s a place for that.</h2><p>Start with a recurring support task. Developers choose the records, permissions and actions; operators use the resulting workspace.</p></div>
+      <ol class="steps">
+        <li><span class="step-number" aria-hidden="true">01</span><h3>Find the right record</h3><p>Search, combine typed filters and follow related records. Give the person doing the work the context they need.</p></li>
+        <li><span class="step-number" aria-hidden="true">02</span><h3>Review the operation</h3><p>Use forms or configured Java actions. Supported actions show a preview; operators provide a reason before confirming.</p></li>
+        <li><span class="step-number" aria-hidden="true">03</span><h3>Check the outcome</h3><p>Review the updated record and permitted activity history, including the operator and reason recorded for the change.</p></li>
+      </ol>
+    </section>
+    <section class="wrap split" aria-labelledby="fit-title">
+      <div class="note"><p class="eyebrow">BUILT AROUND YOUR APPLICATION</p><h2 id="fit-title">Your team knows the task.<br>Your code knows the rules.</h2><p>Vectis runs alongside your Spring Boot application and JPA entities. Configure access and expose the operations you want people to use.</p><p>For tasks with business rules, expose a dedicated action. Generic record edits still require you to define the right validation and permissions.</p></div>
+      <div class="fit"><h3>A useful starting point</h3><ul><li>A Spring Boot team handling repeated record lookups and support changes.</li><li>Operators who need an interface for a defined set of tasks.</li><li>Developers who want to configure an in-app workspace.</li></ul><p>Start with fictional data, then evaluate a small, permission-scoped workflow before introducing production writes.</p></div>
+    </section>
+    <section class="wrap setup" id="setup" aria-labelledby="setup-title">
+      <div><p class="eyebrow">TRY IT IN YOUR OWN TIME</p><h2 id="setup-title">Meet your next workspace.</h2><p>This preview builds from source. With a checkout of the repository, Java 17 and Maven, run these commands from the repository root:</p></div>
+      <div class="code-card"><pre aria-label="Build and run commands"><code>mvn clean install
+java -jar vectis-sample-app/target/vectis-sample-app-0.1.0-SNAPSHOT.jar --spring.profiles.active=demo</code></pre><p>Open <code>http://localhost:8080/login</code> after startup.</p></div>
+      <div class="sample-info"><div><h3>Two ways to explore</h3><p><strong>admin / admin</strong> — try sample changes.<br><strong>user / password</strong> — browse with read-only access.</p></div><div><h3>Fictional data. A fresh start.</h3><p>Records and activity reset when the sample restarts. These accounts belong only in the demonstration app.</p></div></div>
+      <p class="release-note"><strong>Public demo coming next.</strong> The hosted demo and public source link will be added after release verification. This page does not offer a hosted account or a published package yet.</p>
+    </section>
+    <section class="wrap questions" id="questions" aria-labelledby="questions-title">
+      <p class="eyebrow">A FEW GOOD QUESTIONS</p><h2 id="questions-title">Before you bring it to the team.</h2>
+      <details><summary>Why use Vectis when developers can write SQL?</summary><p>Developers can write queries. Vectis gives other team members a repeatable interface for configured tasks, so every lookup or supported change need not start with a request to an engineer. Whether that helps depends on your actual workflow.</p></details>
+      <details><summary>Where does our data go?</summary><p>The starter runs inside the application where you install it and uses that application's persistence configuration. The planned public demo uses separate fictional records; it is not a service for connecting your production database.</p></details>
+      <details><summary>Is this ready for production?</summary><p>This is an early preview. Evaluate authentication, entity permissions, validation, audit storage and mutation behavior for your application. Hosted-demo testing does not establish readiness for your production workflows.</p></details>
+      <details><summary>What does it cost?</summary><p>Commercial packaging and pricing have not been announced. There is no paid subscription on this page.</p></details>
+    </section>
+  </main>
+  <footer class="wrap footer"><span class="brand">vectis <small>A YavonaLabs project</small></span><a href="https://yavonalabs.com/">Visit YavonaLabs <span aria-hidden="true">↗</span></a></footer>
+</body>
+</html>

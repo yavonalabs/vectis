@@ -14,6 +14,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class ReviewCustomPathTest {
     @Autowired MockMvc mvc;
+    @Test void expiredSessionRedirectIncludesContextPath() throws Exception {
+        mvc.perform(get("/portal/ops/employee").contextPath("/portal").header("HX-Request", "true"))
+                .andExpect(status().isUnauthorized()).andExpect(header().string("HX-Redirect", "/portal/login?expired"));
+    }
+
+    @Test void listNavigationWorksWithContextPath() throws Exception {
+        var result = mvc.perform(get("/portal/ops/employee/edit/1").contextPath("/portal")
+                .param("_list", "search=Alice&page=2").with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk()).andReturn();
+        assertThat(result.getResponse().getContentAsString()).contains("href=\"/portal/ops/employee?search=Alice&amp;page=2\"")
+                .doesNotContain("/portal/portal");
+    }
+
+    @Test void relatedCollectionLinksRespectContextAndAdminPath() throws Exception {
+        var result = mvc.perform(get("/portal/ops/employee/view/1/related/skills").contextPath("/portal")
+                .with(user("admin").roles("ADMIN"))).andExpect(status().isOk()).andReturn();
+        assertThat(result.getResponse().getContentAsString()).contains("/portal/ops/employee/view/1", "/portal/ops/skill/view/")
+                .doesNotContain("/portal/portal");
+    }
+
     @Test void contextPathIsIncludedExactlyOnceInLinksAndSearch() throws Exception {
         var result = mvc.perform(get("/portal/ops").contextPath("/portal").with(user("admin").roles("ADMIN")))
             .andExpect(status().isOk()).andReturn();

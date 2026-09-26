@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle != null ? pageTitle + ' - ' + adminTitle : adminTitle}">Operations Console</title>
-    
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- htmx -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-    
+
     <script th:src="@{/vectis-assets/vectis.js}"></script>
     <!-- Alpine.js Plugins -->
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/anchor@3.x.x/dist/cdn.min.js"></script>
@@ -92,46 +92,45 @@
         .htmx-request.htmx-indicator { display: inline-block; }
     </style>
     <link rel="stylesheet" th:href="@{/vectis-assets/operator.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/vectis-assets/vectis-favicon.svg}">
 </head>
-<body class="min-h-screen flex flex-col md:flex-row bg-[#090a0f] text-[#f3f4f6]" 
+<body class="min-h-screen flex flex-col md:flex-row bg-[var(--vx-canvas)] text-[var(--vx-text-main)]"
+      th:classappend="${pageTitle == 'Overview' ? 'studio-home' : ''}"
       th:data-admin-base="@{${adminPath}}"
       x-data="globalSearch()"
       @open-peek-drawer.window="peekDrawerOpen = true">
 
     <a href="#main-content" class="vx-skip-link">Skip to content</a>
     <!-- Mobile Top Header -->
-    <div class="md:hidden flex items-center justify-between bg-[#0f1117] px-4 py-3 border-b border-white/10">
-        <a th:href="@{${adminPath}}" class="flex items-center gap-2 font-bold text-sm text-white">
-            <span class="w-2 h-2 rounded-full bg-[#10b981]"></span>
+    <div class="md:hidden flex items-center justify-between bg-[var(--vx-surface-base)] px-4 py-3 border-b border-[var(--vx-border)]">
+        <a th:href="@{${adminPath}}" class="flex items-center gap-2 font-bold text-sm text-[var(--vx-text-main)]">
+            <img th:src="@{/vectis-assets/vectis-mark-light.svg}" width="32" height="32" alt="" class="shrink-0">
             <span th:text="${adminTitle}">Operations Console</span>
         </a>
-        <button aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="false" onclick="document.getElementById('sidebar').classList.toggle('hidden'); this.setAttribute('aria-expanded', !document.getElementById('sidebar').classList.contains('hidden'))" class="p-1.5 text-[#9ca3af] hover:text-white">
+        <button aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="false" onclick="document.getElementById('sidebar').classList.toggle('hidden'); this.setAttribute('aria-expanded', !document.getElementById('sidebar').classList.contains('hidden'))" class="p-1.5 text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)]">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
     </div>
 
     <!-- Sidebar: Obsidian Surface -->
-    <aside id="sidebar" class="hidden md:flex w-64 bg-[#0f1117] border-r border-white/10 flex-col shrink-0">
+    <aside id="sidebar" class="hidden md:flex w-64 bg-[var(--vx-surface-base)] border-r border-[var(--vx-border)] flex-col shrink-0">
         <!-- Brand Header -->
-        <div class="h-14 flex items-center px-4 border-b border-white/10 justify-between">
-            <a th:href="@{${adminPath}}" class="flex items-center gap-2.5 font-bold text-sm tracking-tight text-white">
-                <div class="w-6 h-6 rounded-lg bg-[#10b981] flex items-center justify-center text-[#090a0f] font-black text-xs shadow-lg shadow-[#10b981]/20"
-                     th:text="${#strings.toUpperCase(#strings.substring(adminTitle, 0, 1))}">
-                    O
-                </div>
+        <div class="h-14 flex items-center px-4 border-b border-[var(--vx-border)] justify-between">
+            <a th:href="@{${adminPath}}" class="flex items-center gap-2.5 font-bold text-sm tracking-tight text-[var(--vx-text-main)]">
+                <img th:src="@{/vectis-assets/vectis-mark-light.svg}" width="38" height="38" alt="" class="shrink-0">
                 <span th:text="${adminTitle}">Operations Console</span>
             </a>
         </div>
 
         <!-- Navigation Sections -->
         <nav class="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
-            
+
             <!-- OVERVIEW -->
             <div>
                 <a th:href="@{${adminPath}}"
-                   th:classappend="${descriptor == null && pageTitle == 'Overview' ? 'bg-[#151821] text-[#10b981] font-semibold border-l-2 border-[#10b981]' : 'text-[#9ca3af] hover:bg-[#151821] hover:text-white'}"
+                   th:classappend="${descriptor == null && pageTitle == 'Overview' ? 'bg-[var(--vx-surface-card)] text-[var(--vx-accent-main)] font-semibold border-l-2 border-[var(--vx-accent-main)]' : 'text-[var(--vx-text-muted)] hover:bg-[var(--vx-surface-card)] hover:text-[var(--vx-text-main)]'}"
                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition">
-                    <svg class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-[var(--vx-text-muted)]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
                     </svg>
                     <span>Overview</span>
@@ -140,17 +139,17 @@
 
             <!-- TABLE EDITOR (DATA) -->
             <div>
-                <div class="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest px-3 pb-2 flex items-center justify-between">
+                <div class="text-[10px] font-bold text-[var(--vx-text-faint)] uppercase tracking-widest px-3 pb-2 flex items-center justify-between">
                     <span>RECORDS</span>
-                    <span class="text-[9px] font-mono text-[#9ca3af] bg-[#151821] px-1.5 py-0.5 rounded border border-white/5" th:text="${#lists.size(entities)}">3</span>
+                    <span class="text-[9px] font-mono text-[var(--vx-text-muted)] bg-[var(--vx-surface-card)] px-1.5 py-0.5 rounded border border-[var(--vx-border)]" th:text="${#lists.size(entities)}">3</span>
                 </div>
                 <div class="space-y-0.5">
-                    <a th:each="ent : ${entities}" 
+                    <a th:each="ent : ${entities}"
                        th:href="@{${adminPath} + '/' + ${ent.slug}}"
-                       th:classappend="${descriptor != null && descriptor.slug == ent.slug ? 'bg-[#151821] text-[#10b981] font-semibold border-l-2 border-[#10b981]' : 'text-[#9ca3af] hover:bg-[#151821] hover:text-white'}"
+                       th:classappend="${descriptor != null && descriptor.slug == ent.slug ? 'bg-[var(--vx-surface-card)] text-[var(--vx-accent-main)] font-semibold border-l-2 border-[var(--vx-accent-main)]' : 'text-[var(--vx-text-muted)] hover:bg-[var(--vx-surface-card)] hover:text-[var(--vx-text-main)]'}"
                        class="flex items-center justify-between px-3 py-2 rounded-lg text-xs transition">
                         <div class="flex items-center gap-2.5 truncate">
-                            <svg class="w-3.5 h-3.5 text-[#6b7280]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5 text-[var(--vx-text-faint)]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                             </svg>
                             <span class="truncate" th:text="${ent.displayName}">Technical Skills</span>
@@ -162,12 +161,12 @@
 
             <!-- SECURITY & AUDIT LOGS -->
             <div>
-                <div class="text-[10px] font-bold text-[#6b7280] uppercase tracking-widest px-3 pb-2">Activity</div>
+                <div class="text-[10px] font-bold text-[var(--vx-text-faint)] uppercase tracking-widest px-3 pb-2">Activity</div>
                 <div class="space-y-0.5">
                     <a th:if="${canViewAudit}" th:href="@{${adminPath} + '/audit'}"
-                       th:classappend="${pageTitle == 'Audit Trail' ? 'bg-[#151821] text-white font-semibold border-l-2 border-[#10b981]' : 'text-[#9ca3af] hover:bg-[#151821] hover:text-white'}"
+                       th:classappend="${pageTitle == 'Audit Trail' ? 'bg-[var(--vx-surface-card)] text-[var(--vx-text-main)] font-semibold border-l-2 border-[var(--vx-accent-main)]' : 'text-[var(--vx-text-muted)] hover:bg-[var(--vx-surface-card)] hover:text-[var(--vx-text-main)]'}"
                        class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition">
-                        <svg class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 text-[var(--vx-text-muted)]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <span>Activity</span>
@@ -178,40 +177,40 @@
         </nav>
 
         <!-- System Footnote -->
-        <div class="p-3 border-t border-white/10 text-xs text-[#9ca3af] bg-[#090a0f] flex items-center justify-between font-mono">
+        <div class="p-3 border-t border-[var(--vx-border)] text-xs text-[var(--vx-text-muted)] bg-[var(--vx-canvas)] flex items-center justify-between font-mono">
             <span class="text-[10px]" th:text="${'OPERATOR: ' + operatorName}">Operator</span>
-            <span class="text-[10px] text-[#10b981] font-bold">&bull; ONLINE</span>
+            <span class="text-[10px]">Workspace</span>
         </div>
     </aside>
 
     <!-- Main Content Area -->
-    <main id="main-content" class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#090a0f]">
-        
+    <main id="main-content" class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[var(--vx-canvas)]">
+
         <!-- Top App Bar with Command Palette & Environment Indicator -->
-        <header class="h-14 bg-[#0f1117] border-b border-white/10 flex items-center justify-between px-6 shrink-0">
+        <header class="h-14 bg-[var(--vx-surface-base)] border-b border-[var(--vx-border)] flex items-center justify-between px-6 shrink-0">
             <div class="flex items-center gap-4">
                 <!-- Command Palette Trigger -->
-                <button @click="commandOpen = true" 
-                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#151821] border border-white/10 hover:border-white/20 text-xs text-[#9ca3af] hover:text-white transition w-56 md:w-64 justify-between">
+                <button @click="commandOpen = true"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--vx-surface-card)] border border-[var(--vx-border)] hover:border-[var(--vx-border)] text-xs text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)] transition w-56 md:w-64 justify-between">
                     <div class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         <span>Search records...</span>
                     </div>
-                    <kbd class="font-mono text-[10px] bg-[#090a0f] px-1.5 py-0.5 rounded border border-white/10">CTRL+K</kbd>
+                    <kbd class="font-mono text-[10px] bg-[var(--vx-canvas)] px-1.5 py-0.5 rounded border border-[var(--vx-border)]">CTRL+K</kbd>
                 </button>
 
                 <div id="global-spinner" class="htmx-indicator">
-                    <svg class="animate-spin h-3.5 w-3.5 text-[#10b981]" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin h-3.5 w-3.5 text-[var(--vx-accent-main)]" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                     </svg>
                 </div>
             </div>
-            
+
             <!-- Environment Badge -->
             <div class="flex items-center gap-3">
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#151821] border border-white/10 text-[11px] text-[#f3f4f6]">
-                    <span class="w-2 h-2 rounded-full bg-[#10b981]"></span>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--vx-surface-card)] border border-[var(--vx-border)] text-[11px] text-[var(--vx-text-main)]">
+                    <span class="w-2 h-2 rounded-full bg-[var(--vx-accent-main)]"></span>
                     <span class="font-medium" th:text="${environmentLabel}">Environment</span>
                 </div>
             </div>
@@ -219,16 +218,16 @@
 
         <!-- Dynamic Content Body -->
         <div class="flex-1 overflow-y-auto p-6 md:p-8">
-            <p th:if="${flashMessage != null}" th:text="${flashMessage}" role="status" class="mb-4 p-3 rounded-lg bg-emerald-500/10 text-emerald-300"></p>
-            <p th:if="${errorMessage != null && pageTitle != 'Error Encountered'}" th:text="${errorMessage}" role="alert" class="mb-4 p-3 rounded-lg bg-rose-500/10 text-rose-300"></p>
+            <p th:if="${flashMessage != null}" th:text="${flashMessage}" role="status" class="mb-4 p-3 rounded-lg bg-emerald-500/10 text-emerald-800"></p>
+            <p th:if="${errorMessage != null && pageTitle != 'Error Encountered'}" th:text="${errorMessage}" role="alert" class="mb-4 p-3 rounded-lg bg-rose-500/10 text-rose-800"></p>
             <div th:replace="${content}"></div>
         </div>
     </main>
 
     <!-- Global Peek Drawer (Side-Over Inspector for clicked rows) -->
-    <div id="peek-drawer" 
-         class="fixed inset-y-0 right-0 w-full max-w-xl bg-[#0f1117] border-l border-white/10 shadow-2xl z-50 flex flex-col"
-         x-show="peekDrawerOpen" 
+    <div id="peek-drawer"
+         class="fixed inset-y-0 right-0 w-full max-w-xl bg-[var(--vx-surface-base)] border-l border-[var(--vx-border)] shadow-2xl z-50 flex flex-col"
+         x-show="peekDrawerOpen"
          x-transition:enter="transition ease-out duration-300 transform"
          x-transition:enter-start="translate-x-full"
          x-transition:enter-end="translate-x-0"
@@ -236,19 +235,19 @@
          x-transition:leave-start="translate-x-0"
          x-transition:leave-end="translate-x-full"
          style="display: none;">
-        
+
         <!-- Drawer Header -->
-        <div class="h-14 px-6 border-b border-white/10 flex items-center justify-between bg-[#090a0f]">
+        <div class="h-14 px-6 border-b border-[var(--vx-border)] flex items-center justify-between bg-[var(--vx-canvas)]">
             <div class="flex items-center gap-2.5">
-                <span class="font-mono text-sm font-bold text-[#10b981]" id="drawer-id">#1</span>
-                <span class="text-xs text-[#6b7280]">&bull;</span>
-                <span class="text-xs font-semibold text-white" id="drawer-title">Record Details</span>
+                <span class="font-mono text-sm font-bold text-[var(--vx-accent-main)]" id="drawer-id">#1</span>
+                <span class="text-xs text-[var(--vx-text-faint)]">&bull;</span>
+                <span class="text-xs font-semibold text-[var(--vx-text-main)]" id="drawer-title">Record Details</span>
             </div>
             <div class="flex items-center gap-2">
-                <a id="drawer-fullpage-link" href="#" class="px-2.5 py-1 text-xs text-[#9ca3af] hover:text-white bg-[#151821] hover:bg-[#1c202c] rounded-lg transition border border-white/5">
+                <a id="drawer-fullpage-link" href="#" class="px-2.5 py-1 text-xs text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)] bg-[var(--vx-surface-card)] hover:bg-[var(--vx-surface-overlay)] rounded-lg transition border border-[var(--vx-border)]">
                     Open Full Page &rarr;
                 </a>
-                <button @click="peekDrawerOpen = false" class="p-1.5 text-[#9ca3af] hover:text-white rounded-lg hover:bg-[#151821] transition font-bold">
+                <button @click="peekDrawerOpen = false" class="p-1.5 text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)] rounded-lg hover:bg-[var(--vx-surface-card)] transition font-bold">
                     &times;
                 </button>
             </div>
@@ -257,7 +256,7 @@
         <!-- Drawer Body Tabs & Content -->
         <div class="flex-1 overflow-y-auto p-6 space-y-6">
             <div id="drawer-content-placeholder">
-                <p class="text-xs text-[#9ca3af]">Loading record inspection...</p>
+                <p class="text-xs text-[var(--vx-text-muted)]">Loading record inspection...</p>
             </div>
         </div>
     </div>
@@ -266,66 +265,66 @@
     <div id="toast-container"></div>
 
     <!-- Safe Action Modal (Vectis Risk & Justification Flow) -->
-    <div id="action-modal" 
+    <div id="action-modal"
          role="dialog" aria-modal="true" aria-labelledby="action-modal-title"
          x-data="actionModal()"
          @open-action-modal.window="openAction($event.detail)"
          @keydown.escape.window="closeActionModal()"
          class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[#0f1117] border border-white/15 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+        <div class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
             <div class="flex items-start gap-3">
-                <div class="p-2.5 bg-[#10b981]/10 rounded-xl border border-[#10b981]/25 text-[#10b981]">
+                <div class="p-2.5 bg-[var(--vx-accent-main)]/10 rounded-xl border border-[var(--vx-accent-main)]/25 text-[var(--vx-accent-main)]">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 </div>
                 <div>
-                    <h3 id="action-modal-title" class="text-sm font-semibold text-white">Execute Operation</h3>
-                    <p class="text-xs mt-0.5 font-bold" 
+                    <h3 id="action-modal-title" class="text-sm font-semibold text-[var(--vx-text-main)]">Execute Operation</h3>
+                    <p class="text-xs mt-0.5 font-bold"
                        :class="{
-                           'text-[#9ca3af]': !previewData || previewData.riskLevel === 'LOW',
-                           'text-amber-400': previewData?.riskLevel === 'MODERATE',
-                           'text-orange-400': previewData?.riskLevel === 'HIGH',
-                           'text-red-400': previewData?.riskLevel === 'CRITICAL'
+                           'text-[var(--vx-text-muted)]': !previewData || previewData.riskLevel === 'LOW',
+                           'text-amber-800': previewData?.riskLevel === 'MODERATE',
+                           'text-orange-800': previewData?.riskLevel === 'HIGH',
+                           'text-red-800': previewData?.riskLevel === 'CRITICAL'
                        }"
                        x-text="previewData ? `Change level: ${previewData.riskLevel}` : 'Change level: ...'">Change level: Moderate</p>
                 </div>
             </div>
-            
-            <div class="p-3.5 bg-[#151821] rounded-xl border border-white/5 text-xs text-[#9ca3af] space-y-3">
+
+            <div class="p-3.5 bg-[var(--vx-surface-card)] rounded-xl border border-[var(--vx-border)] text-xs text-[var(--vx-text-muted)] space-y-3">
                 <div>
-                    <div class="text-white font-medium mb-1">What will happen?</div>
+                    <div class="text-[var(--vx-text-main)] font-medium mb-1">What will happen?</div>
                     <p id="action-modal-desc" class="text-[11px] leading-relaxed mb-3">Review the task and its proposed changes.</p>
 
-                    <p class="text-xs text-[#9ca3af]">Review the proposed changes before confirming.</p>
+                    <p class="text-xs text-[var(--vx-text-muted)]">Review the proposed changes before confirming.</p>
                 </div>
 
                 <!-- Proposed changes / Dry Run Box -->
-                <div class="space-y-2 pt-2 border-t border-white/5">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-[#6b7280] flex items-center justify-between">
+                <div class="space-y-2 pt-2 border-t border-[var(--vx-border)]">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-[var(--vx-text-faint)] flex items-center justify-between">
                         <span>Proposed changes</span>
                         <!-- Loading Spinner -->
-                        <div x-show="loadingPreview" class="flex items-center gap-1.5 text-amber-500">
+                        <div x-show="loadingPreview" class="flex items-center gap-1.5 text-amber-800">
                             <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                             <span>Preparing preview...</span>
                         </div>
                     </div>
 
-                    <p x-show="previewError" x-text="previewError" role="alert" class="text-xs text-rose-400"></p>
+                    <p x-show="previewError" x-text="previewError" role="alert" class="text-xs text-rose-800"></p>
                     <!-- Diff Results -->
                     <div x-show="!loadingPreview && previewData" class="space-y-2 font-mono text-[10px]">
                         <!-- Changes detected -->
                         <template x-if="previewData?.hasChanges">
-                            <div class="space-y-1 bg-[#090a0f] p-2 rounded-lg border border-white/5 max-h-32 overflow-y-auto">
+                            <div class="space-y-1 bg-[var(--vx-canvas)] p-2 rounded-lg border border-[var(--vx-border)] max-h-32 overflow-y-auto">
                                 <template x-for="(change, idx) in previewData.plainTextChanges" :key="idx">
-                                    <div class="flex items-center gap-2 py-1 border-b border-white/5 last:border-0">
-                                        <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        <span class="text-[#f3f4f6] text-xs font-medium" x-text="change"></span>
+                                    <div class="flex items-center gap-2 py-1 border-b border-[var(--vx-border)] last:border-0">
+                                        <svg class="w-4 h-4 text-emerald-800 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        <span class="text-[var(--vx-text-main)] text-xs font-medium" x-text="change"></span>
                                     </div>
                                 </template>
                             </div>
                         </template>
 
                         <!-- No changes -->
-                        <div x-show="previewData && !previewData.hasChanges" class="p-2 rounded bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] flex items-center gap-2 font-semibold">
+                        <div x-show="previewData && !previewData.hasChanges" class="p-2 rounded bg-[var(--vx-accent-main)]/10 border border-[var(--vx-accent-main)]/20 text-[var(--vx-accent-main)] flex items-center gap-2 font-semibold">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             No visible field changes are proposed.
                         </div>
@@ -337,20 +336,20 @@
                 <input type="hidden" name="_version" :value="previewData?.version || ''" />
                 <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="space-y-1.5" x-show="previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL'">
-                    <label for="action-reason" class="text-xs font-medium text-white">
-                        Why are you making this change? <span class="text-rose-400">*</span>
+                    <label for="action-reason" class="text-xs font-medium text-[var(--vx-text-main)]">
+                        Why are you making this change? <span class="text-rose-800">*</span>
                     </label>
                     <input id="action-reason" name="_reason" maxlength="1000" x-model="reasonProvided" :required="previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL'" type="text" placeholder="e.g. Ticket #1042 - Approved by Operations"
-                           class="w-full bg-[#090a0f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-[#6b7280] focus:outline-none focus:border-[#10b981] transition" />
+                           class="w-full bg-[var(--vx-canvas)] border border-[var(--vx-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--vx-text-main)] placeholder-[var(--vx-text-faint)] focus:outline-none focus:border-[var(--vx-accent-main)] transition" />
                 </div>
-                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-white/10">
-                    <button id="action-cancel" type="button" onclick="closeActionModal()" class="px-3.5 py-1.5 bg-[#151821] hover:bg-[#1c202c] text-[#9ca3af] hover:text-white rounded-lg text-xs font-medium transition border border-white/5">
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-[var(--vx-border)]">
+                    <button id="action-cancel" type="button" onclick="closeActionModal()" class="px-3.5 py-1.5 bg-[var(--vx-surface-card)] hover:bg-[var(--vx-surface-overlay)] text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)] rounded-lg text-xs font-medium transition border border-[var(--vx-border)]">
                         Cancel
                     </button>
-                    <button type="submit" id="action-modal-btn" 
+                    <button type="submit" id="action-modal-btn"
                             :disabled="!canSubmit"
-                            :class="!canSubmit ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#059669]'"
-                            class="px-4 py-1.5 bg-[#10b981] text-[#090a0f] font-bold rounded-lg text-xs transition">
+                            :class="!canSubmit ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--vx-accent-hover)]'"
+                            class="px-4 py-1.5 bg-[var(--vx-accent-main)] text-[var(--vx-canvas)] font-bold rounded-lg text-xs transition">
                         Confirm &amp; Execute
                     </button>
                 </div>
@@ -360,29 +359,29 @@
 
     <!-- Themed Delete Modal -->
     <div id="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[#0f1117] border border-rose-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center gap-3 text-rose-400">
+        <div class="bg-[var(--vx-surface-base)] border border-rose-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center gap-3 text-rose-800">
                 <div class="p-2 bg-rose-500/10 rounded-xl border border-rose-500/25">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </div>
                 <div>
-                    <h3 id="delete-modal-title" class="text-sm font-semibold text-white">Delete record</h3>
-                    <p class="text-[11px] text-rose-400 font-bold">Destructive - Permanent Removal</p>
+                    <h3 id="delete-modal-title" class="text-sm font-semibold text-[var(--vx-text-main)]">Delete record</h3>
+                    <p class="text-[11px] text-rose-800 font-bold">Destructive - Permanent Removal</p>
                 </div>
             </div>
-            <p class="text-xs text-[#9ca3af]">Are you sure you want to delete record <span id="modal-record-id" class="font-mono font-bold text-white"></span>?</p>
+            <p class="text-xs text-[var(--vx-text-muted)]">Are you sure you want to delete record <span id="modal-record-id" class="font-mono font-bold text-[var(--vx-text-main)]"></span>?</p>
             <form id="modal-delete-form" method="post" action="">
                 <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="space-y-1.5">
-                    <label for="delete-reason" class="text-xs font-medium text-white">Reason for Deletion <span class="text-rose-400">*</span></label>
-                    <input id="delete-reason" name="_reason" required type="text" placeholder="e.g. User account closed" 
-                           class="w-full bg-[#090a0f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-[#6b7280] focus:outline-none focus:border-rose-500 transition" />
+                    <label for="delete-reason" class="text-xs font-medium text-[var(--vx-text-main)]">Reason for Deletion <span class="text-rose-800">*</span></label>
+                    <input id="delete-reason" name="_reason" required type="text" placeholder="e.g. User account closed"
+                           class="w-full bg-[var(--vx-canvas)] border border-[var(--vx-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--vx-text-main)] placeholder-[var(--vx-text-faint)] focus:outline-none focus:border-rose-500 transition" />
                 </div>
-                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-white/10">
-                    <button type="button" onclick="closeDeleteModal()" class="px-3.5 py-1.5 bg-[#151821] hover:bg-[#1c202c] text-[#9ca3af] rounded-lg text-xs font-medium transition border border-white/5">
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-[var(--vx-border)]">
+                    <button type="button" onclick="closeDeleteModal()" class="px-3.5 py-1.5 bg-[var(--vx-surface-card)] hover:bg-[var(--vx-surface-overlay)] text-[var(--vx-text-muted)] rounded-lg text-xs font-medium transition border border-[var(--vx-border)]">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-lg text-xs transition shadow-lg shadow-rose-600/30">
+                    <button type="submit" class="px-4 py-1.5 bg-rose-700 hover:bg-rose-800 text-white font-semibold rounded-lg text-xs transition shadow-lg shadow-rose-600/30">
                         Confirm Delete
                     </button>
                 </div>
@@ -391,62 +390,62 @@
     </div>
 
     <!-- Global Command Palette Modal (Ctrl+K) -->
-    <div x-show="commandOpen" 
+    <div x-show="commandOpen"
          @keydown.window.meta.k.prevent="commandOpen = !commandOpen"
          @keydown.window.ctrl.k.prevent="commandOpen = !commandOpen"
          @keydown.escape.window="commandOpen = false"
          class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-start justify-center pt-24 p-4"
          style="display: none;">
-        
-        <div class="bg-[#0f1117] border border-white/15 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden divide-y divide-white/10"
+
+        <div class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden divide-y divide-white/10"
              @click.away="commandOpen = false">
             <div class="p-3.5 flex items-center gap-3 relative">
-                <svg x-show="!isSearching" class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <svg x-show="isSearching" class="w-4 h-4 text-[#10b981] animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                <input type="text" placeholder="Search records or jump to a table..." 
-                       x-model="commandSearch"
-                       class="w-full bg-transparent text-xs text-white placeholder-[#6b7280] focus:outline-none"
+                <svg x-show="!isSearching" class="w-4 h-4 text-[var(--vx-text-muted)]" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <svg x-show="isSearching" class="w-4 h-4 text-[var(--vx-accent-main)] animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                <input type="text" placeholder="Search records or jump to a table..."
+                       x-model="commandSearch" x-ref="commandInput"
+                       class="w-full bg-transparent text-xs text-[var(--vx-text-main)] placeholder-[var(--vx-text-faint)] focus:outline-none"
                        @keydown.enter="commandOpen = false" autofocus />
-                <kbd class="font-mono text-[10px] text-[#9ca3af] bg-[#151821] px-1.5 py-0.5 rounded border border-white/10">ESC</kbd>
+                <kbd class="font-mono text-[10px] text-[var(--vx-text-muted)] bg-[var(--vx-surface-card)] px-1.5 py-0.5 rounded border border-[var(--vx-border)]">ESC</kbd>
             </div>
-            
+
             <div class="max-h-72 overflow-y-auto p-2 text-xs space-y-1">
                 <!-- STATIC NAVIGATION (when search is empty) -->
                 <div x-show="commandSearch === '' || searchResults.length === 0">
-                    <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider">TABLES</div>
-                    <a th:each="ent : ${entities}" 
+                    <div class="text-[10px] font-bold text-[var(--vx-text-faint)] px-2.5 py-1 uppercase tracking-wider">TABLES</div>
+                    <a th:each="ent : ${entities}"
                        th:href="@{${adminPath} + '/' + ${ent.slug}}"
                        @click="commandOpen = false"
                        th:data-search-label="${ent.displayName + ' ' + ent.slug}"
                        x-show="commandSearch === '' || $el.dataset.searchLabel.toLowerCase().includes(commandSearch.toLowerCase())"
-                       class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition">
+                       class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[var(--vx-surface-card)] text-[var(--vx-text-main)] transition">
                         <span th:text="${ent.displayName}">Technical Skills</span>
-                        <span class="font-mono text-[10px] text-[#6b7280]" th:text="${adminPath + '/' + ent.slug}">/admin/slug</span>
+                        <span class="font-mono text-[10px] text-[var(--vx-text-faint)]" th:text="${adminPath + '/' + ent.slug}">/admin/slug</span>
                     </a>
 
-                    <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider pt-2">Activity</div>
+                    <div class="text-[10px] font-bold text-[var(--vx-text-faint)] px-2.5 py-1 uppercase tracking-wider pt-2">Activity</div>
                     <a th:if="${canViewAudit}" th:href="@{${adminPath} + '/audit'}" @click="commandOpen = false"
                        x-show="commandSearch === '' || 'Activity'.toLowerCase().includes(commandSearch.toLowerCase())"
-                       class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition">
+                       class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[var(--vx-surface-card)] text-[var(--vx-text-main)] transition">
                         <span>Activity</span>
-                        <span class="font-mono text-[10px] text-[#6b7280]" th:text="${adminPath + '/audit'}">Activity</span>
+                        <span class="font-mono text-[10px] text-[var(--vx-text-faint)]" th:text="${adminPath + '/audit'}">Activity</span>
                     </a>
                 </div>
 
-                <p x-show="searchError" x-text="searchError" role="alert" class="text-xs text-rose-400 p-3"></p>
-                <p x-show="commandSearch.trim().length >= 2 && !isSearching && !searchError && searchResults.length === 0" class="text-xs text-[#9ca3af] p-3">No matching records found.</p>
+                <p x-show="searchError" x-text="searchError" role="alert" class="text-xs text-rose-800 p-3"></p>
+                <p x-show="commandSearch.trim().length >= 2 && !isSearching && !searchError && searchResults.length === 0" class="text-xs text-[var(--vx-text-muted)] p-3">No matching records found.</p>
                 <!-- GLOBAL SEARCH RESULTS -->
                 <template x-if="commandSearch !== '' && searchResults.length > 0">
                     <div>
                 <template x-for="group in searchResults" :key="group.slug">
                             <div class="mb-2">
-                                <div class="text-[10px] font-bold text-[#6b7280] px-2.5 py-1 uppercase tracking-wider pt-2" x-text="group.category"></div>
+                                <div class="text-[10px] font-bold text-[var(--vx-text-faint)] px-2.5 py-1 uppercase tracking-wider pt-2" x-text="group.category"></div>
                                 <template x-for="item in group.items" :key="item.url">
                                     <a :href="item.url"
                                        @click="commandOpen = false"
-                                       class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[#151821] text-[#f3f4f6] transition group">
+                                       class="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-[var(--vx-surface-card)] text-[var(--vx-text-main)] transition group">
                                         <div class="flex items-center gap-2 overflow-hidden">
-                                            <svg class="w-3.5 h-3.5 text-[#9ca3af] group-hover:text-[#10b981]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            <svg class="w-3.5 h-3.5 text-[var(--vx-text-muted)] group-hover:text-[var(--vx-accent-main)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                             <span x-text="item.title" class="truncate"></span>
                                         </div>
                                     </a>

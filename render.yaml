@@ -1,0 +1,13 @@
+# Disposable sample demo only. See docs/DEPLOYMENT.md before publishing.
+services:
+  - type: web
+    name: vectis-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /login
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: demo
+      - key: SERVER_SERVLET_SESSION_COOKIE_SECURE
+        value: "true"

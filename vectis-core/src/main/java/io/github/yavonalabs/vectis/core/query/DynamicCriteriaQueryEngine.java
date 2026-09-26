@@ -111,6 +111,11 @@ public class DynamicCriteriaQueryEngine {
 
     @Transactional(readOnly = true)
     public <T> T findById(EntityDescriptor descriptor, Object id) {
+        return findById(descriptor, id, true);
+    }
+
+    @Transactional(readOnly = true)
+    public <T> T findById(EntityDescriptor descriptor, Object id, boolean initializeCollections) {
         @SuppressWarnings("unchecked")
         Class<T> javaType = (Class<T>) descriptor.javaType();
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
@@ -132,7 +137,7 @@ public class DynamicCriteriaQueryEngine {
 
         try {
             T result = entityManager.createQuery(query).getSingleResult();
-            if (result != null) {
+            if (result != null && initializeCollections) {
                 // Safely initialize collection associations within the transaction boundary
                 BeanWrapper wrapper = PropertyAccessorFactory.forBeanPropertyAccess(result);
                 for (AssociationDescriptor assoc : descriptor.associations()) {
@@ -148,6 +153,37 @@ public class DynamicCriteriaQueryEngine {
         } catch (NoResultException e) {
             return null;
         }
+    }
+
+    /** Pages the association join itself, without initializing the source collection. */
+    @Transactional(readOnly = true)
+    public PageResult<Map<String, String>> findRelatedPage(EntityDescriptor source, Object id,
+            AssociationDescriptor association, EntityDescriptor target, int page) {
+        final int size = 25;
+        if (page < 0 || (long) page * size > Integer.MAX_VALUE)
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid related-record page.");
+        if (association.isSingleValued() || !source.associations().contains(association)
+                || !association.targetEntityClass().equals(target.javaType()))
+            throw new IllegalArgumentException("Invalid collection association");
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> count = cb.createQuery(Long.class);
+        Root<?> countSource = count.from(source.javaType());
+        Join<?, ?> countTarget = countSource.join(association.name());
+        count.select(cb.countDistinct(countTarget.get(target.idField().name())))
+                .where(cb.equal(countSource.get(source.idField().name()), id));
+        long total = entityManager.createQuery(count).getSingleResult();
+        CriteriaQuery<Object> query = cb.createQuery(Object.class);
+        Root<?> root = query.from(source.javaType());
+        Join<?, ?> related = root.join(association.name());
+        query.select(related).distinct(true).where(cb.equal(root.get(source.idField().name()), id))
+                .orderBy(cb.asc(related.get(target.idField().name())));
+        List<Map<String, String>> items = entityManager.createQuery(query).setFirstResult(page * size)
+                .setMaxResults(size).getResultList().stream().map(item -> {
+                    Object targetId = PropertyAccessorFactory.forBeanPropertyAccess(item).getPropertyValue(target.idField().name());
+                    return Map.of("display", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(target, item),
+                            "slug", target.slug(), "encodedId", io.github.yavonalabs.vectis.core.routing.IdCodec.encode(targetId, target.idField().isEmbeddedId()));
+                }).toList();
+        return new PageResult<>(items, page, size, total, (int) Math.ceil((double) total / size));
     }
 
     @Transactional(readOnly = true)

@@ -12,9 +12,13 @@ public class LoginController {
     @Value("${vectis.title:Operations Console}")
     private String adminTitle;
 
+    @Value("${vectis.demo-notice:false}")
+    private boolean demoNotice;
+
     @GetMapping("/login")
     public String login(Model model) {
         model.addAttribute("adminTitle", adminTitle);
+        model.addAttribute("demoNotice", demoNotice);
         return "login";
     }
 }

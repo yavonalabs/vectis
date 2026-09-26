@@ -10,9 +10,9 @@
     <div class="flex items-center justify-between pb-2 border-b border-[var(--vx-border)]">
         <div>
             <h2 class="text-xl font-bold tracking-tight text-[var(--vx-text-main)]">Operations activity history</h2>
-            <p class="text-xs text-[var(--vx-text-muted)] mt-0.5">Permanent, verifiable record of every support action, modification, and deletion.</p>
+            <p class="text-xs text-[var(--vx-text-muted)] mt-0.5">Review recorded operations, their outcomes, and the reasons provided.</p>
         </div>
-        <span class="text-xs font-mono text-[var(--vx-accent-main)] bg-[var(--vx-accent-main)]/10 px-3 py-1 rounded-full border border-[var(--vx-accent-main)]/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]">Compliance Mode Active</span>
+        <span class="text-xs text-[var(--vx-accent-main)] bg-[var(--vx-accent-main)]/10 px-3 py-1 rounded-full border border-[var(--vx-accent-main)]/20">Activity history</span>
     </div>
 
     <div class="border border-[var(--vx-border)] rounded-2xl overflow-x-auto bg-[var(--vx-surface-card)] shadow-xl shadow-black/20">
@@ -45,7 +45,7 @@
                     </td>
                     <td class="px-5 py-3.5">
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase font-sans tracking-wider"
-                              th:classappend="${log.operation.name() == 'DELETE' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : (log.operation.name() == 'ACTION' ? 'bg-[var(--vx-accent-main)]/10 text-[var(--vx-accent-main)] border border-[var(--vx-accent-main)]/20' : 'bg-[var(--vx-surface-overlay)] text-[var(--vx-text-main)] border border-[var(--vx-border)]')}"
+                              th:classappend="${log.operation.name() == 'DELETE' ? 'bg-rose-500/10 text-rose-800 border border-rose-500/20' : (log.operation.name() == 'ACTION' ? 'bg-[var(--vx-accent-main)]/10 text-[var(--vx-accent-main)] border border-[var(--vx-accent-main)]/20' : 'bg-[var(--vx-surface-overlay)] text-[var(--vx-text-main)] border border-[var(--vx-border)]')}"
                               th:text="${log.actionName}">Grant 15% Bonus</span>
                     </td>
                     <td class="px-5 py-3.5 text-[var(--vx-text-main)] font-sans truncate max-w-sm" th:text="${log.reason}">Standard operational edit</td>

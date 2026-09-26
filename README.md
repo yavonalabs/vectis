@@ -3,7 +3,6 @@
 
 [![Build](https://github.com/yavonalabs/vectis/actions/workflows/ci.yml/badge.svg)](https://github.com/yavonalabs/vectis)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-v0.1.0-emerald)](https://central.sonatype.com/)
 
 **Vectis** (*Latin for Lever*) is an in-app operations and support console for **Spring Boot 3 & Java 17+**. It provides operations, customer support, and back-office teams with a secure, audited interface to inspect data and trigger domain actions without giving them direct database access or requiring engineers to build custom React/Retool admin apps.
 
@@ -23,13 +22,24 @@
 
 ## 🚀 Quickstart
 
+This checkout builds `0.1.0-SNAPSHOT`. Until a published release is independently verified, install the modules locally from the repository root with Java 17 and Maven:
+
+```sh
+mvn clean install
+java -jar vectis-sample-app/target/vectis-sample-app-0.1.0-SNAPSHOT.jar --spring.profiles.active=demo
+```
+
+Open `http://localhost:8080/login` to try the fictional sample data. Use `admin / admin` for editing or `user / password` for read-only access. Sample data and activity reset on restart. These accounts are for the sample application only.
+
+For the hosted demo configuration, domain decision and release checks, see [the deployment runbook](docs/DEPLOYMENT.md).
+
 ### 1. Add the Dependency
 
 ```xml
 <dependency>
     <groupId>io.github.yavonalabs</groupId>
     <artifactId>vectis-spring-boot-starter</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.0-SNAPSHOT</version>
 </dependency>
 ```
 

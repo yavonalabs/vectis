@@ -9,22 +9,22 @@
 <div th:fragment="content" class="space-y-6 max-w-6xl mx-auto" x-data="{ activeTab: 'attributes' }">
     
     <!-- Top Breadcrumbs & Action Bar -->
-    <div id="detail-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-white/10 gap-3">
-        <div class="flex items-center gap-2 text-xs font-mono text-[#9ca3af]">
-            <a th:href="@{${adminPath}}" class="hover:text-white transition" th:text="${adminTitle}">Operations Console</a>
+    <div id="detail-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-[var(--vx-border)] gap-3">
+        <div class="flex items-center gap-2 text-xs font-mono text-[var(--vx-text-muted)]">
+            <a th:href="@{${adminPath}}" class="hover:text-[var(--vx-text-main)] transition" th:text="${adminTitle}">Operations Console</a>
             <span>/</span>
-            <a th:href="@{${adminPath} + '/' + ${descriptor.slug}}" class="hover:text-white transition uppercase" th:text="${descriptor.displayName}">TABLE</a>
+            <a th:href="@{${listUrl}}" class="hover:text-[var(--vx-text-main)] transition uppercase" th:text="${descriptor.displayName}">TABLE</a>
             <span>/</span>
-            <span class="text-[#10b981] font-bold" th:text="${'#' + encodedId}">#1</span>
+            <span class="text-[var(--vx-accent-main)] font-bold" th:text="${'#' + encodedId}">#1</span>
         </div>
 
         <div class="flex items-center gap-2">
-            <a th:href="@{${adminPath} + '/' + ${descriptor.slug}}" class="px-3 py-1.5 text-xs text-[#9ca3af] hover:text-white bg-[#0f1117] hover:bg-[#151821] border border-white/10 rounded-lg transition font-medium">
+            <a th:href="@{${listUrl}}" class="px-3 py-1.5 text-xs text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)] bg-[var(--vx-surface-base)] hover:bg-[var(--vx-surface-card)] border border-[var(--vx-border)] rounded-lg transition font-medium">
                 &larr; Back to list
             </a>
-            <a th:if="${canEdit}" th:href="@{${adminPath} + '/' + ${descriptor.slug} + '/edit/' + ${encodedId}}"
-               class="px-3.5 py-1.5 bg-[#10b981] hover:bg-[#059669] text-[#090a0f] font-bold rounded-lg text-xs transition flex items-center gap-1.5 shadow-lg shadow-[#10b981]/20">
-                <svg class="w-3.5 h-3.5 text-[#090a0f]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            <a th:if="${canEdit}" th:href="@{${adminPath} + '/' + ${descriptor.slug} + '/edit/' + ${encodedId}(_list=${listQuery})}"
+               class="px-3.5 py-1.5 bg-[var(--vx-accent-main)] hover:bg-[var(--vx-accent-hover)] text-[var(--vx-canvas)] font-bold rounded-lg text-xs transition flex items-center gap-1.5 shadow-lg shadow-[var(--vx-accent-main)]/20">
+                <svg class="w-3.5 h-3.5 text-[var(--vx-canvas)]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 <span>Edit details</span>
             </a>
         </div>
@@ -37,76 +37,80 @@
         <div th:class="${isDrawer != null && isDrawer ? 'col-span-1 space-y-4' : 'lg:col-span-2 space-y-4'}">
             
             <!-- Record Summary Header Card -->
-            <div class="bg-[#0f1117] border border-white/10 rounded-xl p-5 flex items-center justify-between shadow-sm">
+            <div class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 flex items-center justify-between shadow-sm">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-[#151821] border border-white/10 flex items-center justify-center font-mono font-bold text-lg text-[#10b981] shadow-inner">
+                    <div class="w-12 h-12 rounded-xl bg-[var(--vx-surface-card)] border border-[var(--vx-border)] flex items-center justify-center font-mono font-bold text-lg text-[var(--vx-accent-main)] shadow-inner">
                         <span th:text="${#strings.toUpperCase(#strings.substring(recordLabel, 0, 1))}">E</span>
                     </div>
                     <div>
-                        <h2 class="text-base font-bold text-white flex items-center gap-2.5">
+                        <h2 class="text-base font-bold text-[var(--vx-text-main)] flex items-center gap-2.5">
                             <span th:text="${recordLabel}">Entity Title</span>
-                            <span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/25 font-bold" th:text="${'#' + encodedId}">#1</span>
+                            <span class="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[var(--vx-accent-main)]/10 text-[var(--vx-accent-main)] border border-[var(--vx-accent-main)]/25 font-bold" th:text="${'#' + encodedId}">#1</span>
                         </h2>
-                        <p class="text-xs text-[#9ca3af] font-mono mt-0.5" th:text="${descriptor.displayName + ' Record'}">Record Details</p>
+                        <p class="text-xs text-[var(--vx-text-muted)] font-mono mt-0.5" th:text="${descriptor.displayName + ' Record'}">Record Details</p>
                     </div>
                 </div>
 
             </div>
 
             <!-- Tab Switcher -->
-            <div class="flex items-center gap-2 border-b border-white/10 text-xs font-mono">
+            <div class="flex items-center gap-2 border-b border-[var(--vx-border)] text-xs font-mono">
                 <button @click="activeTab = 'attributes'" 
-                        :class="activeTab === 'attributes' ? 'text-[#10b981] border-b-2 border-[#10b981] font-bold' : 'text-[#9ca3af] hover:text-white'"
+                        :class="activeTab === 'attributes' ? 'text-[var(--vx-accent-main)] border-b-2 border-[var(--vx-accent-main)] font-bold' : 'text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)]'"
                         class="px-3 py-2 transition">
                     Details
                 </button>
                 <button @click="activeTab = 'relationships'" 
-                        :class="activeTab === 'relationships' ? 'text-[#10b981] border-b-2 border-[#10b981] font-bold' : 'text-[#9ca3af] hover:text-white'"
+                        :class="activeTab === 'relationships' ? 'text-[var(--vx-accent-main)] border-b-2 border-[var(--vx-accent-main)] font-bold' : 'text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)]'"
                         class="px-3 py-2 transition">
                     Related records
                 </button>
             </div>
 
             <!-- Tab 1: Attributes -->
-            <div x-show="activeTab === 'attributes'" class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-4 shadow-sm">
+            <div x-show="activeTab === 'attributes'" class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-4 shadow-sm">
                 <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                     <div th:each="field : ${descriptor.fields}" th:if="${!field.isId() && !field.isVersion()}" class="py-1 flex flex-col">
                         <div class="flex items-center gap-2 justify-between">
-                            <dt class="text-[11px] font-mono uppercase text-[#9ca3af] font-semibold" th:text="${field.displayName}">Field</dt>
+                            <dt class="text-[11px] font-mono uppercase text-[var(--vx-text-muted)] font-semibold" th:text="${field.displayName}">Field</dt>
                         </div>
-                        <dd class="mt-1 text-sm text-white break-words" th:text="${field.format(entity.__${field.name}__)}">Value</dd>
+                        <dd class="mt-1 text-sm text-[var(--vx-text-main)] break-words" th:text="${field.format(entity.__${field.name}__)}">Value</dd>
                     </div>
                 </dl>
             </div>
 
             <!-- Tab 2: Relationships -->
-            <div x-show="activeTab === 'relationships'" class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-4 shadow-sm" style="display: none;">
+            <div x-show="activeTab === 'relationships'" class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-4 shadow-sm" style="display: none;">
                 <div class="space-y-4">
                     <!-- Single Valued Associations -->
-                    <div th:each="assoc : ${descriptor.associations}" th:if="${assoc.isSingleValued()}" class="space-y-1.5 pb-3 border-b border-white/5">
-                        <div class="text-xs font-mono text-[#9ca3af]" th:text="${assoc.displayName + ' (Foreign Key)'}">Department</div>
+                    <div th:each="assoc : ${descriptor.associations}" th:if="${assoc.isSingleValued()}" class="space-y-1.5 pb-3 border-b border-[var(--vx-border)]">
+                        <div class="text-xs font-mono text-[var(--vx-text-muted)]" th:text="${assoc.displayName}">Department</div>
                         <div th:if="${singleAssocDetails.containsKey(assoc.name)}">
                             <a th:href="@{${adminPath} + '/' + ${singleAssocDetails.get(assoc.name).slug} + '/view/' + ${singleAssocDetails.get(assoc.name).encodedId}}"
-                               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs bg-[#151821] hover:bg-[#1c202c] border border-white/10 text-[#f3f4f6] transition font-medium">
+                               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs bg-[var(--vx-surface-card)] hover:bg-[var(--vx-surface-overlay)] border border-[var(--vx-border)] text-[var(--vx-text-main)] transition font-medium">
                                 <span th:text="${singleAssocDetails.get(assoc.name).display}">Associated Record</span>
-                                <span class="text-[#10b981] font-mono">&rarr;</span>
+                                <span class="text-[var(--vx-accent-main)] font-mono">&rarr;</span>
                             </a>
                         </div>
-                        <p th:unless="${singleAssocDetails.containsKey(assoc.name)}" class="text-xs text-[#6b7280] font-mono">Not assigned</p>
+                        <p th:unless="${singleAssocDetails.containsKey(assoc.name)}" class="text-xs text-[var(--vx-text-faint)] font-mono">Not assigned</p>
                     </div>
 
                     <!-- Collection Associations -->
                     <div th:each="assoc : ${descriptor.associations}" th:if="${!assoc.isSingleValued()}" class="space-y-2">
-                        <div class="text-xs font-mono text-[#9ca3af]" th:text="${assoc.displayName}">Skills</div>
+                        <div class="text-xs font-mono text-[var(--vx-text-muted)]" th:text="${assoc.displayName}">Skills</div>
                         <div th:if="${collectionDetails.containsKey(assoc.name) && !#lists.isEmpty(collectionDetails.get(assoc.name))}" class="flex flex-wrap gap-2">
                             <a th:each="item : ${collectionDetails.get(assoc.name)}"
                                th:href="@{${adminPath} + '/' + ${item.slug} + '/view/' + ${item.encodedId}}"
-                               class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs bg-[#151821] text-[#f3f4f6] border border-white/10 hover:border-[#10b981] transition font-medium">
+                               class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs bg-[var(--vx-surface-card)] text-[var(--vx-text-main)] border border-[var(--vx-border)] hover:border-[var(--vx-accent-main)] transition font-medium">
                                 <span th:text="${item.display}">Item</span>
-                                <span class="text-[#6b7280] font-mono">&rarr;</span>
+                                <span class="text-[var(--vx-text-faint)] font-mono">&rarr;</span>
                             </a>
                         </div>
-                        <p th:unless="${collectionDetails.containsKey(assoc.name) && !#lists.isEmpty(collectionDetails.get(assoc.name))}" class="text-xs text-[#6b7280] font-mono">None added</p>
+                        <p th:if="${!collectionDetails.containsKey(assoc.name)}">Related records unavailable.</p>
+                        <p th:if="${collectionDetails.containsKey(assoc.name) && #lists.isEmpty(collectionDetails.get(assoc.name))}">None added</p>
+                        <a th:if="${collectionDetails.containsKey(assoc.name) && !#lists.isEmpty(collectionDetails.get(assoc.name))}"
+                           th:href="@{${adminPath} + '/' + ${descriptor.slug} + '/view/' + ${encodedId} + '/related/' + ${assoc.name}(_list=${listQuery})}"
+                           class="vx-secondary">Browse related records (25 per page)</a>
                     </div>
                 </div>
             </div>
@@ -117,12 +121,12 @@
         <div th:class="${isDrawer != null && isDrawer ? 'col-span-1 space-y-4 min-w-0' : 'lg:col-span-1 space-y-4 min-w-0'}">
             
             <!-- Widget 1: Operations Hub (Vectis Differentiator) -->
-            <div class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-4 shadow-sm min-w-0">
-                <div class="flex items-center justify-between pb-2 border-b border-white/10">
-                    <div class="text-xs font-mono font-bold text-[#9ca3af] uppercase tracking-wider flex items-center gap-2">
+            <div class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-4 shadow-sm min-w-0">
+                <div class="flex items-center justify-between pb-2 border-b border-[var(--vx-border)]">
+                    <div class="text-xs font-mono font-bold text-[var(--vx-text-muted)] uppercase tracking-wider flex items-center gap-2">
                         <span>OPERATIONS HUB</span>
                     </div>
-                    <span class="text-[10px] font-mono text-[#10b981] font-bold">ACTIONS</span>
+                    <span class="text-[10px] font-mono text-[var(--vx-accent-main)] font-bold">ACTIONS</span>
                 </div>
 
                 <div class="space-y-2 min-w-0">
@@ -136,17 +140,17 @@
                             th:data-title="${action.modalTitle}"
                             th:data-desc="${action.modalDescription}"
                             th:data-id="${encodedId}" th:data-record-label="${recordLabel}"
-                            class="w-full text-left bg-[#151821] hover:bg-[#1c202c] border border-white/5 hover:border-[#10b981]/50 rounded-lg transition group block">
+                            class="w-full text-left bg-[var(--vx-surface-card)] hover:bg-[var(--vx-surface-overlay)] border border-[var(--vx-border)] hover:border-[var(--vx-accent-main)]/50 rounded-lg transition group block">
                         <div class="flex items-start justify-between p-2.5 min-w-0 w-full gap-2">
                             <div class="flex items-start gap-2.5 min-w-0 flex-1">
-                                <svg class="w-3.5 h-3.5 text-[#10b981] shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                <svg class="w-3.5 h-3.5 text-[var(--vx-accent-main)] shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                 <div class="min-w-0 flex-1">
-                                    <div class="text-xs font-semibold text-[#f3f4f6] group-hover:text-white whitespace-normal break-words leading-tight" th:text="${action.label}">Custom Action</div>
-                                    <div class="text-[10px] text-[#6b7280] whitespace-normal break-words leading-tight mt-0.5" th:text="${action.modalDescription ?: 'Review this task before confirming'}">Trigger operation</div>
+                                    <div class="text-xs font-semibold text-[var(--vx-text-main)] group-hover:text-[var(--vx-text-main)] whitespace-normal break-words leading-tight" th:text="${action.label}">Custom Action</div>
+                                    <div class="text-[10px] text-[var(--vx-text-faint)] whitespace-normal break-words leading-tight mt-0.5" th:text="${action.modalDescription ?: 'Review this task before confirming'}">Trigger operation</div>
                                 </div>
                             </div>
                             <span class="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold shrink-0 mt-0.5"
-                                  th:classappend="${action.riskLevel.name() == 'CRITICAL' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : (action.riskLevel.name() == 'HIGH' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : (action.riskLevel.name() == 'MODERATE' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20'))}"
+                                  th:classappend="${action.riskLevel.name() == 'CRITICAL' ? 'bg-red-500/10 text-red-800 border border-red-500/20' : (action.riskLevel.name() == 'HIGH' ? 'bg-orange-500/10 text-orange-800 border border-orange-500/20' : (action.riskLevel.name() == 'MODERATE' ? 'bg-amber-500/10 text-amber-800 border border-amber-500/20' : 'bg-[var(--vx-accent-main)]/10 text-[var(--vx-accent-main)] border border-[var(--vx-accent-main)]/20'))}"
                                   th:text="${action.riskLevel.name()}">MODERATE</span>
                         </div>
                     </button>
@@ -156,9 +160,9 @@
                             th:if="${canDelete}" data-modal-type="delete"
                             th:data-slug="${descriptor.slug}"
                             th:data-id="${encodedId}" th:data-record-label="${recordLabel}"
-                            class="w-full flex items-center justify-between p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 rounded-lg transition text-left text-rose-400 text-xs font-semibold mt-3">
+                            class="w-full flex items-center justify-between p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 rounded-lg transition text-left text-rose-800 text-xs font-semibold mt-3">
                         <div class="flex items-center gap-2">
-                            <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            <svg class="w-3.5 h-3.5 text-rose-800" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             <span>Delete Record</span>
                         </div>
                         <span class="text-[9px] font-mono px-1.5 py-0.5 rounded risk-badge-danger font-bold">HIGH RISK</span>
@@ -167,41 +171,42 @@
             </div>
 
             <!-- Widget 2: Schema Metadata -->
-            <div class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-3 shadow-sm">
+            <div class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-3 shadow-sm">
                 <details><summary class="vx-details-summary">Technical details</summary>
                 <dl class="space-y-2 text-xs font-mono">
                     <div>
-                        <dt class="text-[#6b7280]">Primary Key</dt>
-                        <dd class="text-[#10b981] font-bold mt-0.5" th:text="${'#' + encodedId}">#1</dd>
+                        <dt class="text-[var(--vx-text-faint)]">Primary Key</dt>
+                        <dd class="text-[var(--vx-accent-main)] font-bold mt-0.5" th:text="${'#' + encodedId}">#1</dd>
                     </div>
                     <div>
-                        <dt class="text-[#6b7280]">Entity Type</dt>
-                        <dd class="text-[#f3f4f6] mt-0.5 font-medium" th:text="${descriptor.displayName}">Skill</dd>
+                        <dt class="text-[var(--vx-text-faint)]">Entity Type</dt>
+                        <dd class="text-[var(--vx-text-main)] mt-0.5 font-medium" th:text="${descriptor.displayName}">Skill</dd>
                     </div>
                     <div>
-                        <dt class="text-[#6b7280]">Status</dt>
-                        <dd class="text-[#9ca3af] mt-0.5">Loaded when this page was opened</dd>
+                        <dt class="text-[var(--vx-text-faint)]">Status</dt>
+                        <dd class="text-[var(--vx-text-muted)] mt-0.5">Loaded when this page was opened</dd>
                     </div>
                 </dl></details>
             </div>
 
             <!-- Widget 3: Activity Timeline -->
-            <div class="bg-[#0f1117] border border-white/10 rounded-xl p-5 space-y-3 shadow-sm">
-                <div class="text-xs font-mono font-bold text-[#9ca3af] uppercase tracking-wider pb-2 border-b border-white/10">ACTIVITY TIMELINE</div>
-                <div th:if="${#lists.isEmpty(entityAudits)}" class="py-4 text-xs text-[#6b7280] text-center font-mono">
+            <div class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-3 shadow-sm">
+                <div class="text-xs font-mono font-bold text-[var(--vx-text-muted)] uppercase tracking-wider pb-2 border-b border-[var(--vx-border)]">ACTIVITY TIMELINE</div>
+                <p th:unless="${canViewAudit}" class="py-4 text-xs text-[var(--vx-text-muted)]">Activity history is unavailable for your account.</p>
+                <div th:if="${canViewAudit and #lists.isEmpty(entityAudits)}" class="py-4 text-xs text-[var(--vx-text-faint)] text-center font-mono">
                     No activity recorded yet.
                 </div>
                 <div class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
-                    <div th:each="audit : ${entityAudits}" class="p-2.5 bg-[#151821] border border-white/5 rounded-lg space-y-1 text-xs">
+                    <div th:each="audit : ${entityAudits}" class="p-2.5 bg-[var(--vx-surface-card)] border border-[var(--vx-border)] rounded-lg space-y-1 text-xs">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-semibold text-white" th:text="${audit.actionName}">Operation</span>
-                                <span class="text-[9px] font-mono text-[#9ca3af]" th:text="${'by ' + (audit.actorUsername ?: 'Operator')}">by admin</span>
+                                <span class="font-semibold text-[var(--vx-text-main)]" th:text="${audit.actionName}">Operation</span>
+                                <span class="text-[9px] font-mono text-[var(--vx-text-muted)]" th:text="${'by ' + (audit.actorUsername ?: 'Operator')}">by admin</span>
                             </div>
-                            <span class="font-mono text-[9px] text-[#6b7280]" th:text="${#temporals.format(audit.timestamp, 'MM/dd HH:mm')}">Time</span>
+                            <span class="font-mono text-[9px] text-[var(--vx-text-faint)]" th:text="${#temporals.format(audit.timestamp, 'MM/dd HH:mm')}">Time</span>
                         </div>
                         <p th:if="${audit.reason != null && !audit.reason.isBlank()}" 
-                           class="text-[10px] text-[#9ca3af] italic" th:text="${'&ldquo;' + audit.reason + '&rdquo;'}">Reason</p>
+                           class="text-[10px] text-[var(--vx-text-muted)] italic" th:text="${'&ldquo;' + audit.reason + '&rdquo;'}">Reason</p>
                     </div>
                 </div>
             </div>

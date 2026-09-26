@@ -1,0 +1,19 @@
+# Isolated demonstration, never a customer database configuration.
+server:
+  address: 0.0.0.0
+  port: ${PORT:8080}
+  servlet:
+    session:
+      timeout: 20m
+      cookie:
+        http-only: true
+        same-site: lax
+
+spring:
+  h2:
+    console:
+      enabled: false
+
+vectis:
+  demo-notice: true
+  environment: Public demo - shared sample data; resets on restart
