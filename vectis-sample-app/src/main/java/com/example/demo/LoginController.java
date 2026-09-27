@@ -15,6 +15,14 @@ public class LoginController {
     @Value("${vectis.demo-notice:false}")
     private boolean demoNotice;
 
+    @Value("${vectis.path:/admin}")
+    private String adminPath;
+
+    @GetMapping("/")
+    public String home() {
+        return "redirect:" + adminPath;
+    }
+
     @GetMapping("/login")
     public String login(Model model) {
         model.addAttribute("adminTitle", adminTitle);

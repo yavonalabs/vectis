@@ -21,6 +21,8 @@ Start with Render's free compute plan for deployment testing. It sleeps after 15
 
 ## Prepared package
 
+The sample root URL redirects to the configured Studio path. Its header exposes a CSRF-protected POST logout control on desktop and mobile. Embedded applications opt in by setting `vectis.logout-path` to their own Spring Security logout endpoint (the sample uses `/logout`); the core leaves it hidden by default rather than assuming a host application's authentication route.
+
 The root Dockerfile runs Maven verification before packaging the sample in a Java 17 runtime, running as a non-root user. The demo Spring profile accepts Render's PORT variable, binds to all interfaces and disables the H2 console. The Render blueprint checks /login and enables secure session cookies for its HTTPS endpoint.
 
 The sample uses an in-memory H2 database and seeds fictional records. Records, mutations and audit history are shared between visitors and reset when the process restarts. There is no scheduled reset yet. Credentials are intentionally the sample credentials: admin/admin for editing, user/password for read-only access. They are not production authentication. Never attach real data or credentials to this service.
@@ -59,9 +61,11 @@ Rollback: deploy the last verified image/commit through Render. This resets the 
 
 ## Status and remaining scope
 
+27 September: the owner deployed the demo at https://vectis-demo.onrender.com/login. Initial hosted HTTP and mobile browser checks passed; see [the hosted verification record](HOSTED_DEMO_VERIFICATION.md) for exact coverage and outstanding release gates. The final custom domain and product-page publication remain pending.
+
 A static product-page draft is available in `docs/site/`. It explains the workflow and current source build, with no external script dependencies. Its public source and hosted-demo links remain pending release verification. See `docs/site/README.md` for publication steps.
 
-Hosting decision and configuration are documented. No Render resources, GitHub publication, billing changes or DNS changes have been made. Neither Docker nor Podman is available on the current command path, so the container build is still unverified. Local Maven verification passed all 61 tests on 26 September. A successful Maven build does not establish production readiness.
+Hosting decision and configuration are documented. The owner created the Render service; no GitHub publication or DNS changes have been made by this work. Neither Docker nor Podman is available on the local command path. The Render deployment now serves the application, but its build logs and commit must still be checked. Local Maven verification passed all 61 tests on 26 September. A successful Maven build does not establish production readiness.
 
 The packaged JAR was started locally with the demo profile on 26 September. Browser checks verified the entry explanation, admin sign-in, action preview, a sample leave-status change and its activity entry, drawer content and read-only access. The disabled H2 console returned HTTP 404. The product page, container smoke test, hosted HTTPS checks and full accessibility verification remain outstanding. Saved views, export, unsaved-edit protection and mutation lifecycle work remain separate roadmap items; they are not claimed complete by this deployment package.
 

@@ -14,6 +14,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class ReviewCustomPathTest {
     @Autowired MockMvc mvc;
+    @Test void rootAndLogoutRespectConfiguredPaths() throws Exception {
+        mvc.perform(get("/portal/").contextPath("/portal"))
+                .andExpect(status().isFound()).andExpect(redirectedUrl("/portal/ops"));
+        String html = mvc.perform(get("/portal/ops").contextPath("/portal").with(user("admin").roles("ADMIN")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("action=\"/portal/logout\"", "Log out", "name=\"_csrf\"");
+    }
     @Test void expiredSessionRedirectIncludesContextPath() throws Exception {
         mvc.perform(get("/portal/ops/employee").contextPath("/portal").header("HX-Request", "true"))
                 .andExpect(status().isUnauthorized()).andExpect(header().string("HX-Redirect", "/portal/login?expired"));

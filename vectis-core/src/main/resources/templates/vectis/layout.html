@@ -209,6 +209,9 @@
 
             <!-- Environment Badge -->
             <div class="flex items-center gap-3">
+                <form th:if="${logoutPath != null}" th:action="@{${logoutPath}}" method="post">
+                    <button type="submit" class="vx-secondary px-3 py-2 text-xs whitespace-nowrap">Log out</button>
+                </form>
                 <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--vx-surface-card)] border border-[var(--vx-border)] text-[11px] text-[var(--vx-text-main)]">
                     <span class="w-2 h-2 rounded-full bg-[var(--vx-accent-main)]"></span>
                     <span class="font-medium" th:text="${environmentLabel}">Environment</span>

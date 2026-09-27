@@ -6,3 +6,4 @@ target/
 .DS_Store
 logs/
 *-output.log
+__pycache__/

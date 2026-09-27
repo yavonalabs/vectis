@@ -17,5 +17,6 @@ vectis:
   enabled: true
   path: /admin
   title: Vectis Studio
+  logout-path: /logout
   read-only-roles: [ROLE_USER]
   environment: Demo — local sample data

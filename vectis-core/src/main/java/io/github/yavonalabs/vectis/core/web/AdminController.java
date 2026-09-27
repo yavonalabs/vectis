@@ -51,6 +51,7 @@ public class AdminController {
     private String adminTitle;
     @Value("${vectis.path:/admin}") private String adminPath;
     @Value("${vectis.environment:Not specified}") private String environmentLabel;
+    @Value("${vectis.logout-path:}") private String logoutPath;
 
     public AdminController(
             EntityMetadataRegistry registry,
@@ -90,6 +91,7 @@ public class AdminController {
         model.addAttribute("adminTitle", adminTitle);
         model.addAttribute("adminPath", adminPath);
         model.addAttribute("environmentLabel", environmentLabel);
+        model.addAttribute("logoutPath", logoutPath.isBlank() ? null : logoutPath);
         model.addAttribute("operatorName", principal == null ? "Unknown" : principal.getName());
         model.addAttribute("canViewAudit", permissionEvaluator.canViewAuditLogs(principal));
         model.addAttribute("fieldErrors", Map.of());

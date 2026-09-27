@@ -42,6 +42,17 @@ class ReviewRegressionTest {
 
     Employee employee(long id) { return engine.findById(registry.getBySlug("employee").orElseThrow(), id); }
 
+    @Test void rootOpensWorkspaceAndLogoutInvalidatesSession() throws Exception {
+        mvc.perform(get("/")).andExpect(status().isFound()).andExpect(redirectedUrl("/admin"));
+        var session = new org.springframework.mock.web.MockHttpSession();
+        mvc.perform(post("/logout").session(session).with(user("admin").roles("ADMIN")).with(csrf()))
+                .andExpect(status().isFound()).andExpect(redirectedUrl("/login?logout"));
+        assertThat(session.isInvalid()).isTrue();
+        mvc.perform(get("/admin")).andExpect(status().isFound());
+        mvc.perform(post("/logout").with(user("admin").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+    }
+
     @Test void relatedCollectionsAreBoundedAndDoNotInitializeSourceCollection() {
         tx.executeWithoutResult(transaction -> {
             try {
