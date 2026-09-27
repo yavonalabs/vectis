@@ -2,7 +2,7 @@
 
 Public repository: [yavonalabs/vectis](https://github.com/yavonalabs/vectis), created on 27 September 2026. The reviewed history was pushed to `master`, and GitHub's branch SHA matched local commit `d75796f14c87da5b781e2c270ed86d42b014f865`. GitHub is the `github` remote; GitLab remains `origin` because Render deploys from it. Neither remote is an automatic mirror: push approved changes to both explicitly.
 
-GitHub Issues and pull requests are the public contribution channels. Private vulnerability reporting is enabled. The initial GitHub Verify workflow was queued after publication; check [Actions](https://github.com/yavonalabs/vectis/actions) for the current result rather than treating the prior local test pass as a hosted CI result.
+GitHub Issues and pull requests are the public contribution channels. Private vulnerability reporting is enabled. The [initial GitHub Verify workflow](https://github.com/yavonalabs/vectis/actions/runs/36331447911) passed on `d75796f`. Its Node 20 deprecation warnings prompted upgrading checkout and setup-java to v5; check [Actions](https://github.com/yavonalabs/vectis/actions) for verification of subsequent commits.
 
 Prepared: accurate preview README, approved vector identity, contribution guidance, vulnerability reporting guidance, issue/PR templates and Java 17 Maven CI. The README no longer advertises an unimplemented enterprise edition or a published Maven artifact.
 
