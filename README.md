@@ -1,39 +1,45 @@
-# Vectis ⚙️
-> **Give your operations team leverage over your Spring Boot application — not your database.**
+<p align="center"><img src="docs/site/assets/vectis-mark.svg" width="80" alt="Vectis lever V logo"></p>
 
-[![Build](https://github.com/yavonalabs/vectis/actions/workflows/ci.yml/badge.svg)](https://github.com/yavonalabs/vectis)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+# Vectis Studio
 
-**Vectis** (*Latin for Lever*) is an in-app operations and support console for **Spring Boot 3 & Java 17+**. It provides operations, customer support, and back-office teams with a secure, audited interface to inspect data and trigger domain actions without giving them direct database access or requiring engineers to build custom React/Retool admin apps.
+An in-app operations workspace for Spring Boot teams, by YavonaLabs.
 
----
+Help operators find records, review changes and run configured Java actions without asking an engineer to write a query for each recurring task.
 
-## 💡 Why Vectis?
+**Early preview:** Java 17, Spring Boot 3 and JPA. The current source version is `0.1.0-SNAPSHOT`; no Maven Central release is claimed. Evaluate permissions and mutation behavior for your application before production use.
 
-| Dimension | Direct DB / DBeaver | Retool / Low-Code | **Vectis** |
-| :--- | :--- | :--- | :--- |
-| **Security & Safety** | 🔴 Direct DB writes bypass all Java rules | 🟡 Custom SQL queries can corrupt data | 🟢 **Runs inside Spring context** |
-| **Domain Logic** | 🔴 No events, no notifications fired | 🔴 Blind updates | 🟢 **Triggers real `@AdminAction` methods** |
-| **Validation** | 🔴 DB-level constraints only | 🟡 Manual frontend rules | 🟢 **Honors `@NotNull`, `@Email`, `@Size`** |
-| **Discovery** | 🔴 Everything exposed | 🟡 Manual query building | 🟢 **Strict opt-in via `@AdminEntity`** |
-| **Setup** | 🔴 Requires database port exposure | 🔴 Requires external server connection | 🟢 **Single dependency, 0 external servers** |
+## What you can do today
 
----
+- Search records, combine typed filters and browse related records in bounded pages.
+- Use labelled create/edit forms with validation feedback.
+- Expose Java methods as named operations with explicit previews where configured.
+- Configure access through Spring Security roles and an entity/action permission evaluator.
+- Review permitted activity history, including the operator and reason for a change.
+- Preserve list context while moving between records and recover from expired sessions.
 
-## 🚀 Quickstart
+A useful first workflow is a repeated record lookup or a narrowly scoped support operation. Developers still own authentication, validation, business rules and the operations they expose. Generic CRUD does not automatically invoke every domain service or external integration.
 
-This checkout builds `0.1.0-SNAPSHOT`. Until a published release is independently verified, install the modules locally from the repository root with Java 17 and Maven:
+## Run the sample
+
+From a checkout of this repository, with Java 17 and Maven installed:
 
 ```sh
 mvn clean install
 java -jar vectis-sample-app/target/vectis-sample-app-0.1.0-SNAPSHOT.jar --spring.profiles.active=demo
 ```
 
-Open `http://localhost:8080/login` to try the fictional sample data. Use `admin / admin` for editing or `user / password` for read-only access. Sample data and activity reset on restart. These accounts are for the sample application only.
+Open `http://localhost:8080/`.
 
-For the hosted demo configuration, domain decision and release checks, see [the deployment runbook](docs/DEPLOYMENT.md).
+| Access | Username | Password |
+| --- | --- | --- |
+| Try sample changes | `admin` | `admin` |
+| Read-only browsing | `user` | `password` |
 
-### 1. Add the Dependency
+The sample contains fictional records in an in-memory H2 database. Records and activity reset on restart. These public sample accounts are not production authentication.
+
+## Add it to an application
+
+After installing the source modules locally, add:
 
 ```xml
 <dependency>
@@ -43,87 +49,35 @@ For the hosted demo configuration, domain decision and release checks, see [the 
 </dependency>
 ```
 
-### 2. Mark Entities for Management
-
-```java
-@Entity
-@Table(name = "customers")
-@AdminEntity(label = "Customers", group = "Customer Support")
-public class Customer {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @NotBlank
-    @Email
-    private String email;
-
-    @Enumerated(EnumType.STRING)
-    private AccountStatus status = AccountStatus.ACTIVE;
-
-    @AdminIgnore // Hidden from UI completely
-    private String internalPasswordHash;
-
-    // --- DOMAIN ACTIONS ---
-    @AdminAction(
-        label = "Suspend Account",
-        color = "rose",
-        previewMethod = "previewSuspension",
-        confirmMessage = "Are you sure you want to suspend this customer? They will lose access immediately."
-    )
-    public void suspendAccount() {
-        this.status = AccountStatus.SUSPENDED;
-        // Triggers your domain service, notifications, and events!
-    }
-
-    public java.util.Map<String, Object> previewSuspension() {
-        return java.util.Map.of("status", AccountStatus.SUSPENDED);
-    }
-}
-```
-
-### 3. Open the Console
-
-Start your Spring Boot app and navigate to:
-👉 **`http://localhost:8080/admin`**
-
-Configure the host application's authentication and CSRF protection first. The default
-Vectis policy requires `ROLE_ADMIN`; read-only roles can be configured below. See
-[access and preview configuration](docs/SAFE_ACTIONS.md) for upgrade requirements,
-explicit preview methods, and current limitations.
-
----
-
-## 🛠️ Configuration (`application.yml`)
+Mark selected JPA entities with `@AdminEntity`, use `@AdminField` for presentation, and expose specific operations with `@AdminAction`. See the [working sample entities](vectis-sample-app/src/main/java/com/example/demo/entity) and [access and preview configuration](docs/SAFE_ACTIONS.md).
 
 ```yaml
 vectis:
   enabled: true
   path: /admin
-  title: ACME Support Console
+  title: Support Console
   environment: Staging
   roles: [ROLE_ADMIN]
   read-only-roles: [ROLE_SUPPORT]
-  allowed-entities:
-    - com.example.demo.entity.Customer
-    - com.example.demo.entity.Order
+  # Optional: your host application's CSRF-protected POST logout endpoint.
+  logout-path: /logout
 ```
 
----
+Supply the host application's authentication and security filter chain. The default permission policy is not a substitute for your entity-specific access rules. Restrict exposed entities and fields to the intended workflow.
 
-## 🏢 Enterprise & Open-Core Model
+## Status and limits
 
-Vectis is distributed under the **Apache 2.0 License** for its open-source core. 
+- The Render sample deployment is undergoing [hosted release verification](docs/HOSTED_DEMO_VERIFICATION.md); it is not a production-readiness certification.
+- Saved views, export, unsaved-edit protection and additional mutation-lifecycle work remain on the [roadmap](VECTIS_IMPROVEMENT_PLAN.md).
+- Runtime UI assets currently include CDN dependencies.
+- No enterprise edition, SSO product, approval workflow or commercial pricing is announced by this repository.
 
-For security, compliance, and enterprise support teams, **Vectis Enterprise** provides:
-* **Visual Audit Trail & Before/After Diff Viewer**
-* **SSO / SAML 2.0 / OIDC (Okta, Keycloak, Azure AD)**
-* **Granular Field-Level & Action-Level RBAC**
-* **Dual-Authorization Approval Workflows**
+## Development and contributions
 
----
+Run `mvn verify` from the repository root. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request and [SECURITY.md](SECURITY.md) before reporting a vulnerability.
 
-## 📄 License
+Useful feedback describes a real recurring support task, the smallest reproduction, and the expected outcome. Do not include customer records, credentials or private logs in public issues.
 
-Copyright © 2026 [YavonaLabs](https://yavonalabs.com). Released under the [Apache 2.0 License](LICENSE).
+## License
+
+[Apache License 2.0](LICENSE). Copyright 2026 Vectis Contributors (YavonaLabs).
