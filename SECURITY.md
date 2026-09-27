@@ -2,7 +2,7 @@
 
 Do not post credentials, exploit details, customer records or private logs in public issues.
 
-If GitHub's private vulnerability reporting is enabled on this repository, use **Security → Report a vulnerability**. If it is not enabled, open a minimal issue asking a maintainer for a private reporting channel, without disclosing the vulnerability itself.
+Use [GitHub's private vulnerability reporting](https://github.com/yavonalabs/vectis/security/advisories/new) (**Security → Report a vulnerability**). Private reporting is enabled on the official repository. If you cannot access it, open a minimal issue asking a maintainer for a private reporting channel, without disclosing the vulnerability itself.
 
 Include affected versions, a minimal reproduction using fictional data, expected and actual behavior, and impact when a private channel is available. Never test against someone else's deployment without authorization.
 
