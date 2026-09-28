@@ -6,7 +6,9 @@ Accepted with the project owner on 25 September 2026.
 
 Use GitHub for source, releases and issues, and Render for the interactive Spring Boot sample application. Keep the product under the existing YavonaLabs domain. Developers install the Vectis starter inside their own application; the hosted demo is not a service for connecting customer databases.
 
-Repository status: the current origin is `https://gitlab.com/jigsya23-group/vectis-studio.git`. The GitHub destination remains to be provisioned or confirmed; the remote has not been changed. Do not publish a guessed source URL.
+Repository status: the public source is https://github.com/yavonalabs/vectis (`github` remote). The existing `origin` remains `https://gitlab.com/jigsya23-group/vectis-studio.git`, which Render builds from. Push approved changes to both; no automatic mirroring is configured. GitHub verification passed on commit `852d7e7`.
+
+The owner confirmed Cloudflare manages `yavonalabs.com` on 27 September 2026. DNS changes remain pending authenticated access and inspection of existing records. Only the proposed Vectis subdomains are in scope; preserve root-domain and mail records.
 
 Proposed addresses (not yet provisioned):
 
@@ -63,9 +65,9 @@ Rollback: deploy the last verified image/commit through Render. This resets the 
 
 27 September: the owner deployed the demo at https://vectis-demo.onrender.com/login. Initial hosted HTTP and mobile browser checks passed; see [the hosted verification record](HOSTED_DEMO_VERIFICATION.md) for exact coverage and outstanding release gates. The final custom domain and product-page publication remain pending.
 
-A static product-page draft is available in `docs/site/`. It explains the workflow and current source build, with no external script dependencies. Its public source and hosted-demo links remain pending release verification. See `docs/site/README.md` for publication steps.
+A static product-page draft is available in `docs/site/`. It explains the workflow and current source build, with no external script dependencies. Its public GitHub source is linked; its hosted-demo CTA remains pending release verification. See `docs/site/README.md` for publication steps.
 
-Hosting decision and configuration are documented. The owner created the Render service; no GitHub publication or DNS changes have been made by this work. Neither Docker nor Podman is available on the local command path. The Render deployment now serves the application, but its build logs and commit must still be checked. Local Maven verification passed all 61 tests on 26 September. A successful Maven build does not establish production readiness.
+Hosting decision and configuration are documented. The owner created the Render service; GitHub publication is complete, while DNS changes are pending. Neither Docker nor Podman is available on the local command path. The Render deployment now serves the application, but its build logs and commit must still be checked. Local Maven verification passed all 61 tests on 26 September, and the later root/logout fix passed 63 tests. A successful Maven build does not establish production readiness.
 
 The packaged JAR was started locally with the demo profile on 26 September. Browser checks verified the entry explanation, admin sign-in, action preview, a sample leave-status change and its activity entry, drawer content and read-only access. The disabled H2 console returned HTTP 404. The product page, container smoke test, hosted HTTPS checks and full accessibility verification remain outstanding. Saved views, export, unsaved-edit protection and mutation lifecycle work remain separate roadmap items; they are not claimed complete by this deployment package.
 

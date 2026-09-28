@@ -170,7 +170,7 @@
                                         <div class="px-3 py-1 text-[9px] font-mono uppercase tracking-widest text-[var(--vx-text-faint)]">Tasks</div>
                                     <button th:each="action : ${actions}"
                                             type="button"
-                                            @click="open = false"
+                                            @click="$el.vectisReturnFocus = $refs.actionBtn; open = false"
                                             data-modal-type="action"
                                             th:data-slug="${descriptor.slug}"
                                             th:data-action-id="${action.id}"
@@ -206,7 +206,7 @@
                                 <!-- Danger Zone: High Risk -->
                                 <div class="py-1">
                                     <button type="button"
-                                            @click="open = false"
+                                            @click="$el.vectisReturnFocus = $refs.actionBtn; open = false"
                                             th:if="${canDelete}" data-modal-type="delete"
                                             th:data-slug="${descriptor.slug}"
                                             th:data-id="${row.__${descriptor.idField.name}__}" th:data-record-label="${recordLabels.get(row)}"

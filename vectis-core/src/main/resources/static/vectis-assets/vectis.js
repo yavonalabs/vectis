@@ -165,7 +165,8 @@ function actionModal() {
             if (deleteBtn) {
                 const slug = deleteBtn.getAttribute('data-slug');
                 const encodedId = deleteBtn.getAttribute('data-id');
-                window.vectisDeleteTrigger = deleteBtn;
+                // Dropdown items are hidden on selection; return to their visible menu button.
+                window.vectisDeleteTrigger = deleteBtn.vectisReturnFocus || deleteBtn;
                 document.getElementById('delete-reason').value = '';
                 document.getElementById('modal-record-id').innerText = deleteBtn.dataset.recordLabel || '#' + encodedId;
                 document.getElementById('modal-delete-form').action = adminBase() + '/' + slug + '/delete/' + encodedId;
@@ -176,7 +177,7 @@ function actionModal() {
 
             const actionBtn = e.target.closest('[data-modal-type="action"]');
             if (actionBtn) {
-                window.vectisActionTrigger = actionBtn;
+                window.vectisActionTrigger = actionBtn.vectisReturnFocus || actionBtn;
                 const slug = actionBtn.getAttribute('data-slug');
                 const actionId = actionBtn.getAttribute('data-action-id');
                 const label = actionBtn.getAttribute('data-label');
@@ -252,4 +253,3 @@ function actionModal() {
                 }
             }
         });
-

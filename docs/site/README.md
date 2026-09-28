@@ -2,11 +2,11 @@
 
 Serve this directory with any static HTTP server. It has no build step, JavaScript or external font/script dependency. `index.html` and `site.css` must be deployed together.
 
-This is an unpublished product-page draft. It deliberately has no live-demo CTA, source download link, signup form, published-package badge or announced price. The existing repository remote is GitLab (`https://gitlab.com/jigsya23-group/vectis-studio.git`); a public GitHub repository has not been provisioned or verified by this work.
+This is an unpublished product-page draft. Its source link points to the verified public repository, https://github.com/yavonalabs/vectis. It has no live-demo CTA, signup form, published-package badge or announced price. GitLab remains the Render deployment source.
 
 Before publication:
 
-1. Confirm the public source repository and add its verified URL near the source-build instructions.
+1. Public source repository confirmed and linked near the source-build instructions on 27 September 2026.
 2. Complete the hosted-demo gates in `../DEPLOYMENT.md` on the final domain.
 3. Replace the public-demo pending notice with the verified demo link, preserving the sample-data explanation.
 4. Check mobile widths, keyboard navigation, contrast and all links on the deployed product page as well.
