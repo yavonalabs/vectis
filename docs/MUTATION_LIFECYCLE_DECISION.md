@@ -2,6 +2,10 @@
 
 Date: 5 October 2026. Status: design accepted for staged implementation; transaction guarantees below are not implemented yet.
 
+Implementation progress: legacy action orchestration has been extracted into `ActionMutationService`. Its direct entry point obtains the actor through `MutationActorProvider` and checks console, entity and action access before loading or executing a record. The default Spring Security adapter rejects missing and anonymous authentication. Hosts using custom authentication must provide a trusted server-context actor provider; absent that provider, direct mutation access fails closed. The controller retains redirects and validation feedback. CRUD extraction, structured outcome expansion, managed transactions and atomic auditing remain pending.
+
+Compatibility: annotated/programmatic action registrations and HTTP routes are unchanged. Hosts manually constructing `AdminController` must now supply the action service dependency. The existing optional-version behavior is retained for this extraction; mandatory version enforcement is a later change with its own migration and concurrency tests. Missing execution handlers now reject with 422 instead of reporting an operation as successful.
+
 ## Observed baseline
 
 `AdminController` coordinates create, update, delete and actions. Query-engine writes each have their own transactional method. After those calls return, the controller publishes `VectisChangeEvent`. `VectisAuditLogService` handles it in `REQUIRES_NEW` and catches persistence errors. A committed change can therefore lack a success audit. Wrapping the controller in a transaction alone would not repair this: the independent audit transaction and swallowed failures would remain.

@@ -101,6 +101,8 @@ Separate two supported modes:
 
 ### B2. Extract services with compatibility adapters
 
+In progress: action orchestration now lives in `ActionMutationService`, including direct-call authorization and server-derived actor identity. HTTP feedback remains in the controller. This is the legacy execution adapter, not managed atomic mode. Create/edit/delete extraction and the complete outcome contract remain pending; see the lifecycle decision for compatibility notes.
+
 - Move save/delete/action orchestration out of controllers; keep HTTP parsing, validation feedback and redirects in controllers.
 - Preserve supported custom paths, servlet context paths, list context, ordinary forms and HTMX responses.
 - Keep existing annotations/registration working through adapters where possible. Publish migration instructions for deliberate contract changes.

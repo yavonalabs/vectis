@@ -81,6 +81,23 @@ public class VectisAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnClass(name = "org.springframework.security.core.context.SecurityContextHolder")
+    public io.github.yavonalabs.vectis.core.mutation.MutationActorProvider springMutationActorProvider() {
+        return new io.github.yavonalabs.vectis.core.mutation.SpringSecurityMutationActorProvider();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutationService(
+            EntityMetadataRegistry metadata, EntityActionRegistry actions, DynamicCriteriaQueryEngine queries,
+            AdminPermissionEvaluator permissions, ApplicationEventPublisher events,
+            ObjectProvider<io.github.yavonalabs.vectis.core.mutation.MutationActorProvider> actors) {
+        return new io.github.yavonalabs.vectis.core.mutation.ActionMutationService(metadata, actions, queries,
+                permissions, actors.getIfAvailable(() -> () -> null), events);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public AdminController adminController(
             EntityMetadataRegistry registry,
             DynamicCriteriaQueryEngine queryEngine,
@@ -88,7 +105,8 @@ public class VectisAutoConfiguration {
             EntityActionRegistry actionRegistry,
             ObjectProvider<List<StatCardProvider>> statCardProviders,
             ApplicationEventPublisher eventPublisher,
-            VectisAuditLogService auditLogService
+            VectisAuditLogService auditLogService,
+            io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations
     ) {
         return new AdminController(
                 registry,
@@ -97,7 +115,8 @@ public class VectisAutoConfiguration {
                 actionRegistry,
                 statCardProviders,
                 eventPublisher,
-                auditLogService
+                auditLogService,
+                actionMutations
         );
     }
 

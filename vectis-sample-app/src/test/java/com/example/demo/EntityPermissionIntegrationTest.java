@@ -20,6 +20,46 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class EntityPermissionIntegrationTest {
     @Autowired MockMvc mvc;
     @SpyBean AdminPermissionEvaluator permissions;
+    @Autowired io.github.yavonalabs.vectis.core.mutation.ActionMutationService mutations;
+
+    @Test void directActionServiceRejectsMissingAuthentication() {
+        assertThat(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()).isNull();
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> mutations.execute("employee", "toggleLeaveStatus", "1",
+                java.util.Map.of("_reason", "Direct call", "actor", "admin")))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(403));
+    }
+
+    @Test
+    @org.springframework.security.test.context.support.WithMockUser(username = "restricted", roles = "RESTRICTED")
+    void directActionServiceRejectsRestrictedActorDespiteForgedInput() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> mutations.execute("employee", "toggleLeaveStatus", "1",
+                java.util.Map.of("_reason", "Direct call", "actor", "admin")))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(403));
+    }
+
+    @Test
+    @org.springframework.security.test.context.support.WithMockUser(username = "admin", roles = "ADMIN")
+    void directActionServiceRechecksEntityPermission() {
+        doReturn(false).when(permissions).canViewEntity(eq("employee"), any());
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> mutations.execute("employee", "toggleLeaveStatus", "1",
+                java.util.Map.of("_reason", "Direct call")))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(403));
+    }
+
+    @Test
+    @org.springframework.security.test.context.support.WithMockUser(username = "admin", roles = "ADMIN")
+    void directActionServiceStillRequiresReasonAndChecksVersion() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> mutations.execute("employee", "toggleLeaveStatus", "1", java.util.Map.of()))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(400));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> mutations.execute("employee", "toggleLeaveStatus", "1",
+                java.util.Map.of("_reason", "Direct call", "_version", "-1")))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(409));
+    }
 
     @Test void realRestrictedAccountCanBrowseEmployeesButNotRelatedEntities() throws Exception {
         // No mocked permission decisions: exercise the sample's real role policy.

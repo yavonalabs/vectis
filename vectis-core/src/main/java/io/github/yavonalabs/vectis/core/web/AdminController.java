@@ -45,6 +45,7 @@ public class AdminController {
     private final List<StatCardProvider> statCardProviders;
     private final ApplicationEventPublisher eventPublisher;
     private final VectisAuditLogService auditLogService;
+    private final io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations;
     private final ConversionService conversionService = DefaultConversionService.getSharedInstance();
 
     @Value("${vectis.title:Operations Console}")
@@ -60,7 +61,8 @@ public class AdminController {
             EntityActionRegistry actionRegistry,
             ObjectProvider<List<StatCardProvider>> statCardProvidersProvider,
             ApplicationEventPublisher eventPublisher,
-            VectisAuditLogService auditLogService
+            VectisAuditLogService auditLogService,
+            io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations
     ) {
         this.registry = registry;
         this.queryEngine = queryEngine;
@@ -69,6 +71,7 @@ public class AdminController {
         this.statCardProviders = statCardProvidersProvider.getIfAvailable(Collections::emptyList);
         this.eventPublisher = eventPublisher;
         this.auditLogService = auditLogService;
+        this.actionMutations = actionMutations;
     }
 
     @ModelAttribute
@@ -523,55 +526,11 @@ public class AdminController {
     ) {
         EntityDescriptor descriptor = getDescriptorOrThrow(slug);
 
-        Optional<? extends EntityAction<?>> actionOpt = actionRegistry.getAction(descriptor.javaType(), actionId);
-        if (actionOpt.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Action not found: " + actionId);
-        }
-
-        EntityAction<Object> action = (EntityAction<Object>) actionOpt.get();
-
-        if (!permissionEvaluator.canViewEntity(slug, principal) || !permissionEvaluator.canExecuteAction(slug, actionId, principal)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot execute this action.");
-        }
-        if (action.getRiskLevel() != io.github.yavonalabs.vectis.core.annotation.RiskLevel.LOW) requireReason(allParams);
-
-        Object id = decodeId(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
-        Object entity = queryEngine.findById(descriptor, id);
-        if (entity == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found: " + encodedId);
-        }
-
-        if (descriptor.hasVersion() && allParams.containsKey("_version")) {
-            Object currentVersion = PropertyAccessorFactory.forBeanPropertyAccess(entity).getPropertyValue(descriptor.versionField().name());
-            if (!Objects.equals(String.valueOf(currentVersion), allParams.get("_version"))) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "This record changed after the preview. Refresh and review the action again.");
-            }
-        }
-        Map<String, Object> beforeSnapshot = takeSnapshot(entity, descriptor);
-
         try {
-            if (action.getHandler() != null) {
-                action.getHandler().accept(entity, allParams);
-                queryEngine.save(entity);
-            }
-
-            Map<String, Object> afterSnapshot = takeSnapshot(entity, descriptor);
-            String username = principal != null ? principal.getName() : "system/ops";
-
-            // PERSIST DURABLE AUDIT EVENT WITH REASON
-            eventPublisher.publishEvent(new VectisChangeEvent(
-                    this,
-                    slug,
-                    encodedId,
-                    action.getLabel(),
-                    VectisChangeEvent.OperationType.ACTION,
-                    beforeSnapshot,
-                    afterSnapshot,
-                    username,
-                    allParams.getOrDefault("_reason", "Executed via Vectis Console")
-            ));
-
-            redirectAttributes.addFlashAttribute("flashMessage", "Action '" + action.getLabel() + "' executed successfully!");
+            var result = actionMutations.execute(slug, actionId, encodedId, allParams);
+            redirectAttributes.addFlashAttribute("flashMessage", "Action '" + result.actionLabel() + "' executed successfully!");
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (jakarta.validation.ConstraintViolationException e) {
             StringBuilder sb = new StringBuilder("Action validation failed:\n");
             e.getConstraintViolations().forEach(violation -> {

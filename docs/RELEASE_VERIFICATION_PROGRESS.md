@@ -17,6 +17,12 @@ The frontend now distinguishes 401/sign-in redirects, 403 denial and non-JSON se
 
 ## Remaining
 
+### Action service extraction — 5 October 2026
+
+The deployed demo passed the full three-account HTTP smoke before this extraction. Action execution now delegates to `ActionMutationService`, with server-context actor resolution and console/entity/action permission checks at its direct entry point. Added direct-service tests for absent authentication, restricted access despite forged actor input, denied entity access, missing reason and stale version.
+
+Full Maven verification passed with 69 Java tests after correcting the optional Spring Security adapter's module placement. HTTP action routes and existing custom-path regressions pass. The extraction itself has not yet been verified on Render. CRUD orchestration, atomic audit, mandatory version enforcement and durable idempotency remain pending. See `MUTATION_LIFECYCLE_DECISION.md` for manual-controller construction compatibility and custom-authentication requirements.
+
 ### Hosted restricted-role verification and lifecycle design — 5 October 2026
 
 After the user reported the Render build passed, the first hosted smoke attempt timed out during admin sign-in. A subsequent complete run against `https://demo.vectis.yavonalabs.com` passed for admin, user and restricted, including relationship redaction, unavailable collection text, denied entity routes, search exclusions and logout. This verifies the restricted-account HTTP behavior live; it does not establish an exact deployed SHA or a full browser/accessibility pass.

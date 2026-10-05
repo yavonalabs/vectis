@@ -24,6 +24,8 @@ Provide an `AdminPermissionEvaluator` bean for entity-specific policies. Every a
 
 Entity opt-in still applies. These controls do not implement row-level multi-tenant isolation or granular field-level RBAC.
 
+Action execution is routed through `ActionMutationService`, which repeats console/entity/action authorization even for direct service callers. Its `MutationActorProvider` resolves identity from trusted host context; Spring Security supplies the default adapter. Custom-authentication hosts must provide their own server-context adapter. Client parameters cannot supply the authenticated actor. This service extraction does not yet change transaction or audit guarantees.
+
 ## Explicit previews
 
 Opening a preview no longer invokes the action's execution handler. Annotated actions can name a separate public method on the same class with the same parameter signature and a `Map<String, Object>` return value:
