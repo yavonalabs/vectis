@@ -6,6 +6,8 @@ Start with a small, reproducible problem or an actual operator workflow. For a s
 
 Use Java 17 and Maven. From the repository root, run `mvn verify`. To try the sample, run the packaged sample JAR with the `demo` profile as described in the README. Use fictional data only.
 
+For action-dialog JavaScript changes, also run `node --test scripts/action-modal.test.cjs` with Node.js 18 or newer. These controller tests supplement browser checks. Run `python scripts/smoke_demo.py http://localhost:8080` against the disposable running sample to check real login, CSRF, preview permissions and logout.
+
 ## Pull requests
 
 - Explain the user-visible problem and resulting behavior.

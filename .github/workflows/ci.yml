@@ -19,3 +19,5 @@ jobs:
           cache: maven
       - name: Verify all modules
         run: mvn -B -ntp verify
+      - name: Verify preview response handling
+        run: node --test scripts/action-modal.test.cjs

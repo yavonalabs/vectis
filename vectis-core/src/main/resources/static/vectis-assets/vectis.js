@@ -113,6 +113,15 @@ function actionModal() {
                 const url = adminBase() + '/api/' + encodeURIComponent(this.slug) + '/action/'
                     + encodeURIComponent(this.actionId) + '/' + encodeURIComponent(this.entityId) + '/preview';
                 const response = await fetch(url, {method: 'POST', body: formData});
+                if (response.status === 401 || response.redirected) {
+                    throw new Error('Your session may have expired. Reload this page and sign in again before reviewing the action.');
+                }
+                if (response.status === 403) {
+                    throw new Error('Preview access was denied. Reload the page and try again. If it still fails, ask your administrator to check your permissions.');
+                }
+                if (!(response.headers.get('Content-Type') || '').includes('application/json')) {
+                    throw new Error('The server did not return a preview. Reload the page and try again.');
+                }
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'Preview failed. Try again.');
                 if (requestId === this.requestSequence) this.previewData = data;

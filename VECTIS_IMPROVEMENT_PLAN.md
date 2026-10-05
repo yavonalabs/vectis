@@ -2,6 +2,8 @@
 
 Prepared 12 September 2026 from the code review and local testing recorded in [VECTIS_REVIEW.md](VECTIS_REVIEW.md).
 
+28 September planning update: [the next implementation plan](docs/NEXT_IMPLEMENTATION_PLAN.md) defines the current remaining-work sequence, technical contracts, acceptance tests, release gates and external-pilot measures. Use it for execution priority; the phases below retain the original planning context.
+
 Implementation update, 13 September: the first set of safety and workflow fixes is implemented and verified. See [the milestone report](docs/PHASE1_STATUS.md) for completed work, test results, compatibility changes, and remaining scope.
 
 UI/UX and product planning update, 13 September: see [the detailed UI/UX and competitive strategy](docs/UI_UX_AND_PRODUCT_STRATEGY.md) for the current interface review, KraftAdmin/SnapAdmin comparison, screen-level requirements, prioritized features, delivery dependencies, and pilot success measures.

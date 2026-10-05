@@ -1,0 +1,22 @@
+# Release verification progress — updated 5 October 2026
+
+This records the first implementation slice of NEXT_IMPLEMENTATION_PLAN.md, not completion of its release gates.
+
+## Preview diagnosis
+
+Fresh login against the existing local packaged sample on port 18083 successfully rendered the leave-status preview in a real browser. Separate real-HTTP requests using the rendered CSRF token returned 200 for both multipart and URL-encoded preview bodies, and 403 without CSRF. The earlier Forbidden response is not reproduced; its cause remains unconfirmed. No authorization or CSRF policy was relaxed.
+
+The frontend now distinguishes 401/sign-in redirects, 403 denial and non-JSON server responses rather than exposing a raw Forbidden or JSON parsing error. Each failure clears the old proposal and leaves confirmation disabled. A 403 is not described as proof of session expiry.
+
+## Verification added
+
+- `node --test scripts/action-modal.test.cjs`: six tests against the actual actionModal controller cover success/reason gating, 401, redirected HTML login, 403, HTML server failure and JSON validation error.
+- `python scripts/smoke_demo.py http://localhost:18083`: passed with additional preview checks using real login sessions and rendered CSRF tokens. Admin preview succeeds; read-only preview and missing-CSRF requests fail. These are endpoint checks against the running sample, not proof that its packaged JavaScript includes the new error messages.
+- Fresh local browser preview at 375 × 812 shows proposed status, reason and confirmation controls without page-level horizontal overflow. This is not final-domain mobile verification or a full accessibility audit.
+- A custom-domain HTTPS diagnostic timed out on 1 October before login. The previously recorded successful HTTPS smoke remains historical evidence; it is not a fresh availability pass.
+
+## Remaining
+
+The full Maven reactor verification completed successfully on 1 October after stopping the local demo process that held the packaged JAR open on Windows. This was a packaging lock, not a test failure. The six JavaScript regression tests passed again on 5 October and now run in GitHub CI alongside Maven verification.
+
+Verify the new browser error messages in a freshly packaged application; diagnose the historical Forbidden only if reproducible. Recheck exact deployed SHA and custom-domain availability, then complete the hosted mobile/keyboard/contrast/screen-reader matrix before promoting the public demo. No product-page publication is claimed by this slice.

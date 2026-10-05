@@ -5,6 +5,7 @@ Uses only the public sample accounts. Never point this at a customer installatio
 Browser/mobile/accessibility checks remain separate release gates.
 """
 import argparse
+import json
 import http.cookiejar
 import urllib.error
 import urllib.parse
@@ -75,6 +76,20 @@ def main():
         require(status == 200 and urllib.parse.urlsplit(url).path == '/admin', username + ': sign-in reaches workspace')
         status, _, html, _ = read(client, base + '/admin/employee')
         require(status == 200 and 'Team Members' in html, username + ': sample record list renders')
+        inputs = Inputs()
+        inputs.feed(html)
+        preview_url = base + '/admin/api/employee/action/toggleLeaveStatus/1/preview'
+        payload = urllib.parse.urlencode({'_csrf': inputs.values['_csrf']}).encode()
+        status, _, preview_body, _ = read(client, preview_url, payload)
+        if username == 'admin':
+            require(status == 200, 'Admin can preview a sample action using the rendered CSRF token')
+            preview = json.loads(preview_body)
+            require(preview.get('riskLevel') == 'MODERATE' and bool(preview.get('plainTextChanges')),
+                    'Preview includes proposed changes and risk level')
+        else:
+            require(status == 403, 'Read-only account cannot preview actions even with valid CSRF')
+        status, _, _, _ = read(client, preview_url, b'')
+        require(status == 403, username + ': preview rejects missing CSRF')
         if username == 'user':
             status, _, _, _ = read(client, base + '/admin/employee/edit/1')
             require(status == 403, 'Read-only account cannot open edit form')
