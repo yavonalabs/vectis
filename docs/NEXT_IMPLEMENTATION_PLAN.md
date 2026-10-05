@@ -2,7 +2,11 @@
 
 Prepared 28 September 2026. Status: proposed implementation sequence; this document does not mark its work complete.
 
+Scope confirmed by the product owner on 5 October 2026: all stages below are required, including unsaved-edit protection, personal saved views and export. Dependencies still determine implementation order. Pilot feedback informs their design and acceptance criteria; it no longer determines whether these three conveniences are included. External participation, independent review and publishing prerequisites remain explicit gates, not completed engineering work.
+
 1 October: implementation has begun. See [release verification progress](RELEASE_VERIFICATION_PROGRESS.md) for preview diagnosis, new regression coverage and remaining hosted checks.
+
+5 October: the sample now includes a real restricted role and a [permission-denial checklist](RESTRICTED_SAMPLE_ROLE.md), with regression coverage for employee access, denied related targets, unavailable collections and search exclusions. This implements part of E2 ahead of the mutation stages because it is independent of those contracts. It does not complete E1 or the full E2 security matrix.
 
 This is the current execution order for remaining work in [the original roadmap](../VECTIS_IMPROVEMENT_PLAN.md). Keep that roadmap and milestone reports as historical context. Where earlier documents describe completed features as pending, reconcile them against implementation and tests before changing claims.
 
@@ -42,7 +46,7 @@ Estimates are developer effort, not elapsed-time commitments. Assume one develop
 | E. Preview, policy and permission proof | 3–5 days | B–D | Reviewed proposal tied to execution; independently testable denial paths |
 | F. Integration and release package | 4–7 days | B–E | Fresh-app installation and supported database checks; versioned prerelease |
 | G. Pilot and distribution | 2–4 days setup + 2–3 weeks observation | A for recruitment; F for installs | Recorded adoption/effort evidence and explicit continue/change/stop decision |
-| H. Operator conveniences | 3–6 days per selected slice | Pilot demand; B–E for writes | Measured improvement to a pilot's repeated task |
+| H. Operator conveniences | 3–6 days per slice, subject to re-estimation | B–E for writes; workflow feedback for design | Unsaved-edit protection, personal saved views and bounded permission-aware export |
 
 Stages A–F total roughly 22–36 developer days before a stronger external installation candidate. Discovery can run alongside engineering. Pilot observation and review availability add calendar time. H is not a prerequisite for the first pilot.
 
@@ -186,7 +190,7 @@ Decision targets (proposed, not existing results): three independent installatio
 
 If setup repeatedly fails, prioritize integration before more features. If installation succeeds but repeat use does not occur, revisit the workflow/customer segment. If teams use it but decline payment, investigate buyer/value/support scope rather than interpreting stars as revenue. Stop broad expansion if there is no repeated need after these interviews and trials.
 
-## 11. Stage H — Add convenience only from observed need
+## 11. Stage H — Required operator conveniences
 
 | Slice | Implementation boundary | Acceptance |
 |---|---|---|
@@ -194,7 +198,7 @@ If setup repeatedly fails, prioritize integration before more features. If insta
 | Personal saved views | Versioned allowlisted filter/sort/page-size schema; owner-scoped persistence; reapply permissions when loaded | No shared secrets or unauthorized fields; removed fields handled; malformed/oversized state rejected |
 | Export | Separate permission, same filters and safe projection, row/size bounds, spreadsheet formula neutralization | Hidden fields absent; access rechecked; bounded memory; cancellation/limits and cell interpretation tested |
 
-Choose one slice after pilot feedback. Export is not automatically available to every read-only user. Defer shared views and large asynchronous exports until their ownership/permissions model is established.
+Deliver all three slices, starting with unsaved-edit protection, then personal saved views and bounded export. Use workflow feedback to refine each design without dropping it from the agreed scope. Export is not automatically available to every read-only user. Shared views and large asynchronous exports remain outside this scope until their ownership/permissions model is established.
 
 ## 12. Verification, release and ownership rules
 

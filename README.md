@@ -34,6 +34,7 @@ Open `http://localhost:8080/`.
 | --- | --- | --- |
 | Try sample changes | `admin` | `admin` |
 | Read-only browsing | `user` | `password` |
+| Team members only (restricted relationships) | `restricted` | `password` |
 
 The sample contains fictional records in an in-memory H2 database. Records and activity reset on restart. These public sample accounts are not production authentication.
 

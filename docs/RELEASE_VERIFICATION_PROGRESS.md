@@ -17,6 +17,20 @@ The frontend now distinguishes 401/sign-in redirects, 403 denial and non-JSON se
 
 ## Remaining
 
+### Restricted sample role — 5 October 2026
+
+Added `restricted / password` with employee-only read access and a manual checklist in `RESTRICTED_SAMPLE_ROLE.md`. Full `mvn verify` passed with 64 Java tests; six JavaScript tests also passed. The freshly packaged demo on port 18084 passed the expanded HTTP smoke for all three accounts, including real restricted login, hidden department labels, unavailable skills collection, denied direct routes and excluded search results. An initial smoke attempt preceded server readiness and was rerun after startup completed. Hosted verification of this new role remains pending deployment.
+
+### Hosted follow-up — 5 October 2026
+
+After the user reported a successful Render deployment, the complete HTTP smoke script passed against `https://demo.vectis.yavonalabs.com` for both sample accounts, including preview permissions, missing-CSRF rejection, restricted activity and logout/session invalidation.
+
+Browser checks at 375 × 812 covered sign-in, opening mobile navigation, navigating to Team Members and previewing Alice's leave-status change. The measured login and record-list document widths did not exceed the viewport. The preview displayed Active → On leave and kept confirmation disabled without a reason. Escape closed the dialog and returned focus to the Record actions button.
+
+Logging out in a second tab and reopening preview in the stale first tab displayed the new access-denied guidance, removed the previous proposed change and disabled confirmation. This verifies the updated frontend behavior on the custom domain; the exact Render commit SHA was not independently inspected. No business mutation was submitted.
+
+These checks supersede the earlier availability timeout and satisfy the targeted deployed-preview check. They do not constitute a full mobile visual, contrast or screen-reader audit.
+
 The full Maven reactor verification completed successfully on 1 October after stopping the local demo process that held the packaged JAR open on Windows. This was a packaging lock, not a test failure. The six JavaScript regression tests passed again on 5 October and now run in GitHub CI alongside Maven verification.
 
-Verify the new browser error messages in a freshly packaged application; diagnose the historical Forbidden only if reproducible. Recheck exact deployed SHA and custom-domain availability, then complete the hosted mobile/keyboard/contrast/screen-reader matrix before promoting the public demo. No product-page publication is claimed by this slice.
+Recheck exact deployed SHA and complete the remaining hosted mobile/keyboard/contrast/screen-reader matrix before promoting the public demo. Diagnose the historical Forbidden only if reproducible in a fresh authenticated session. No product-page publication is claimed by this slice.

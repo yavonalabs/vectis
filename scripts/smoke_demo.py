@@ -65,7 +65,7 @@ def main():
         require(status == 200 and 'image/svg+xml' in headers.get('Content-Type', ''), 'Logo asset loads: ' + asset)
     status, _, _, _ = read(anonymous, base + '/h2-console/')
     require(status == 404, 'H2 console is disabled')
-    for username, password in (('admin', 'admin'), ('user', 'password')):
+    for username, password in (('admin', 'admin'), ('user', 'password'), ('restricted', 'password')):
         client = session()
         status, _, html, _ = read(client, base + '/login')
         inputs = Inputs()
@@ -90,12 +90,21 @@ def main():
             require(status == 403, 'Read-only account cannot preview actions even with valid CSRF')
         status, _, _, _ = read(client, preview_url, b'')
         require(status == 403, username + ': preview rejects missing CSRF')
-        if username == 'user':
+        if username != 'admin':
             status, _, _, _ = read(client, base + '/admin/employee/edit/1')
             require(status == 403, 'Read-only account cannot open edit form')
             status, _, html, _ = read(client, base + '/admin/employee/view/1')
             require(status == 200 and 'Activity history is unavailable for your account.' in html,
                     'Restricted activity is unavailable, not falsely empty')
+        if username == 'restricted':
+            require('Related records unavailable.' in html and 'Engineering' not in html,
+                    'Restricted relationships are unavailable without leaking department labels')
+            for path in ('/admin/department', '/admin/department/view/1', '/admin/skill',
+                         '/admin/employee/view/1/related/skills'):
+                status, _, _, _ = read(client, base + path)
+                require(status == 403, 'Restricted account denied: ' + path)
+            status, _, results, _ = read(client, base + '/admin/api/search?q=Engineering')
+            require(status == 200 and json.loads(results) == [], 'Restricted search excludes departments')
         status, _, html, _ = read(client, base + '/admin')
         inputs = Inputs()
         inputs.feed(html)

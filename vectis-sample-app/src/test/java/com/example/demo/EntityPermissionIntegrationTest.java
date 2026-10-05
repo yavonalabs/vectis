@@ -21,6 +21,30 @@ class EntityPermissionIntegrationTest {
     @Autowired MockMvc mvc;
     @SpyBean AdminPermissionEvaluator permissions;
 
+    @Test void realRestrictedAccountCanBrowseEmployeesButNotRelatedEntities() throws Exception {
+        // No mocked permission decisions: exercise the sample's real role policy.
+        for (String path : new String[]{"/admin/employee", "/admin/employee/view/1", "/admin/employee/peek/1"}) {
+            String html = mvc.perform(get(path).with(user("restricted").roles("RESTRICTED")))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+            assertThat(html).doesNotContain("Engineering");
+        }
+        String detail = mvc.perform(get("/admin/employee/view/1").with(user("restricted").roles("RESTRICTED")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(detail).contains("Related records unavailable.");
+        for (String path : new String[]{"/admin/department", "/admin/department/view/1",
+                "/admin/department/peek/1", "/admin/skill", "/admin/employee/view/1/related/skills",
+                "/admin/employee/relationships/department/options", "/admin/employee/edit/1", "/admin/audit"}) {
+            mvc.perform(get(path).with(user("restricted").roles("RESTRICTED")))
+                    .andExpect(status().isForbidden());
+        }
+        mvc.perform(get("/admin/api/search").param("q", "Engineering")
+                .with(user("restricted").roles("RESTRICTED")))
+                .andExpect(status().isOk()).andExpect(content().json("[]"));
+        mvc.perform(post("/admin/api/employee/action/toggleLeaveStatus/1/preview")
+                .with(user("restricted").roles("RESTRICTED")).with(csrf()))
+                .andExpect(status().isForbidden());
+    }
+
     @Test void restrictedActivityIsUnavailableRatherThanFalselyEmpty() throws Exception {
         for (String path : new String[]{"/admin", "/admin/employee/view/1", "/admin/employee/peek/1"}) {
             String restricted = mvc.perform(get(path).with(user("user").roles("USER")))

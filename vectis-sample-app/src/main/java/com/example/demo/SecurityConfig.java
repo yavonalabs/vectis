@@ -16,6 +16,23 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
+    public io.github.yavonalabs.vectis.core.security.AdminPermissionEvaluator samplePermissions(
+            io.github.yavonalabs.vectis.core.metadata.EntityMetadataRegistry metadata,
+            io.github.yavonalabs.vectis.core.action.EntityActionRegistry actions,
+            io.github.yavonalabs.vectis.autoconfigure.VectisProperties properties) {
+        return new io.github.yavonalabs.vectis.core.security.SpringSecurityPermissionEvaluator(
+                metadata, actions, properties.getRoles(), properties.getReadOnlyRoles()) {
+            @Override
+            public boolean canViewEntity(String slug, java.security.Principal principal) {
+                var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                boolean restricted = auth != null && auth.getAuthorities().stream()
+                        .anyMatch(authority -> authority.getAuthority().equals("ROLE_RESTRICTED"));
+                return super.canViewEntity(slug, principal) && (!restricted || "employee".equals(slug));
+            }
+        };
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, @org.springframework.beans.factory.annotation.Value("${vectis.path:/admin}") String adminPath) throws Exception {
         var loginEntryPoint = new org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint("/login") {
             @Override
@@ -73,6 +90,12 @@ public class SecurityConfig {
             .roles("USER")
             .build();
 
-        return new InMemoryUserDetailsManager(admin, user);
+        UserDetails restricted = User.withDefaultPasswordEncoder()
+            .username("restricted")
+            .password("password")
+            .roles("RESTRICTED")
+            .build();
+
+        return new InMemoryUserDetailsManager(admin, user, restricted);
     }
 }

@@ -60,4 +60,6 @@ Configured paths and servlet context paths are used in navigation, search URLs, 
 
 ## Remaining work
 
-Audit persistence and mutations still need a shared transaction contract for standard CRUD, with explicit handling of service actions that use independent transactions. Durable idempotency, broader metadata/database compatibility, structured filters, export, and the complete operator-view redesign remain on the roadmap. The sample termination preview intentionally rejects its zero-salary result under the current `@Min(30000)` constraint; the domain rule needs an explicit decision before that sample action is usable.
+Audit persistence and mutations still need a shared transaction contract for standard CRUD, with explicit handling of service actions that use independent transactions. Durable idempotency, broader metadata/database compatibility, saved views, export and unsaved-edit protection remain on the roadmap. Structured filters and the branded operator interface are implemented, with hosted accessibility verification still in progress. The sample termination action now changes employment status and retains salary; it does not revoke access in other systems.
+
+The sample also provides a restricted read-only role for independently checking entity and relationship denial paths. See [the reproducible checklist](RESTRICTED_SAMPLE_ROLE.md). This does not add row-level isolation to the library.
