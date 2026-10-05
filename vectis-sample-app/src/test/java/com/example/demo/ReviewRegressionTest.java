@@ -409,6 +409,17 @@ class ReviewRegressionTest {
             .andExpect(status().isBadRequest());
     }
 
+    @Test void failedActionAfterExternalEffectDoesNotInviteBlindRetry() throws Exception {
+        probe.reset();
+        mvc.perform(post("/admin/employee/action/effectThenFailure/3")
+                .param("_reason", "Ambiguous outcome regression")
+                .with(user("admin").roles("ADMIN")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute("errorMessage", org.hamcrest.Matchers.containsString("external effect may already have occurred")))
+                .andExpect(flash().attributeCount(1));
+        assertThat(probe.count()).isEqualTo(1);
+    }
+
     @Test void actionRejectsStalePreviewVersion() throws Exception {
         mvc.perform(post("/admin/employee/action/promoteEmployee/3").param("_reason", "Conflict test")
             .param("_version", "-1").with(user("admin").roles("ADMIN")).with(csrf()))
@@ -445,6 +456,10 @@ class ReviewRegressionTest {
         @AdminAction(previewMethod = "previewToken") public void rotateReviewToken(Employee employee) { employee.setInternalSecurityToken("REVIEW_NEW_TOKEN"); }
         public java.util.Map<String, Object> previewToken(Employee employee) { return java.util.Map.of("internalSecurityToken", "REVIEW_NEW_TOKEN"); }
         @AdminAction public void unsafeUnannotatedEffect(Employee employee) { probe.unannotatedCall(); }
+        @AdminAction public void effectThenFailure(Employee employee) {
+            probe.unannotatedCall();
+            throw new IllegalStateException("Simulated failure after external dispatch");
+        }
         @AdminAction(previewMethod = "invalidPreview") public void badExplicitPreview(Employee employee) { probe.unannotatedCall(); }
         public java.util.Map<String, Object> invalidPreview(Employee employee) { probe.externalCall(); return java.util.Map.of(); }
         @AdminAction public void reviewExternalEffect(Employee employee) { probe.externalCall(); }

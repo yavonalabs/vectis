@@ -60,6 +60,8 @@ Configured paths and servlet context paths are used in navigation, search URLs, 
 
 ## Remaining work
 
+An unexpected action failure does not prove that the action had no effect. The UI asks operators to check the record and connected systems before retrying. Host services can perform external work before throwing; the current implementation cannot roll that work back or deduplicate a retry. See the [mutation lifecycle decision](MUTATION_LIFECYCLE_DECISION.md) for the planned execution and audit contracts.
+
 Audit persistence and mutations still need a shared transaction contract for standard CRUD, with explicit handling of service actions that use independent transactions. Durable idempotency, broader metadata/database compatibility, saved views, export and unsaved-edit protection remain on the roadmap. Structured filters and the branded operator interface are implemented, with hosted accessibility verification still in progress. The sample termination action now changes employment status and retains salary; it does not revoke access in other systems.
 
 The sample also provides a restricted read-only role for independently checking entity and relationship denial paths. See [the reproducible checklist](RESTRICTED_SAMPLE_ROLE.md). This does not add row-level isolation to the library.

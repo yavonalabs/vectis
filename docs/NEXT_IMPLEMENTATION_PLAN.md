@@ -88,6 +88,8 @@ Primary implementation locations: `AdminController`, `ActionPreviewController`, 
 
 ### B1. Write a short architecture decision before coding
 
+The [mutation lifecycle decision](MUTATION_LIFECYCLE_DECISION.md) records the current transaction gaps, selected execution modes, service boundary and required failure evidence. This completes the initial design document, not the extraction or atomicity milestones.
+
 Define mutation request/result contracts covering operation ID, actor, entity/action identity, validated input, reason, expected version and idempotency key. Derive actor from authenticated server context. Bound all fields; never accept an actor or permission decision supplied by the browser.
 
 Define the sequence: authenticate → authorize entry → validate request → load permitted current record → check expected state → check business eligibility → execute → validate result → persist → record outcome → commit → return result. Permissions must also be enforced when the service is invoked directly rather than through its controller.

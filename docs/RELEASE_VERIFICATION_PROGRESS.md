@@ -17,6 +17,14 @@ The frontend now distinguishes 401/sign-in redirects, 403 denial and non-JSON se
 
 ## Remaining
 
+### Hosted restricted-role verification and lifecycle design — 5 October 2026
+
+After the user reported the Render build passed, the first hosted smoke attempt timed out during admin sign-in. A subsequent complete run against `https://demo.vectis.yavonalabs.com` passed for admin, user and restricted, including relationship redaction, unavailable collection text, denied entity routes, search exclusions and logout. This verifies the restricted-account HTTP behavior live; it does not establish an exact deployed SHA or a full browser/accessibility pass.
+
+The mutation lifecycle decision now documents transaction ownership and the required failure/concurrency evidence. Unexpected action errors no longer invite an unconditional retry. A regression simulates an external effect followed by failure and checks that only uncertainty guidance is returned. Atomic audit and durable deduplication are still unimplemented.
+
+Full Maven verification passed after this change: 65 Java tests, zero failures, errors or skips. The new guidance is verified by that integration test; hosted browser verification of this subsequent change is pending deployment.
+
 ### Restricted sample role — 5 October 2026
 
 Added `restricted / password` with employee-only read access and a manual checklist in `RESTRICTED_SAMPLE_ROLE.md`. Full `mvn verify` passed with 64 Java tests; six JavaScript tests also passed. The freshly packaged demo on port 18084 passed the expanded HTTP smoke for all three accounts, including real restricted login, hidden department labels, unavailable skills collection, denied direct routes and excluded search results. An initial smoke attempt preceded server readiness and was rerun after startup completed. Hosted verification of this new role remains pending deployment.

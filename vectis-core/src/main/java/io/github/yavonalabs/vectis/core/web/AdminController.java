@@ -582,7 +582,7 @@ public class AdminController {
             });
             redirectAttributes.addFlashAttribute("errorMessage", sb.toString());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "The action could not be completed. Refresh the record and try again.");
+            redirectAttributes.addFlashAttribute("errorMessage", "The action's outcome could not be confirmed. Check the record and any connected systems before attempting it again; an external effect may already have occurred.");
         }
 
         return "redirect:" + adminPath + "/" + slug;
