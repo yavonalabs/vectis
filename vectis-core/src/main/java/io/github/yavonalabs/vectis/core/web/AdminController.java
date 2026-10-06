@@ -46,6 +46,7 @@ public class AdminController {
     private final ApplicationEventPublisher eventPublisher;
     private final VectisAuditLogService auditLogService;
     private final io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations;
+    private final io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations;
     private final ConversionService conversionService = DefaultConversionService.getSharedInstance();
 
     @Value("${vectis.title:Operations Console}")
@@ -62,7 +63,8 @@ public class AdminController {
             ObjectProvider<List<StatCardProvider>> statCardProvidersProvider,
             ApplicationEventPublisher eventPublisher,
             VectisAuditLogService auditLogService,
-            io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations
+            io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations,
+            io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations
     ) {
         this.registry = registry;
         this.queryEngine = queryEngine;
@@ -72,6 +74,7 @@ public class AdminController {
         this.eventPublisher = eventPublisher;
         this.auditLogService = auditLogService;
         this.actionMutations = actionMutations;
+        this.recordMutations = recordMutations;
     }
 
     @ModelAttribute
@@ -376,98 +379,7 @@ public class AdminController {
         Object entity = null;
 
         try {
-            Map<String, Object> beforeSnapshot = new HashMap<>();
-
-            if (isNew) {
-                entity = descriptor.javaType().getDeclaredConstructor().newInstance();
-            } else {
-                Object id = decodeId(rawId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
-                entity = queryEngine.findById(descriptor, id);
-                if (entity == null) {
-                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found: " + rawId);
-                }
-                beforeSnapshot = takeSnapshot(entity, descriptor);
-            }
-
-            BeanWrapper wrapper = PropertyAccessorFactory.forBeanPropertyAccess(entity);
-
-            for (FieldDescriptor field : descriptor.fields()) {
-                if (field.isId() && !isNew) continue;
-                if (field.isVersion()) {
-                    String versionStr = formParams.get(field.name());
-                    if (versionStr != null && !versionStr.isBlank()) {
-                        wrapper.setPropertyValue(field.name(), conversionService.convert(versionStr, field.type()));
-                    }
-                    continue;
-                }
-
-                String paramVal = formParams.get(field.name());
-                if (paramVal != null) {
-                    if (field.isBoolean()) {
-                        wrapper.setPropertyValue(field.name(), Boolean.parseBoolean(paramVal));
-                    } else if (paramVal.isBlank()) {
-                        wrapper.setPropertyValue(field.name(), null);
-                    } else {
-                        wrapper.setPropertyValue(field.name(), conversionService.convert(paramVal, field.type()));
-                    }
-                } else if (field.isBoolean()) {
-                    wrapper.setPropertyValue(field.name(), false);
-                }
-            }
-
-            for (AssociationDescriptor assoc : descriptor.associations()) {
-                if (assoc.isSingleValued()) {
-                    EntityDescriptor target = registry.getByClass(assoc.targetEntityClass()).orElse(null);
-                    if (target == null || !permissionEvaluator.canViewEntity(target.slug(), principal)) {
-                        if (formParams.containsKey(assoc.name())) {
-                            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot change this relationship.");
-                        }
-                        continue;
-                    }
-                    String assocId = formParams.get(assoc.name());
-                    if (assocId != null && !assocId.isBlank()) {
-                        EntityDescriptor targetDesc = registry.getByClass(assoc.targetEntityClass()).orElse(null);
-                        if (targetDesc != null && targetDesc.idField() != null) {
-                            if (!permissionEvaluator.canViewEntity(targetDesc.slug(), principal)) {
-                                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to related record.");
-                            }
-                            Object decodedTargetId = decodeId(assocId, targetDesc.idField().type(), targetDesc.idField().isEmbeddedId());
-                            Object targetEntity = queryEngine.findById(targetDesc, decodedTargetId);
-                            if (targetEntity == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Related record does not exist.");
-                            wrapper.setPropertyValue(assoc.name(), targetEntity);
-                        }
-                    } else if (assocId != null) {
-                        wrapper.setPropertyValue(assoc.name(), null);
-                    }
-                }
-            }
-
-            Object savedEntity;
-            if (isNew) {
-                queryEngine.persist(entity);
-                savedEntity = entity;
-            } else {
-                savedEntity = queryEngine.save(entity);
-            }
-
-            Map<String, Object> afterSnapshot = takeSnapshot(savedEntity, descriptor);
-            BeanWrapper savedWrapper = PropertyAccessorFactory.forBeanPropertyAccess(savedEntity);
-            Object rawEntityId = descriptor.idField() != null ? savedWrapper.getPropertyValue(descriptor.idField().name()) : "N/A";
-            String normalizedEncodedId = IdCodec.encode(rawEntityId, descriptor.idField() != null && descriptor.idField().isEmbeddedId());
-            String username = principal != null ? principal.getName() : "system/ops";
-
-            // PERSIST DURABLE AUDIT EVENT WITH REASON
-            eventPublisher.publishEvent(new VectisChangeEvent(
-                    this,
-                    slug,
-                    normalizedEncodedId,
-                    isNew ? "Create Record" : "Update Record",
-                    isNew ? VectisChangeEvent.OperationType.CREATE : VectisChangeEvent.OperationType.UPDATE,
-                    beforeSnapshot,
-                    afterSnapshot,
-                    username,
-                    formParams.getOrDefault("_reason", "Standard operational edit")
-            ));
+            String normalizedEncodedId = recordMutations.save(slug, formParams);
 
             redirectAttributes.addFlashAttribute("flashMessage",
                     "Record successfully " + (isNew ? "created" : "updated") + "!");
@@ -487,7 +399,8 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "Conflict: This record was modified by another user while you were editing it. Please refresh and try again.");
             return (isNew ? "redirect:" + adminPath + "/" + slug + "/create" : "redirect:" + adminPath + "/" + slug + "/edit/" + rawId) + ListNavigation.contextSuffix(request.getParameter("_list"));
-        } catch (jakarta.validation.ConstraintViolationException e) {
+        } catch (io.github.yavonalabs.vectis.core.mutation.RecordMutationService.InvalidRecord e) {
+            entity = e.entity();
             model.addAttribute("descriptor", descriptor);
             model.addAttribute("entity", entity);
             model.addAttribute("isNew", isNew);
@@ -557,35 +470,7 @@ public class AdminController {
     ) {
         EntityDescriptor descriptor = getDescriptorOrThrow(slug);
 
-        if (!permissionEvaluator.canViewEntity(slug, principal) || !permissionEvaluator.canDeleteEntity(slug, principal)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
-        }
-
-        Object id = decodeId(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
-        Object entity = queryEngine.findById(descriptor, id);
-        if (entity == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found: " + encodedId);
-        }
-
-        requireReason(allParams);
-        Map<String, Object> beforeSnapshot = takeSnapshot(entity, descriptor);
-        queryEngine.deleteById(descriptor, id);
-
-        String username = principal != null ? principal.getName() : "system/ops";
-        String reason = (allParams != null) ? allParams.getOrDefault("_reason", "Deleted via Vectis Console") : "Deleted via Vectis Console";
-
-        // PERSIST DURABLE AUDIT EVENT WITH REASON
-        eventPublisher.publishEvent(new VectisChangeEvent(
-                this,
-                slug,
-                encodedId,
-                "Delete Record",
-                VectisChangeEvent.OperationType.DELETE,
-                beforeSnapshot,
-                Map.of(),
-                username,
-                reason
-        ));
+        recordMutations.delete(slug, encodedId, allParams);
 
         redirectAttributes.addFlashAttribute("flashMessage", "Record #" + encodedId + " was successfully deleted.");
         return "redirect:" + adminPath + "/" + slug;

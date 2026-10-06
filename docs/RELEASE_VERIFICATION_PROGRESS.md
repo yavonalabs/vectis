@@ -17,6 +17,12 @@ The frontend now distinguishes 401/sign-in redirects, 403 denial and non-JSON se
 
 ## Remaining
 
+### Record service extraction — 6 October 2026
+
+Create/edit/delete now delegate to `RecordMutationService`. The service resolves the actor from server context, checks console/entity/write permission and enforces related-entity permissions. Invalid records carry their submitted entity and validation errors back to the controller; form feedback, reasons, list context and HTMX redirects remain covered by existing regressions.
+
+Full Maven verification completed successfully with 72 Java tests, zero failures, errors or skips. New direct-call tests cover missing authentication, restricted save/delete and denied relationship updates. The preceding deployed version passed the three-account hosted HTTP smoke; this extraction has not yet been verified on Render. This step preserves the existing independent audit transaction and does not establish atomicity, mandatory concurrency checks or durable idempotency.
+
 ### Action service extraction — 5 October 2026
 
 The deployed demo passed the full three-account HTTP smoke before this extraction. Action execution now delegates to `ActionMutationService`, with server-context actor resolution and console/entity/action permission checks at its direct entry point. Added direct-service tests for absent authentication, restricted access despite forged actor input, denied entity access, missing reason and stale version.

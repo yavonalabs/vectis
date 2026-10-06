@@ -21,6 +21,37 @@ class EntityPermissionIntegrationTest {
     @Autowired MockMvc mvc;
     @SpyBean AdminPermissionEvaluator permissions;
     @Autowired io.github.yavonalabs.vectis.core.mutation.ActionMutationService mutations;
+    @Autowired io.github.yavonalabs.vectis.core.mutation.RecordMutationService records;
+
+    @Test void directRecordServiceRejectsUnauthenticatedWrites() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> records.save("employee", java.util.Map.of("actor", "admin")))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(403));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> records.delete("employee", "1", java.util.Map.of("actor", "admin")))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(403));
+    }
+
+    @Test
+    @org.springframework.security.test.context.support.WithMockUser(username = "restricted", roles = "RESTRICTED")
+    void directRecordServiceRejectsRestrictedWrites() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> records.save("employee", java.util.Map.of("_reason", "Denied write")))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(403));
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> records.delete("employee", "1", java.util.Map.of("_reason", "Denied write")))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(403));
+    }
+
+    @Test
+    @org.springframework.security.test.context.support.WithMockUser(username = "admin", roles = "ADMIN")
+    void directRecordServicePreservesRelationshipDenial() {
+        doReturn(false).when(permissions).canViewEntity(eq("department"), any());
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> records.save("employee",
+                java.util.Map.of("__id", "1", "department", "1", "_reason", "Denied relationship")))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(403));
+    }
 
     @Test void directActionServiceRejectsMissingAuthentication() {
         assertThat(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()).isNull();

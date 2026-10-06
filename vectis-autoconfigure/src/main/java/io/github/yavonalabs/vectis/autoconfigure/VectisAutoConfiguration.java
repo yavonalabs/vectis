@@ -98,6 +98,16 @@ public class VectisAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutationService(
+            EntityMetadataRegistry metadata, DynamicCriteriaQueryEngine queries,
+            AdminPermissionEvaluator permissions, ApplicationEventPublisher events,
+            ObjectProvider<io.github.yavonalabs.vectis.core.mutation.MutationActorProvider> actors) {
+        return new io.github.yavonalabs.vectis.core.mutation.RecordMutationService(metadata, queries,
+                permissions, actors.getIfAvailable(() -> () -> null), events);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public AdminController adminController(
             EntityMetadataRegistry registry,
             DynamicCriteriaQueryEngine queryEngine,
@@ -106,7 +116,8 @@ public class VectisAutoConfiguration {
             ObjectProvider<List<StatCardProvider>> statCardProviders,
             ApplicationEventPublisher eventPublisher,
             VectisAuditLogService auditLogService,
-            io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations
+            io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations,
+            io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations
     ) {
         return new AdminController(
                 registry,
@@ -116,7 +127,8 @@ public class VectisAutoConfiguration {
                 statCardProviders,
                 eventPublisher,
                 auditLogService,
-                actionMutations
+                actionMutations,
+                recordMutations
         );
     }
 
