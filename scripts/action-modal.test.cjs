@@ -6,6 +6,14 @@ const { readFileSync } = require('node:fs');
 const vm = require('node:vm');
 const source = readFileSync('vectis-core/src/main/resources/static/vectis-assets/vectis.js', 'utf8');
 
+test('confirmation form preserves initial version zero and clears absent versions', () => {
+    const layout = readFileSync('vectis-core/src/main/resources/templates/vectis/layout.html', 'utf8');
+    const binding = layout.match(/name="_version"\s+:value="([^"]+)"/)[1];
+    assert.equal(vm.runInNewContext(binding, { previewData: { version: 0 } }), 0);
+    assert.equal(vm.runInNewContext(binding, { previewData: { version: 4 } }), 4);
+    assert.equal(vm.runInNewContext(binding, { previewData: null }), '');
+});
+
 function modalFor(response) {
     const context = vm.createContext({
         document: { addEventListener() {}, body: { dataset: { adminBase: '/portal/ops' } },

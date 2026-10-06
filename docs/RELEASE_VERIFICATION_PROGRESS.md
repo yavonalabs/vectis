@@ -17,6 +17,16 @@ The frontend now distinguishes 401/sign-in redirects, 403 denial and non-JSON se
 
 ## Remaining
 
+### Required action versions — 6 October 2026
+
+The user reported successful Render and GitHub jobs for the managed CRUD milestone, including the PostgreSQL job previously requested for validation. That result was reported by the user, not independently retrieved from CI in this turn.
+
+Versioned actions now reject missing or blank `_version` with 400 and mismatches with 409 before invoking the handler. The confirmation form now preserves initial version zero instead of replacing it with an empty string. Full Maven verification passed with 80 Java tests; seven JavaScript tests passed, including the actual template binding at version zero. Required edit/delete versions, transaction-level concurrency protection for actions and durable idempotency are still pending.
+
+A new explicitly invoked `scripts/smoke_demo_mutations.py --allow-mutations` check creates one uniquely named fictional record on the fixed public-demo host, verifies its edit/audit reasons and removes it in cleanup. The first hosted attempt timed out on the login page before any mutation; subsequent results are recorded separately below.
+
+The retry passed: created disposable employee 5, independently read it back, updated its name, confirmed both create/edit audit reasons on the detail page, deleted it and verified that the detail URL returned 404. No fixture remains from the successful run. This verifies hosted CRUD behavior on the preceding deployed build; the required-action-version change still needs deployment verification.
+
 ### Managed CRUD transaction — 6 October 2026
 
 Create/edit/delete now enclose the entity write and direct success-audit write in one default JPA transaction. Audit persistence failures propagate. Save flushes before projecting the final state; supplied versions are compared rather than assigned onto a managed existing entity. Legacy action auditing remains unchanged. CRUD no longer publishes the legacy audit event; see `ATOMIC_RECORD_MUTATIONS.md` for compatibility and transaction-manager limits.

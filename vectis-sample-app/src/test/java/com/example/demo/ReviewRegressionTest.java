@@ -257,6 +257,7 @@ class ReviewRegressionTest {
                 var salary = employee(3).getSalary();
                 mvc.perform(post("/admin/employee/action/terminateEmployee/3")
                         .param("_reason", "End employment record")
+                        .param("_version", employee(3).getVersion().toString())
                         .with(user("admin").roles("ADMIN")).with(csrf()))
                         .andExpect(status().is3xxRedirection());
                 assertThat(employee(3).getStatus()).isEqualTo(Employee.EmploymentStatus.TERMINATED);
@@ -412,6 +413,7 @@ class ReviewRegressionTest {
     @Test void failedActionAfterExternalEffectDoesNotInviteBlindRetry() throws Exception {
         probe.reset();
         mvc.perform(post("/admin/employee/action/effectThenFailure/3")
+                .param("_version", employee(3).getVersion().toString())
                 .param("_reason", "Ambiguous outcome regression")
                 .with(user("admin").roles("ADMIN")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
@@ -424,6 +426,17 @@ class ReviewRegressionTest {
         mvc.perform(post("/admin/employee/action/promoteEmployee/3").param("_reason", "Conflict test")
             .param("_version", "-1").with(user("admin").roles("ADMIN")).with(csrf()))
             .andExpect(status().isConflict());
+    }
+
+    @Test void missingOrBlankActionVersionCannotInvokeHandler() throws Exception {
+        probe.reset();
+        mvc.perform(post("/admin/employee/action/effectThenFailure/3").param("_reason", "Missing version")
+                .with(user("admin").roles("ADMIN")).with(csrf())).andExpect(status().isBadRequest());
+        mvc.perform(post("/admin/employee/action/effectThenFailure/3").param("_reason", "Blank version").param("_version", " ")
+                .with(user("admin").roles("ADMIN")).with(csrf())).andExpect(status().isBadRequest());
+        mvc.perform(post("/admin/employee/action/effectThenFailure/3").param("_reason", "Invalid version").param("_version", "invalid")
+                .with(user("admin").roles("ADMIN")).with(csrf())).andExpect(status().isConflict());
+        assertThat(probe.count()).isZero();
     }
 
     @Test void invalidIdentifierIsABadRequest() throws Exception {

@@ -336,7 +336,7 @@
             </div>
 
             <form id="modal-action-form" method="post" action="" @submit="if (!canSubmit) { $event.preventDefault(); } else { submitting = true; }">
-                <input type="hidden" name="_version" :value="previewData?.version || ''" />
+                <input type="hidden" name="_version" :value="previewData?.version ?? ''" />
                 <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="space-y-1.5" x-show="previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL'">
                     <label for="action-reason" class="text-xs font-medium text-[var(--vx-text-main)]">

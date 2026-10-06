@@ -65,7 +65,10 @@ public class ActionMutationService {
         catch (Exception e) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid record identifier."); }
         Object entity = queries.findById(descriptor, id);
         if (entity == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Record not found");
-        if (descriptor.hasVersion() && params.containsKey("_version")) {
+        if (descriptor.hasVersion()) {
+            if (params.get("_version") == null || params.get("_version").isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Review the current record before submitting this action; its version is required.");
+            }
             Object version = PropertyAccessorFactory.forBeanPropertyAccess(entity).getPropertyValue(descriptor.versionField().name());
             if (!Objects.equals(String.valueOf(version), params.get("_version"))) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "This record changed after the preview. Refresh and review the action again.");

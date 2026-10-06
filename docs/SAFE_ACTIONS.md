@@ -50,7 +50,7 @@ Preview methods must be side-effect-free: no emails, HTTP calls, jobs, persisten
 
 Actions without an explicit preview return HTTP 422 from the preview endpoint. The UI explains that preview is unavailable and keeps confirmation disabled. Direct execution requests still use the normal authorization and validation rules; a preview is not an authorization token.
 
-If a preview fails, confirmation stays disabled. If the preview projects invalid data, it returns HTTP 422. A submitted preview version is compared with the current record version, with HTTP 409 on mismatch. This check does not provide durable retry deduplication or eliminate all concurrency races; those are part of the next transaction milestone.
+If a preview fails, confirmation stays disabled. If the preview projects invalid data, it returns HTTP 422. Versioned actions require `_version` from the current preview. Missing/blank values return HTTP 400; a value that does not match the current record returns HTTP 409 before the handler runs. The confirmation form preserves version zero. This check does not provide durable retry deduplication or eliminate all concurrency races; those are part of the next transaction milestone.
 
 ## Reasons and forms
 
