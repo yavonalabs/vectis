@@ -207,7 +207,7 @@
                                 <div class="py-1">
                                     <button type="button"
                                             @click="$el.vectisReturnFocus = $refs.actionBtn; open = false"
-                                            th:if="${canDelete}" data-modal-type="delete"
+                                            th:if="${canDelete}" data-modal-type="delete" th:data-version="${recordVersions.get(row)}"
                                             th:data-slug="${descriptor.slug}"
                                             th:data-id="${row.__${descriptor.idField.name}__}" th:data-record-label="${recordLabels.get(row)}"
                                             class="w-full flex items-center justify-between px-3 py-1.5 text-xs text-rose-800 hover:bg-rose-950/30 transition text-left font-medium">

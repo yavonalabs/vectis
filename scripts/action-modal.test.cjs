@@ -26,6 +26,23 @@ function modalFor(response) {
     modal.$nextTick = fn => fn();
     return modal;
 }
+
+test('delete dialog replaces the reviewed version between records, including zero', () => {
+    const clicks = [];
+    const nodes = {};
+    const context = vm.createContext({ window: {}, document: {
+        body: { dataset: { adminBase: '/admin' } },
+        addEventListener(name, fn) { if (name === 'click') clicks.push(fn); },
+        getElementById(id) { return nodes[id] ||= { value: '', classList: { remove() {} } }; },
+        querySelector() { return { focus() {} }; }
+    } });
+    vm.runInContext(source, context);
+    for (const version of ['7', '0', undefined]) {
+        const button = { dataset: { version }, getAttribute: name => name === 'data-slug' ? 'employee' : '1' };
+        clicks[0]({ target: { closest: selector => selector === '[data-modal-type="delete"]' ? button : null } });
+        assert.equal(nodes['delete-version'].value, version ?? '');
+    }
+});
 const detail = { slug: 'employee', actionId: 'toggleLeaveStatus', entityId: '1' };
 function response(status, body, type = 'application/json', redirected = false) {
     return { status, ok: status === 200, redirected, headers: { get: () => type }, json: async () => body };

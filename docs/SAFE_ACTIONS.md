@@ -54,7 +54,7 @@ If a preview fails, confirmation stays disabled. If the preview projects invalid
 
 ## Reasons and forms
 
-Create, update, and delete requests require a nonblank `_reason` of at most 1,000 characters. Moderate, high, and critical actions require it too. CSRF remains required by the host's configuration. The UI sends the reason and preview version automatically.
+Create, update, and delete requests require a nonblank `_reason` of at most 1,000 characters. Moderate, high, and critical actions require it too. CSRF remains required by the host's configuration. The UI sends the reason and preview version automatically. Versioned edits require the rendered version field, and deletes require `_version` from the reviewed record. Missing/malformed versions reject with HTTP 400; stale versions reject with HTTP 409. Unversioned records have no version-based concurrency guarantee.
 
 Successful HTMX saves return an `HX-Redirect` to the saved record and a success message. Normal form submissions retain regular redirects. Jakarta validation failures retain the form and reason. Pagination supports sizes 1–100 and rejects negative or overflowing offsets.
 

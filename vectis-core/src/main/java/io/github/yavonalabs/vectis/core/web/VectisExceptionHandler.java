@@ -56,6 +56,12 @@ public class VectisExceptionHandler {
         return "vectis/error";
     }
 
+    @ExceptionHandler({jakarta.persistence.OptimisticLockException.class, org.springframework.dao.OptimisticLockingFailureException.class})
+    public String handleConflict(Exception ex, Model model, HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        return handleResponseStatusException(new ResponseStatusException(HttpStatus.CONFLICT,
+                "This record changed while the operation was running. Reload and review it before trying again."), model, request, response);
+    }
+
     @ExceptionHandler(Exception.class)
     public String handleGenericException(Exception ex, Model model, HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
         log.error("Unhandled exception in Vectis Admin", ex);

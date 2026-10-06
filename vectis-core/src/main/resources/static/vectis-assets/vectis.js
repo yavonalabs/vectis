@@ -177,6 +177,7 @@ function actionModal() {
                 // Dropdown items are hidden on selection; return to their visible menu button.
                 window.vectisDeleteTrigger = deleteBtn.vectisReturnFocus || deleteBtn;
                 document.getElementById('delete-reason').value = '';
+                document.getElementById('delete-version').value = deleteBtn.dataset.version ?? '';
                 document.getElementById('modal-record-id').innerText = deleteBtn.dataset.recordLabel || '#' + encodedId;
                 document.getElementById('modal-delete-form').action = adminBase() + '/' + slug + '/delete/' + encodedId;
                 document.getElementById('delete-modal').classList.remove('hidden');

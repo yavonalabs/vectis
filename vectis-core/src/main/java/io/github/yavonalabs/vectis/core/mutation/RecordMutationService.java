@@ -83,17 +83,7 @@ public class RecordMutationService {
 
             for (FieldDescriptor field : descriptor.fields()) {
                 if (field.isId() && !isNew) continue;
-                if (field.isVersion()) {
-                    String versionStr = formParams.get(field.name());
-                    if (versionStr != null && !versionStr.isBlank()) {
-                        Object suppliedVersion = conversionService.convert(versionStr, field.type());
-                        if (!isNew && !Objects.equals(wrapper.getPropertyValue(field.name()), suppliedVersion)) {
-                            throw new jakarta.persistence.OptimisticLockException("Record version changed");
-                        }
-                        if (isNew) wrapper.setPropertyValue(field.name(), suppliedVersion);
-                    }
-                    continue;
-                }
+                if (field.isVersion()) continue;
 
                 String paramVal = formParams.get(field.name());
                 if (paramVal != null) {
@@ -136,6 +126,7 @@ public class RecordMutationService {
                 }
             }
 
+            if (!isNew) requireVersion(descriptor, entity, formParams.get(descriptor.hasVersion() ? descriptor.versionField().name() : "_version"));
             Object savedEntity;
             if (isNew) {
                 queryEngine.persist(entity);
@@ -182,6 +173,7 @@ public class RecordMutationService {
         }
 
         requireReason(allParams);
+        requireVersion(descriptor, entity, allParams.get("_version"));
         Map<String, Object> beforeSnapshot = takeSnapshot(entity, descriptor);
         queryEngine.deleteById(descriptor, id);
 
@@ -201,6 +193,20 @@ public class RecordMutationService {
                 reason
         ));
 
+    }
+
+    private void requireVersion(EntityDescriptor descriptor, Object entity, String supplied) {
+        if (!descriptor.hasVersion()) return;
+        if (supplied == null || supplied.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The reviewed record version is required. Reload and review the record.");
+        }
+        Object expected;
+        try { expected = conversionService.convert(supplied, descriptor.versionField().type()); }
+        catch (RuntimeException e) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid record version."); }
+        Object current = PropertyAccessorFactory.forBeanPropertyAccess(entity).getPropertyValue(descriptor.versionField().name());
+        if (!Objects.equals(current, expected)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This record changed after it was reviewed. Reload and review the change again.");
+        }
     }
 
     private Object decodeId(String value, Class<?> type, boolean embedded) {

@@ -177,7 +177,9 @@ public class AdminController {
         model.addAttribute("pageResult", pageResult);
         Map<Object, Map<String, String>> associationLabels = new HashMap<>();
         Map<Object, String> recordLabels = new HashMap<>();
+        Map<Object, String> recordVersions = new HashMap<>();
         for (Object row : pageResult.content()) {
+            recordVersions.put(row, recordVersion(descriptor, row));
             recordLabels.put(row, io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, row));
             Map<String, String> labels = new HashMap<>();
             BeanWrapper rowWrapper = PropertyAccessorFactory.forBeanPropertyAccess(row);
@@ -192,6 +194,7 @@ public class AdminController {
         }
         model.addAttribute("associationLabels", associationLabels);
         model.addAttribute("recordLabels", recordLabels);
+        model.addAttribute("recordVersions", recordVersions);
         model.addAttribute("canEdit", permissionEvaluator.canEditEntity(slug, principal));
         model.addAttribute("canDelete", permissionEvaluator.canDeleteEntity(slug, principal));
         model.addAttribute("search", search);
@@ -258,6 +261,7 @@ public class AdminController {
         model.addAttribute("collectionDetails", collectionDetails);
         model.addAttribute("actions", getAllowedActions(slug, descriptor, principal));
         model.addAttribute("entityAudits", permissionEvaluator.canViewAuditLogs(principal) ? auditLogService.findByEntity(slug, encodedId) : List.of());
+        model.addAttribute("recordVersion", recordVersion(descriptor, entity));
         model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity));
         model.addAttribute("canEdit", permissionEvaluator.canEditEntity(slug, principal));
         model.addAttribute("canDelete", permissionEvaluator.canDeleteEntity(slug, principal));
@@ -351,6 +355,7 @@ public class AdminController {
         model.addAttribute("entity", entity);
         model.addAttribute("encodedId", encodedId);
         model.addAttribute("isNew", false);
+        model.addAttribute("recordVersion", recordVersion(descriptor, entity));
         model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity));
         model.addAttribute("formOptions", loadFormAssociationOptions(descriptor, principal, entity));
 
@@ -395,7 +400,7 @@ public class AdminController {
             return "redirect:" + adminPath + "/" + slug + ListNavigation.querySuffix(request.getParameter("_list"));
 
         } catch (ResponseStatusException e) { throw e;
-        } catch (OptimisticLockException e) {
+        } catch (OptimisticLockException | org.springframework.dao.OptimisticLockingFailureException e) {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "Conflict: This record was modified by another user while you were editing it. Please refresh and try again.");
             return (isNew ? "redirect:" + adminPath + "/" + slug + "/create" : "redirect:" + adminPath + "/" + slug + "/edit/" + rawId) + ListNavigation.contextSuffix(request.getParameter("_list"));
@@ -417,7 +422,8 @@ public class AdminController {
             model.addAttribute("errorMessage", "Please correct the fields below before saving.");
             model.addAttribute("fieldErrors", fieldErrors);
             model.addAttribute("submittedValues", formParams);
-            model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity));
+            model.addAttribute("recordVersion", recordVersion(descriptor, entity));
+        model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity));
             model.addAttribute("changeReason", formParams.get("_reason"));
             return "true".equalsIgnoreCase(request.getHeader("HX-Request"))
                     ? "vectis/fragments/edit-form :: editFormFragment" : "vectis/form";
@@ -474,6 +480,12 @@ public class AdminController {
 
         redirectAttributes.addFlashAttribute("flashMessage", "Record #" + encodedId + " was successfully deleted.");
         return "redirect:" + adminPath + "/" + slug;
+    }
+
+    private String recordVersion(EntityDescriptor descriptor, Object entity) {
+        if (!descriptor.hasVersion() || entity == null) return "";
+        Object value = PropertyAccessorFactory.forBeanPropertyAccess(entity).getPropertyValue(descriptor.versionField().name());
+        return value == null ? "" : value.toString();
     }
 
     private Object decodeId(String value, Class<?> type, boolean embedded) {

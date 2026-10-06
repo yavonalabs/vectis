@@ -9,7 +9,7 @@ This contract requires the default JPA transaction manager to own both the entit
 - Generic CRUD calls the audit writer directly instead of publishing `VectisChangeEvent`. This avoids the independent event listener producing duplicate or detached success records. Hosts subscribing to CRUD change events must account for this change; no replacement after-commit notification API is promised in this slice.
 - Legacy custom actions retain their event-based audit and independent transaction behavior. They do not inherit this managed CRUD contract.
 - Hosts manually constructing `RecordMutationService` now supply `VectisAuditLogService` instead of an event publisher.
-- Supplied edit versions are compared with the loaded version rather than overwriting a managed entity's version. Mandatory version submission, explicit delete version checks, reviewed proposals and retry deduplication remain separate work.
+- Versioned edits require the version field rendered by the form; deletes require `_version` from the reviewed row/detail. Missing or malformed versions reject with 400 and stale versions with 409. The values are compared with the managed entity rather than assigned to it. Unversioned entities do not acquire lost-update protection. Reviewed proposals and retry deduplication remain separate work.
 - Validation feedback still returns submitted form values. Audit storage failures are failures, not successful changes with missing history.
 
 ## Verification
@@ -18,4 +18,4 @@ This contract requires the default JPA transaction manager to own both the entit
 
 The default test database is H2. CI adds a PostgreSQL 16 service and runs the same class using `VECTIS_TEST_DB_URL`, `VECTIS_TEST_DB_DRIVER`, `VECTIS_TEST_DB_USER` and `VECTIS_TEST_DB_PASSWORD`. Only point these variables at a disposable test database: the sample recreates its schema. A configured CI job is not evidence of a passing PostgreSQL run; record its actual result before declaring the database verification gate complete.
 
-This is a managed CRUD implementation slice, not completion of mutation reliability or approval for production writes. Independent review, PostgreSQL evidence, guarded action modes, mandatory concurrency checks and durable idempotency are still required.
+This is a managed CRUD implementation slice, not completion of mutation reliability or approval for production writes. Independent review, PostgreSQL evidence, guarded action modes, action transaction/concurrency guarantees and durable idempotency are still required.

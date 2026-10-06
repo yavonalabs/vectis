@@ -17,6 +17,16 @@ The frontend now distinguishes 401/sign-in redirects, 403 denial and non-JSON se
 
 ## Remaining
 
+### Required edit/delete versions — 6 October 2026
+
+Versioned edits now require the form's version field; deletes require `_version` from the reviewed table row or detail. Missing/malformed versions return 400 and stale versions return 409. Delete confirmation replaces its hidden version when switching records, preserving zero. Unversioned entities retain their existing behavior without a lost-update guarantee.
+
+The atomic-mutation suite adds missing/malformed/stale input checks, a delete following a newer edit, and two simultaneous service calls using separate transactions after both have loaded the same version. The H2 concurrency test produces one successful update, one optimistic-lock failure and one success audit. The same class runs in the PostgreSQL CI job; its new run remains pending. Eight JavaScript tests pass, including delete-version replacement.
+
+Final full Maven verification passed with 83 Java tests and no failures, errors or skips.
+
+This does not complete stage D: action transaction-level concurrency, durable idempotency and preserving submitted inputs throughout the conflict/review journey remain open. Hosted browser verification of these new version controls is also pending.
+
 ### Required action versions — 6 October 2026
 
 The user reported successful Render and GitHub jobs for the managed CRUD milestone, including the PostgreSQL job previously requested for validation. That result was reported by the user, not independently retrieved from CI in this turn.

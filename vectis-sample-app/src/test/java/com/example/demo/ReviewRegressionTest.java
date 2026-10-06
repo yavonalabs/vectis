@@ -112,14 +112,14 @@ class ReviewRegressionTest {
         tx.executeWithoutResult(transaction -> {
             try {
                 String query = "search=Alice&sort=email&dir=desc";
-                mvc.perform(post("/admin/employee/save").param("__id", "1").param("firstName", "Alice")
+                mvc.perform(post("/admin/employee/save").param("__id", "1").param("version", employee(1).getVersion().toString()).param("firstName", "Alice")
                         .param("_reason", "Navigation test").param("_list", query).with(user("admin").roles("ADMIN")).with(csrf()))
                         .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/admin/employee?" + query));
-                mvc.perform(post("/admin/employee/save").header("HX-Request", "true").param("__id", "1")
+                mvc.perform(post("/admin/employee/save").header("HX-Request", "true").param("__id", "1").param("version", employee(1).getVersion().toString())
                         .param("firstName", "Alice").param("_reason", "Navigation test").param("_list", query)
                         .with(user("admin").roles("ADMIN")).with(csrf()))
                         .andExpect(status().isOk()).andExpect(header().string("HX-Redirect", "/admin/employee/view/1?_list=search%3DAlice%26sort%3Demail%26dir%3Ddesc"));
-                var invalid = mvc.perform(post("/admin/employee/save").header("HX-Request", "true").param("__id", "1")
+                var invalid = mvc.perform(post("/admin/employee/save").header("HX-Request", "true").param("__id", "1").param("version", employee(1).getVersion().toString())
                         .param("firstName", "").param("_reason", "Navigation test").param("_list", query)
                         .with(user("admin").roles("ADMIN")).with(csrf())).andReturn();
                 assertThat(invalid.getResponse().getContentAsString()).contains("name=\"_list\"", "search=Alice&amp;sort=email&amp;dir=desc");
@@ -210,7 +210,7 @@ class ReviewRegressionTest {
     }
     @Test void invalidSalaryRejectedAndDataUnchanged() throws Exception {
         var before = employee(3).getSalary();
-        mvc.perform(post("/admin/employee/save").param("__id", "3").param("salary", "1").param("_reason", "Validation test")
+        mvc.perform(post("/admin/employee/save").param("__id", "3").param("version", employee(3).getVersion().toString()).param("salary", "1").param("_reason", "Validation test")
             .with(user("admin").roles("ADMIN")).with(csrf()))
             .andExpect(status().isOk()).andExpect(model().attributeExists("errorMessage"));
         assertThat(employee(3).getSalary()).isEqualByComparingTo(before);
@@ -242,7 +242,7 @@ class ReviewRegressionTest {
     }
 
     @Test void invalidFormShowsFieldErrorAndRetainsInput() throws Exception {
-        String html = mvc.perform(post("/admin/employee/save").param("__id", "3")
+        String html = mvc.perform(post("/admin/employee/save").param("__id", "3").param("version", employee(3).getVersion().toString())
                 .param("firstName", "   ").param("lastName", "Retained")
                 .param("_reason", "Keep my explanation").with(user("admin").roles("ADMIN")).with(csrf()))
                 .andExpect(status().isOk()).andExpect(model().attributeExists("fieldErrors"))
@@ -341,7 +341,7 @@ class ReviewRegressionTest {
 
     @Test void htmxValidationReturnsOneFormFragmentWithAccessibleErrors() throws Exception {
         String html = mvc.perform(post("/admin/employee/save").header("HX-Request", "true")
-                .param("__id", "3").param("firstName", " ").param("_reason", "Check correction flow")
+                .param("__id", "3").param("version", employee(3).getVersion().toString()).param("firstName", " ").param("_reason", "Check correction flow")
                 .with(user("admin").roles("ADMIN")).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("vectis/fragments/edit-form :: editFormFragment"))
@@ -373,7 +373,7 @@ class ReviewRegressionTest {
             var audits = context.getBean(io.github.yavonalabs.vectis.core.audit.VectisAuditLogService.class).findByEntity("employee", created.getId().toString());
             assertThat(audits).hasSize(2);
         } finally {
-            mvc.perform(post("/admin/employee/delete/" + created.getId()).param("_reason", "Remove test fixture").with(user("admin").roles("ADMIN")).with(csrf()))
+            mvc.perform(post("/admin/employee/delete/" + created.getId()).param("_version", employee(created.getId()).getVersion().toString()).param("_reason", "Remove test fixture").with(user("admin").roles("ADMIN")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
         }
         assertThat(employee(created.getId())).isNull();
@@ -381,7 +381,7 @@ class ReviewRegressionTest {
 
     @Test void htmxSaveReturnsNavigationToSavedRecord() throws Exception {
         var result = mvc.perform(post("/admin/employee/save").header("HX-Request", "true")
-            .param("__id", "3").param("firstName", "Carlos").param("_reason", "Browser navigation regression")
+            .param("__id", "3").param("version", employee(3).getVersion().toString()).param("firstName", "Carlos").param("_reason", "Browser navigation regression")
             .with(user("admin").roles("ADMIN")).with(csrf()))
             .andExpect(status().isOk()).andExpect(header().string("HX-Redirect", "/admin/employee/view/3")).andReturn();
         assertThat(result.getResponse().getContentAsString()).isEmpty();

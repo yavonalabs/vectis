@@ -157,7 +157,7 @@
 
                     <!-- Destructive Action -->
                     <button type="button"
-                            th:if="${canDelete}" data-modal-type="delete"
+                            th:if="${canDelete}" data-modal-type="delete" th:data-version="${recordVersion}"
                             th:data-slug="${descriptor.slug}"
                             th:data-id="${encodedId}" th:data-record-label="${recordLabel}"
                             class="w-full flex items-center justify-between p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 rounded-lg transition text-left text-rose-800 text-xs font-semibold mt-3">
