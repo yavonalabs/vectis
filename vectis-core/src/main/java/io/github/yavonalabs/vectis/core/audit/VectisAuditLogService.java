@@ -26,6 +26,24 @@ public class VectisAuditLogService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onVectisChangeEvent(VectisChangeEvent event) {
         try {
+            persistLog(event);
+        } catch (Exception e) {
+            System.err.println("[Vectis] Failed to record audit log: " + e.getMessage());
+        }
+    }
+
+    /** Managed CRUD audit: caller and audit must use the same JPA transaction manager. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void recordMutation(VectisChangeEvent event) {
+        try {
+            persistLog(event);
+            entityManager.flush();
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new IllegalStateException("Audit snapshot could not be serialized", e);
+        }
+    }
+
+    private void persistLog(VectisChangeEvent event) throws com.fasterxml.jackson.core.JsonProcessingException {
             String beforeJson = event.getBeforeSnapshot() != null ? objectMapper.writeValueAsString(event.getBeforeSnapshot()) : null;
             String afterJson = event.getAfterSnapshot() != null ? objectMapper.writeValueAsString(event.getAfterSnapshot()) : null;
 
@@ -43,9 +61,6 @@ public class VectisAuditLogService {
             );
 
             entityManager.persist(log);
-        } catch (Exception e) {
-            System.err.println("[Vectis] Failed to record audit log: " + e.getMessage());
-        }
     }
 
     @Transactional(readOnly = true)

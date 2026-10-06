@@ -7,7 +7,8 @@ import io.github.yavonalabs.vectis.core.event.VectisChangeEvent;
 import io.github.yavonalabs.vectis.core.routing.IdCodec;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
-import org.springframework.context.ApplicationEventPublisher;
+import io.github.yavonalabs.vectis.core.audit.VectisAuditLogService;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.http.HttpStatus;
@@ -15,22 +16,22 @@ import org.springframework.web.server.ResponseStatusException;
 import java.security.Principal;
 import java.util.*;
 
-/** Legacy CRUD orchestration; atomic transaction ownership is a subsequent milestone. */
+/** Managed CRUD: entity writes and success audit share the host default JPA transaction. */
 public class RecordMutationService {
     private final EntityMetadataRegistry registry;
     private final DynamicCriteriaQueryEngine queryEngine;
     private final AdminPermissionEvaluator permissionEvaluator;
     private final MutationActorProvider actors;
-    private final ApplicationEventPublisher eventPublisher;
+    private final VectisAuditLogService auditLog;
     private final ConversionService conversionService = DefaultConversionService.getSharedInstance();
 
     public RecordMutationService(EntityMetadataRegistry registry, DynamicCriteriaQueryEngine queryEngine,
-            AdminPermissionEvaluator permissionEvaluator, MutationActorProvider actors, ApplicationEventPublisher eventPublisher) {
+            AdminPermissionEvaluator permissionEvaluator, MutationActorProvider actors, VectisAuditLogService auditLog) {
         this.registry = registry;
         this.queryEngine = queryEngine;
         this.permissionEvaluator = permissionEvaluator;
         this.actors = actors;
-        this.eventPublisher = eventPublisher;
+        this.auditLog = auditLog;
     }
 
     public static class InvalidRecord extends jakarta.validation.ConstraintViolationException {
@@ -55,6 +56,7 @@ public class RecordMutationService {
         return registry.getBySlug(slug).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity not found"));
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public String save(String slug, Map<String, String> input) throws Exception {
         Principal principal = authorize(slug, false);
         EntityDescriptor descriptor = descriptor(slug);
@@ -84,7 +86,11 @@ public class RecordMutationService {
                 if (field.isVersion()) {
                     String versionStr = formParams.get(field.name());
                     if (versionStr != null && !versionStr.isBlank()) {
-                        wrapper.setPropertyValue(field.name(), conversionService.convert(versionStr, field.type()));
+                        Object suppliedVersion = conversionService.convert(versionStr, field.type());
+                        if (!isNew && !Objects.equals(wrapper.getPropertyValue(field.name()), suppliedVersion)) {
+                            throw new jakarta.persistence.OptimisticLockException("Record version changed");
+                        }
+                        if (isNew) wrapper.setPropertyValue(field.name(), suppliedVersion);
                     }
                     continue;
                 }
@@ -138,6 +144,7 @@ public class RecordMutationService {
                 savedEntity = queryEngine.save(entity);
             }
 
+            queryEngine.flush();
             Map<String, Object> afterSnapshot = takeSnapshot(savedEntity, descriptor);
             BeanWrapper savedWrapper = PropertyAccessorFactory.forBeanPropertyAccess(savedEntity);
             Object rawEntityId = descriptor.idField() != null ? savedWrapper.getPropertyValue(descriptor.idField().name()) : "N/A";
@@ -145,7 +152,7 @@ public class RecordMutationService {
             String username = principal.getName();
 
             // PERSIST DURABLE AUDIT EVENT WITH REASON
-            eventPublisher.publishEvent(new VectisChangeEvent(
+            auditLog.recordMutation(new VectisChangeEvent(
                     this,
                     slug,
                     normalizedEncodedId,
@@ -163,6 +170,7 @@ public class RecordMutationService {
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void delete(String slug, String encodedId, Map<String, String> input) {
         Principal principal = authorize(slug, true);
         EntityDescriptor descriptor = descriptor(slug);
@@ -181,7 +189,7 @@ public class RecordMutationService {
         String reason = (allParams != null) ? allParams.getOrDefault("_reason", "Deleted via Vectis Console") : "Deleted via Vectis Console";
 
         // PERSIST DURABLE AUDIT EVENT WITH REASON
-        eventPublisher.publishEvent(new VectisChangeEvent(
+        auditLog.recordMutation(new VectisChangeEvent(
                 this,
                 slug,
                 encodedId,

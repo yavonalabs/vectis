@@ -100,10 +100,10 @@ public class VectisAutoConfiguration {
     @ConditionalOnMissingBean
     public io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutationService(
             EntityMetadataRegistry metadata, DynamicCriteriaQueryEngine queries,
-            AdminPermissionEvaluator permissions, ApplicationEventPublisher events,
+            AdminPermissionEvaluator permissions, VectisAuditLogService auditLog,
             ObjectProvider<io.github.yavonalabs.vectis.core.mutation.MutationActorProvider> actors) {
         return new io.github.yavonalabs.vectis.core.mutation.RecordMutationService(metadata, queries,
-                permissions, actors.getIfAvailable(() -> () -> null), events);
+                permissions, actors.getIfAvailable(() -> () -> null), auditLog);
     }
 
     @Bean

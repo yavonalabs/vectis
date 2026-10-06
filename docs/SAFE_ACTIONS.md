@@ -24,7 +24,7 @@ Provide an `AdminPermissionEvaluator` bean for entity-specific policies. Every a
 
 Entity opt-in still applies. These controls do not implement row-level multi-tenant isolation or granular field-level RBAC.
 
-Action execution is routed through `ActionMutationService`, which repeats console/entity/action authorization even for direct service callers. Its `MutationActorProvider` resolves identity from trusted host context; Spring Security supplies the default adapter. Custom-authentication hosts must provide their own server-context adapter. Client parameters cannot supply the authenticated actor. This service extraction does not yet change transaction or audit guarantees.
+Action execution is routed through `ActionMutationService`, which repeats console/entity/action authorization even for direct service callers. Its `MutationActorProvider` resolves identity from trusted host context; Spring Security supplies the default adapter. Custom-authentication hosts must provide their own server-context adapter. Client parameters cannot supply the authenticated actor. Custom actions retain their existing transaction and audit behavior. Managed CRUD has a separate transaction contract described in [Atomic record mutations](ATOMIC_RECORD_MUTATIONS.md).
 
 ## Explicit previews
 
@@ -64,6 +64,6 @@ Configured paths and servlet context paths are used in navigation, search URLs, 
 
 An unexpected action failure does not prove that the action had no effect. The UI asks operators to check the record and connected systems before retrying. Host services can perform external work before throwing; the current implementation cannot roll that work back or deduplicate a retry. See the [mutation lifecycle decision](MUTATION_LIFECYCLE_DECISION.md) for the planned execution and audit contracts.
 
-Audit persistence and mutations still need a shared transaction contract for standard CRUD, with explicit handling of service actions that use independent transactions. Durable idempotency, broader metadata/database compatibility, saved views, export and unsaved-edit protection remain on the roadmap. Structured filters and the branded operator interface are implemented, with hosted accessibility verification still in progress. The sample termination action now changes employment status and retains salary; it does not revoke access in other systems.
+Standard CRUD now writes records and success audit within one default JPA transaction; PostgreSQL validation and independent review remain pending. Custom/service actions still need explicit execution modes and transaction contracts. Durable idempotency, broader metadata/database compatibility, saved views, export and unsaved-edit protection remain on the roadmap. Structured filters and the branded operator interface are implemented, with hosted accessibility verification still in progress. The sample termination action now changes employment status and retains salary; it does not revoke access in other systems.
 
 The sample also provides a restricted read-only role for independently checking entity and relationship denial paths. See [the reproducible checklist](RESTRICTED_SAMPLE_ROLE.md). This does not add row-level isolation to the library.

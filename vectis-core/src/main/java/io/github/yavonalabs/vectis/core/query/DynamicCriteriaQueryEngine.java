@@ -210,6 +210,11 @@ public class DynamicCriteriaQueryEngine {
         return entityManager.merge(entity);
     }
 
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void flush() {
+        entityManager.flush();
+    }
+
     @Transactional
     public void persist(Object entity) {
         if (validator != null) {

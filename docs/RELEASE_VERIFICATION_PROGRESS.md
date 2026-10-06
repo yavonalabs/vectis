@@ -17,6 +17,14 @@ The frontend now distinguishes 401/sign-in redirects, 403 denial and non-JSON se
 
 ## Remaining
 
+### Managed CRUD transaction — 6 October 2026
+
+Create/edit/delete now enclose the entity write and direct success-audit write in one default JPA transaction. Audit persistence failures propagate. Save flushes before projecting the final state; supplied versions are compared rather than assigned onto a managed existing entity. Legacy action auditing remains unchanged. CRUD no longer publishes the legacy audit event; see `ATOMIC_RECORD_MUTATIONS.md` for compatibility and transaction-manager limits.
+
+Full Maven verification passed: 79 Java tests, including seven new tests without test-owned transactions. H2 checks cover successful CRUD audits, rollback after an audit flush for all three operations, a real audit-column failure and an entity uniqueness failure. The first injection setup incorrectly stubbed a transactional proxy; targeting its underlying spy corrected the harness without weakening transaction enforcement.
+
+PostgreSQL 16 CI coverage is configured, but has not run: no local Docker/PostgreSQL executable was available and remote authentication was previously unavailable. PostgreSQL evidence, independent review and deployment verification remain open; stage C is not complete. Custom actions, durable idempotency and mandatory version/proposal enforcement remain separate work.
+
 ### Record service extraction — 6 October 2026
 
 Create/edit/delete now delegate to `RecordMutationService`. The service resolves the actor from server context, checks console/entity/write permission and enforces related-entity permissions. Invalid records carry their submitted entity and validation errors back to the controller; form feedback, reasons, list context and HTMX redirects remain covered by existing regressions.

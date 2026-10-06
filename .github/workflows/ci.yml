@@ -21,3 +21,32 @@ jobs:
         run: mvn -B -ntp verify
       - name: Verify preview response handling
         run: node --test scripts/action-modal.test.cjs
+  postgres-mutations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: vectis_test
+          POSTGRES_USER: vectis_test
+          POSTGRES_PASSWORD: disposable_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vectis_test -d vectis_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Verify real PostgreSQL mutation rollback
+        run: mvn -B -ntp -pl vectis-sample-app -am -Dtest=AtomicRecordMutationTest -Dsurefire.failIfNoSpecifiedTests=false test
+        env:
+          VECTIS_TEST_DB_URL: jdbc:postgresql://localhost:5432/vectis_test
+          VECTIS_TEST_DB_DRIVER: org.postgresql.Driver
+          VECTIS_TEST_DB_USER: vectis_test
+          VECTIS_TEST_DB_PASSWORD: disposable_ci_password
