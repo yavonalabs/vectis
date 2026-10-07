@@ -12,7 +12,7 @@ Updated 6 October 2026. All stages in NEXT_IMPLEMENTATION_PLAN.md remain require
 | Duplicate requests | Managed CRUD receipts and form keys in current implementation | Final replay tests/CI, actual restart evidence, explicit retry-expiry/cleanup policy; custom actions excluded |
 | Preview/policy | Explicit preview handlers; independently testable restricted role | Reviewed proposal bound to actor/input/version/expiry and enforced at execution |
 | Packaging | Source build, CI, Docker demo | Separate consuming app, supported version/database matrix, bundled UI dependencies, tagged prerelease, Maven Central prerequisites |
-| Unsaved edits | Required scope | Implementation, browser/session-expiry/HTMX tests |
+| Unsaved edits | In-memory dirty guard, HTMX/session handling, in-flight edit preservation; automated tests and local successful-save/expired-session browser checks | Hosted verification, native cancel-navigation and mobile browser coverage |
 | Saved views | Required scope | Owner-scoped persistence, schema validation and permissions |
 | Export | Required scope | Dedicated permission, safe projection, bounded rows/memory, formula neutralization |
 | External pilots | Plan and decision criteria | Recruit participating teams with owner authorization; independent installation, two-week repeated-use evidence, commercial feedback |

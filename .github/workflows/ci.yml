@@ -20,7 +20,7 @@ jobs:
       - name: Verify all modules
         run: mvn -B -ntp verify
       - name: Verify preview response handling
-        run: node --test scripts/action-modal.test.cjs
+        run: node --test scripts/action-modal.test.cjs scripts/unsaved-edits.test.cjs
   postgres-mutations:
     runs-on: ubuntu-latest
     timeout-minutes: 20

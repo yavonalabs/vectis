@@ -31,6 +31,7 @@
 
     <!-- 3. The Actual Form with htmx in-place swap -->
     <form id="entity-form" 
+          th:data-unsaved="${submittedValues != null}"
           th:action="@{${adminPath} + '/' + ${descriptor.slug} + '/save'}"
           method="post" 
           th:attr="hx-post=@{${adminPath} + '/' + ${descriptor.slug} + '/save'}"
@@ -41,6 +42,7 @@
           class="bg-[var(--vx-surface-card)] border border-[var(--vx-border)] rounded-2xl p-6 md:p-8 shadow-xl shadow-black/20 space-y-6">
 
         <input type="hidden" name="_list" th:value="${listQuery}" />
+        <p id="unsaved-session-status" role="alert" tabindex="-1" hidden class="text-sm text-rose-800"></p>
         <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
         <input type="hidden" name="_operation" th:value="${mutationKey}" />
         <input th:if="${!isNew}" type="hidden" name="__id" th:value="${encodedId}" />
