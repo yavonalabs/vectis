@@ -1,6 +1,6 @@
 # Improvement completion ledger
 
-Updated 6 October 2026. All stages in NEXT_IMPLEMENTATION_PLAN.md remain required. A deployed build is evidence for that commit, not completion of this roadmap.
+Updated 7 October 2026. All stages in NEXT_IMPLEMENTATION_PLAN.md remain required. A deployed build is evidence for that commit, not completion of this roadmap.
 
 | Area | Implemented / verified | Remaining gate or implementation |
 |---|---|---|
@@ -13,7 +13,7 @@ Updated 6 October 2026. All stages in NEXT_IMPLEMENTATION_PLAN.md remain require
 | Preview/policy | Explicit preview handlers; independently testable restricted role | Reviewed proposal bound to actor/input/version/expiry and enforced at execution |
 | Packaging | Source build, CI, Docker demo | Separate consuming app, supported version/database matrix, bundled UI dependencies, tagged prerelease, Maven Central prerequisites |
 | Unsaved edits | In-memory dirty guard, HTMX/session handling, in-flight edit preservation; automated tests and local successful-save/expired-session browser checks | Hosted verification, native cancel-navigation and mobile browser coverage |
-| Saved views | Required scope | Owner-scoped persistence, schema validation and permissions |
+| Saved views | Owner-scoped create/open/remove, versioned allowlisted state, permission rechecks, bounded storage; local browser workflow and H2 integration checks | Current PostgreSQL CI and hosted verification, final mobile check and restart persistence evidence |
 | Export | Required scope | Dedicated permission, safe projection, bounded rows/memory, formula neutralization |
 | External pilots | Plan and decision criteria | Recruit participating teams with owner authorization; independent installation, two-week repeated-use evidence, commercial feedback |
 

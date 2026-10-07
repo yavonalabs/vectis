@@ -4,6 +4,29 @@
 
 <div th:fragment="tableFragment" id="table-container" hx-swap="outerHTML" class="space-y-4 relative" x-data="{ selectedCount: 0, totalCount: 0 }">
 
+    <details class="vx-filter-details vx-filter-form vx-saved-views">
+        <summary>My saved views <span th:text="${'(' + #lists.size(savedViews) + ')'}"></span></summary>
+        <p>Save the applied search, filters and sorting for this section. Only your account can open these views. Views start on the first page; they do not store records.</p>
+        <p>Names and filter values are stored in your application's database. Do not include passwords, tokens or other secrets.</p>
+        <ul th:if="${!#lists.isEmpty(savedViews)}" class="space-y-2">
+            <li th:each="view : ${savedViews}" class="vx-filter-toolbar">
+                <a class="vx-secondary" th:href="@{${adminPath} + '/' + ${descriptor.slug} + '/saved-views/' + ${view.id}}" th:text="${view.name}">Open view</a>
+                <form method="post" th:action="@{${adminPath} + '/' + ${descriptor.slug} + '/saved-views/' + ${view.id} + '/delete'}">
+                    <button type="submit" class="vx-secondary" th:aria-label="${'Remove saved view ' + view.name}">Remove view</button>
+                </form>
+            </li>
+        </ul>
+        <p th:if="${#lists.isEmpty(savedViews)}">No saved views yet.</p>
+        <p th:if="${savedViewError != null}" th:text="${savedViewError}"></p>
+        <form th:if="${filterError == null && savedViewError == null}" method="post" th:action="@{${adminPath} + '/' + ${descriptor.slug} + '/saved-views'}" class="vx-filter-toolbar">
+            <input type="hidden" name="state" th:value="${savedViewState}">
+            <label for="saved-view-name">View name
+                <input id="saved-view-name" name="name" required maxlength="80" placeholder="e.g. Active team members">
+            </label>
+            <button type="submit" class="vx-secondary">Save applied view</button>
+        </form>
+    </details>
+
     <form id="record-filters" method="get" th:action="@{${adminPath} + '/' + ${descriptor.slug}}"
           th:attr="hx-get=@{${adminPath} + '/' + ${descriptor.slug}}" hx-target="#table-container"
           hx-push-url="true" class="vx-filter-form">

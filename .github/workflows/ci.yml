@@ -43,8 +43,8 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - name: Verify real PostgreSQL mutation rollback
-        run: mvn -B -ntp -pl vectis-sample-app -am -Dtest=AtomicRecordMutationTest -Dsurefire.failIfNoSpecifiedTests=false test
+      - name: Verify PostgreSQL mutations and personal saved views
+        run: mvn -B -ntp -pl vectis-sample-app -am -Dtest=AtomicRecordMutationTest,SavedViewIntegrationTest -Dsurefire.failIfNoSpecifiedTests=false test
         env:
           VECTIS_TEST_DB_URL: jdbc:postgresql://localhost:5432/vectis_test
           VECTIS_TEST_DB_DRIVER: org.postgresql.Driver

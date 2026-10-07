@@ -14,6 +14,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class ReviewCustomPathTest {
     @Autowired MockMvc mvc;
+    @Test void personalViewsRespectContextPathAndPreserveFeedback() throws Exception {
+        var created = mvc.perform(post("/portal/ops/employee/saved-views").contextPath("/portal")
+                .with(user("path-reader").roles("USER")).with(csrf()).param("name", "My view").param("state", "search=Alice"))
+                .andExpect(status().isFound()).andExpect(flash().attribute("flashMessage", "Personal view saved."))
+                .andReturn();
+        String target = created.getResponse().getRedirectedUrl();
+        assertThat(target).startsWith("/portal/ops/employee/saved-views/");
+        mvc.perform(get(target).contextPath("/portal").with(user("path-reader").roles("USER"))
+                .flashAttrs(created.getFlashMap()))
+                .andExpect(redirectedUrl("/portal/ops/employee?search=Alice"))
+                .andExpect(flash().attribute("flashMessage", "Personal view saved."));
+        mvc.perform(post(target + "/delete").contextPath("/portal").with(user("path-reader").roles("USER")).with(csrf()))
+                .andExpect(redirectedUrl("/portal/ops/employee"));
+    }
     @Test void rootAndLogoutRespectConfiguredPaths() throws Exception {
         mvc.perform(get("/portal/").contextPath("/portal"))
                 .andExpect(status().isFound()).andExpect(redirectedUrl("/portal/ops"));

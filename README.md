@@ -69,7 +69,8 @@ Supply the host application's authentication and security filter chain. The defa
 ## Status and limits
 
 - The Render sample deployment is undergoing [hosted release verification](docs/HOSTED_DEMO_VERIFICATION.md); it is not a production-readiness certification.
-- Saved views, export, unsaved-edit protection and additional mutation-lifecycle work remain on the [roadmap](VECTIS_IMPROVEMENT_PLAN.md).
+- [Personal saved views](docs/PERSONAL_SAVED_VIEWS.md) and [unsaved-edit protection](docs/UNSAVED_EDITS.md) are implemented, with verification limits documented. Schema-managed installations need the saved-view table migration.
+- Export and additional mutation-lifecycle work remain on the [roadmap](docs/NEXT_IMPLEMENTATION_PLAN.md); the [completion ledger](docs/IMPROVEMENT_COMPLETION_LEDGER.md) tracks remaining gates.
 - Runtime UI assets currently include CDN dependencies.
 - No enterprise edition, SSO product, approval workflow or commercial pricing is announced by this repository.
 

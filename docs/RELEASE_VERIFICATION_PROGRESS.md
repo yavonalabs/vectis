@@ -90,3 +90,15 @@ These checks supersede the earlier availability timeout and satisfy the targeted
 The full Maven reactor verification completed successfully on 1 October after stopping the local demo process that held the packaged JAR open on Windows. This was a packaging lock, not a test failure. The six JavaScript regression tests passed again on 5 October and now run in GitHub CI alongside Maven verification.
 
 Recheck exact deployed SHA and complete the remaining hosted mobile/keyboard/contrast/screen-reader matrix before promoting the public demo. Diagnose the historical Forbidden only if reproducible in a fresh authenticated session. No product-page publication is claimed by this slice.
+
+### Personal saved views — 7 October 2026
+
+The owner reported GitHub and Render passing for commit 3f4c90e before this slice. That report does not verify subsequent commits.
+
+Implemented personal saved views with server-derived ownership, permission rechecks, schema validation, bounded filter/name values and 50 database-enforced slots per owner/section. Added source migration notes and a PostgreSQL table example. Read-only operators may manage their own views; record-write permissions remain unchanged.
+
+Local browser checks on port 18086 used the fictional read-only account to apply the Alice search, save it, clear the current filters, reopen the saved view and remove it. Reopening restored one matching record; removal left all four sample records intact. A browser-observed missing confirmation message was corrected and covered with context-path/redirect tests. The initial view-name input lacked shared styling; the panel now uses the existing styled form classes.
+
+Also corrected untouched edit forms being marked dirty because submittedValues defaults to an empty map. A rendered-form regression test covers the false marker. The roadmap still requires hosted/mobile verification and actual restart persistence; H2 tests and a SQL example are not PostgreSQL migration evidence.
+
+Final local verification for this slice passed: `mvn -B -ntp verify` ran 98 Java tests with no failures/errors/skips; 17 JavaScript tests passed. The saved-view suite covers account isolation (including administrator denial), forged-owner input, revoked entity access, CSRF, malformed/oversized state, obsolete fields/schema versions, quota reuse, applied-state capture and untouched-form dirty state. A separate custom-path test covers create/open/remove and confirmation-message propagation. The expanded PostgreSQL CI job has not yet been observed for this commit.

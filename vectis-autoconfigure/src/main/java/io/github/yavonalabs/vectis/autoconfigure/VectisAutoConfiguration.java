@@ -31,7 +31,7 @@ import java.util.List;
 @ConditionalOnClass({EntityManagerFactory.class, EntityManager.class})
 @ConditionalOnProperty(prefix = "vectis", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(VectisProperties.class)
-@EntityScan(basePackageClasses = {VectisAuditLog.class, io.github.yavonalabs.vectis.core.mutation.MutationReceipt.class})
+@EntityScan(basePackageClasses = {VectisAuditLog.class, io.github.yavonalabs.vectis.core.mutation.MutationReceipt.class, io.github.yavonalabs.vectis.core.view.SavedView.class})
 public class VectisAutoConfiguration {
 
     @Bean
@@ -115,6 +115,20 @@ public class VectisAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.view.SavedViewService savedViewService(
+            EntityManager em, EntityMetadataRegistry metadata, AdminPermissionEvaluator permissions,
+            ObjectProvider<io.github.yavonalabs.vectis.core.mutation.MutationActorProvider> actors) {
+        return new io.github.yavonalabs.vectis.core.view.SavedViewService(em, metadata, permissions, actors.getIfAvailable(() -> () -> null));
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.web.SavedViewController savedViewController(io.github.yavonalabs.vectis.core.view.SavedViewService views) {
+        return new io.github.yavonalabs.vectis.core.web.SavedViewController(views);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public AdminController adminController(
             EntityMetadataRegistry registry,
             DynamicCriteriaQueryEngine queryEngine,
@@ -124,7 +138,8 @@ public class VectisAutoConfiguration {
             ApplicationEventPublisher eventPublisher,
             VectisAuditLogService auditLogService,
             io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations,
-            io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations
+            io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations,
+            io.github.yavonalabs.vectis.core.view.SavedViewService savedViews
     ) {
         return new AdminController(
                 registry,
@@ -135,7 +150,8 @@ public class VectisAutoConfiguration {
                 eventPublisher,
                 auditLogService,
                 actionMutations,
-                recordMutations
+                recordMutations,
+                savedViews
         );
     }
 

@@ -31,7 +31,7 @@
 
     <!-- 3. The Actual Form with htmx in-place swap -->
     <form id="entity-form" 
-          th:data-unsaved="${submittedValues != null}"
+          th:data-unsaved="${submittedValues != null && !submittedValues.isEmpty()}"
           th:action="@{${adminPath} + '/' + ${descriptor.slug} + '/save'}"
           method="post" 
           th:attr="hx-post=@{${adminPath} + '/' + ${descriptor.slug} + '/save'}"

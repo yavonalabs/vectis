@@ -47,6 +47,7 @@ public class AdminController {
     private final VectisAuditLogService auditLogService;
     private final io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations;
     private final io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations;
+    private final io.github.yavonalabs.vectis.core.view.SavedViewService savedViews;
     private final ConversionService conversionService = DefaultConversionService.getSharedInstance();
 
     @Value("${vectis.title:Operations Console}")
@@ -64,7 +65,8 @@ public class AdminController {
             ApplicationEventPublisher eventPublisher,
             VectisAuditLogService auditLogService,
             io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations,
-            io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations
+            io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations,
+            io.github.yavonalabs.vectis.core.view.SavedViewService savedViews
     ) {
         this.registry = registry;
         this.queryEngine = queryEngine;
@@ -75,6 +77,7 @@ public class AdminController {
         this.auditLogService = auditLogService;
         this.actionMutations = actionMutations;
         this.recordMutations = recordMutations;
+        this.savedViews = savedViews;
     }
 
     @ModelAttribute
@@ -148,6 +151,12 @@ public class AdminController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
+        model.addAttribute("savedViews", savedViews.list(slug));
+        try {
+            model.addAttribute("savedViewState", io.github.yavonalabs.vectis.core.view.SavedViewState.capture(descriptor, parameters));
+        } catch (ResponseStatusException invalidView) {
+            model.addAttribute("savedViewError", "Apply valid filters and a page size of 10, 25 or 50 before saving a view.");
+        }
         List<String> filterFields = parameters.getOrDefault("filterField", List.of());
         List<String> filterOperators = parameters.getOrDefault("filterOp", List.of());
         List<String> filterValues = parameters.getOrDefault("filterValue", List.of());
