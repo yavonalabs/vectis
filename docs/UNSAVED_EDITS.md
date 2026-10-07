@@ -9,6 +9,6 @@ If an operator types while a save is pending, the response cannot replace those 
 ## Verification — 7 October 2026
 
 - Maven reactor verification passed: 88 Java tests, no failures or skips.
-- Node suite passed: 16 tests across action-modal and unsaved-edits suites, including validation replacement, session expiry, successful redirect, late edits, and reverting during an in-flight save.
+- Node suite passed: 17 tests across action-modal and unsaved-edits suites, including validation replacement, session expiry, successful redirect, late edits, reverting during an in-flight save, and native-submit fallback.
 - Local demo on port 18085: browser validation retained an invalid salary; a corrected create reached the saved record without an unload warning. Logout in a second tab followed by Save in the first retained the changed first name and reason and focused the expired-session alert.
 - The browser check used disposable local H2 data, not the hosted service. Native cancel-navigation, full mobile coverage and hosted verification remain pending. The in-flight response cases have automated coverage, not a timed browser reproduction.

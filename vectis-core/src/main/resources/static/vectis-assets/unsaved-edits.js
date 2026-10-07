@@ -49,10 +49,10 @@ function createUnsavedEditState(snapshot) {
     window.addEventListener('beforeunload', event => {
         if (dirty() && !nativeSubmission) { event.preventDefault(); event.returnValue = ''; }
     });
+    window.addEventListener('pageshow', () => { nativeSubmission = false; });
     document.addEventListener('submit', event => {
         if (event.target === form && (!window.htmx || !form.hasAttribute('hx-post'))) {
             nativeSubmission = true;
-            setTimeout(() => { nativeSubmission = false; }, 0);
         }
     });
     document.addEventListener('htmx:beforeRequest', event => {

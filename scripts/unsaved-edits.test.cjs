@@ -12,9 +12,9 @@ function harness() {
         getElementById:id=>id==='entity-form'?form:notice}, window:{htmx:{}, addEventListener:(n,f)=>win[n]=f, confirm:()=>false}, setTimeout});
     vm.runInContext(source, context);
     doc.DOMContentLoaded();
-    function fire(name, detail) {
+    function fire(name, detail, target) {
         let prevented=false;
-        (doc[name] || win[name])({detail,preventDefault(){prevented=true;}});
+        (doc[name] || win[name])({detail,target,preventDefault(){prevented=true;}});
         return prevented;
     }
     return {fire, form, notice, swap(next){form=next; doc['htmx:afterSwap']();}};
@@ -73,5 +73,14 @@ test('reverting to the original value during a save still warns because the serv
     h.fire('htmx:beforeRequest',{elt:h.form});
     h.form.elements[0].value='Alice';
     h.fire('htmx:beforeOnLoad',{elt:h.form,xhr:{status:200,getResponseHeader:()=>'/record'}});
+    assert.equal(h.fire('beforeunload'),true);
+});
+
+test('native submission avoids false unload warnings and returning restores protection', () => {
+    const h=harness(); h.form.hasAttribute=()=>false;
+    h.form.elements[0].value='Bob';
+    h.fire('submit',undefined,h.form);
+    assert.equal(h.fire('beforeunload'),false);
+    h.fire('pageshow');
     assert.equal(h.fire('beforeunload'),true);
 });
