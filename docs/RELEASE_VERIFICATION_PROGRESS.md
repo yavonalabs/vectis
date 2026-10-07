@@ -17,6 +17,14 @@ The frontend now distinguishes 401/sign-in redirects, 403 denial and non-JSON se
 
 ## Remaining
 
+### Managed CRUD receipts — 7 October 2026
+
+Added database-backed operation receipts scoped to authenticated actor and request key. CRUD reserves the key and commits its result in the same transaction as the record and audit. Completed identical requests return the stored result; changed input rejects. Current permissions are rechecked before replay. Forms preserve the key for an attempt; delete confirmation creates one on opening.
+
+Full Maven verification passed with 88 Java tests after correcting a Mockito varargs/generic reset in the rollback-retry test. Coverage includes create/update/delete replay, concurrent duplicates, changed input, revoked permissions and rollback followed by retry. The eight existing JavaScript tests passed in the preceding run; final browser verification of operation keys, PostgreSQL CI and actual process-restart testing remain open. The prior hosted versioned CRUD check passed and removed its unique fixture.
+
+See `MANAGED_REQUEST_REPLAY.md` and `sql/mutation-receipts-postgresql.sql` for migration, retention, request bounds and custom-action exclusions. No automatic expiry/cleanup is implemented. The full required scope is tracked in `IMPROVEMENT_COMPLETION_LEDGER.md`; it is not complete.
+
 ### Required edit/delete versions — 6 October 2026
 
 Versioned edits now require the form's version field; deletes require `_version` from the reviewed table row or detail. Missing/malformed versions return 400 and stale versions return 409. Delete confirmation replaces its hidden version when switching records, preserving zero. Unversioned entities retain their existing behavior without a lost-update guarantee.

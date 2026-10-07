@@ -21,7 +21,7 @@ def main():
     def fields(path):
         status, _, html, _ = read(client, base + path)
         require(status == 200, 'Form loads: ' + path)
-        inputs = Inputs()
+        inputs = Inputs('entity-form' if '/employee/' in path else None)
         inputs.feed(html)
         require(bool(inputs.values.get('_csrf')), 'Rendered CSRF token is present')
         return inputs.values
@@ -54,7 +54,7 @@ def main():
         if record_id:
             cleanup = fields('/admin/employee/edit/' + record_id)
             status, _, _, _ = post('/admin/employee/delete/' + record_id,
-                    {'_csrf': cleanup['_csrf'], '_version': cleanup.get('version', ''),
+                    {'_csrf': cleanup['_csrf'], '_version': cleanup.get('version', ''), '_operation': str(uuid.uuid4()),
                      '_reason': 'Hosted disposable fixture cleanup'})
             require(status == 200, 'Delete request completed')
             status, _, _, _ = read(client, base + '/admin/employee/view/' + record_id)

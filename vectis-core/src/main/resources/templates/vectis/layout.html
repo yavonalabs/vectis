@@ -375,6 +375,7 @@
             <p class="text-xs text-[var(--vx-text-muted)]">Are you sure you want to delete record <span id="modal-record-id" class="font-mono font-bold text-[var(--vx-text-main)]"></span>?</p>
             <form id="modal-delete-form" method="post" action="">
                 <input type="hidden" id="delete-version" name="_version" value="" />
+                <input type="hidden" id="delete-operation" name="_operation" value="" />
                 <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="space-y-1.5">
                     <label for="delete-reason" class="text-xs font-medium text-[var(--vx-text-main)]">Reason for Deletion <span class="text-rose-800">*</span></label>

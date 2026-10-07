@@ -151,7 +151,7 @@ class EntityPermissionIntegrationTest {
             .andExpect(status().isForbidden());
         mvc.perform(get("/admin/employee/relationships/department/options").with(user("user").roles("USER")))
             .andExpect(status().isForbidden());
-        mvc.perform(post("/admin/employee/save").param("__id", "1").param("department", "")
+        mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).param("__id", "1").param("department", "")
             .param("_reason", "Denied relationship change").with(user("admin").roles("ADMIN")).with(csrf()))
             .andExpect(status().isForbidden());
     }

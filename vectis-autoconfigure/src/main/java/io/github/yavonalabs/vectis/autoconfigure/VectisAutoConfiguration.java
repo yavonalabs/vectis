@@ -31,7 +31,7 @@ import java.util.List;
 @ConditionalOnClass({EntityManagerFactory.class, EntityManager.class})
 @ConditionalOnProperty(prefix = "vectis", name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(VectisProperties.class)
-@EntityScan(basePackageClasses = {VectisAuditLog.class})
+@EntityScan(basePackageClasses = {VectisAuditLog.class, io.github.yavonalabs.vectis.core.mutation.MutationReceipt.class})
 public class VectisAutoConfiguration {
 
     @Bean
@@ -98,12 +98,19 @@ public class VectisAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.mutation.MutationReceiptStore mutationReceiptStore(EntityManager entityManager) {
+        return new io.github.yavonalabs.vectis.core.mutation.MutationReceiptStore(entityManager);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutationService(
             EntityMetadataRegistry metadata, DynamicCriteriaQueryEngine queries,
             AdminPermissionEvaluator permissions, VectisAuditLogService auditLog,
+            io.github.yavonalabs.vectis.core.mutation.MutationReceiptStore receipts,
             ObjectProvider<io.github.yavonalabs.vectis.core.mutation.MutationActorProvider> actors) {
         return new io.github.yavonalabs.vectis.core.mutation.RecordMutationService(metadata, queries,
-                permissions, actors.getIfAvailable(() -> () -> null), auditLog);
+                permissions, actors.getIfAvailable(() -> () -> null), auditLog, receipts);
     }
 
     @Bean

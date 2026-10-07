@@ -30,7 +30,7 @@ function modalFor(response) {
 test('delete dialog replaces the reviewed version between records, including zero', () => {
     const clicks = [];
     const nodes = {};
-    const context = vm.createContext({ window: {}, document: {
+    const context = vm.createContext({ window: { crypto: { randomUUID: () => 'test-operation-key' } }, document: {
         body: { dataset: { adminBase: '/admin' } },
         addEventListener(name, fn) { if (name === 'click') clicks.push(fn); },
         getElementById(id) { return nodes[id] ||= { value: '', classList: { remove() {} } }; },

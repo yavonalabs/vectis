@@ -15,7 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.math.BigDecimal;
 
 @SpringBootApplication
-@EntityScan(basePackages = {"com.example.demo.entity", "io.github.yavonalabs.vectis.core.audit"})
+@EntityScan(basePackages = {"com.example.demo.entity", "io.github.yavonalabs.vectis.core.audit", "io.github.yavonalabs.vectis.core.mutation"})
 public class SampleApplication {
 
     public static void main(String[] args) {

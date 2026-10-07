@@ -46,7 +46,7 @@ class AtomicRecordMutationTest {
     }
 
     @Test void updateAndAuditCommitTogetherOnce() throws Exception {
-        records.save("employee", Map.of("__id", fixture.getId().toString(), "version", fixture.getVersion().toString(), "firstName", "Updated", "_reason", "Atomic success"));
+        records.save("employee", Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(), "version", fixture.getVersion().toString(), "firstName", "Updated", "_reason", "Atomic success"));
         assertThat(reload().getFirstName()).isEqualTo("Updated");
         var logs = audit.findByEntity("employee", fixture.getId().toString());
         assertThat(logs).hasSize(1);
@@ -56,7 +56,7 @@ class AtomicRecordMutationTest {
 
     @Test void updateRollsBackEvenAfterAuditWasFlushed() {
         failAfterAuditFlush();
-        assertThatThrownBy(() -> records.save("employee", Map.of("__id", fixture.getId().toString(), "version", fixture.getVersion().toString(), "firstName", "RolledBack", "_reason", "Rollback")))
+        assertThatThrownBy(() -> records.save("employee", Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(), "version", fixture.getVersion().toString(), "firstName", "RolledBack", "_reason", "Rollback")))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(reload().getFirstName()).isEqualTo("Atomic");
         assertThat(auditCount()).isZero();
@@ -68,7 +68,7 @@ class AtomicRecordMutationTest {
         context.setAuthentication(new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
                 "x".repeat(101), "unused", previous.getAuthorities()));
         try {
-            assertThatThrownBy(() -> records.save("employee", Map.of("__id", fixture.getId().toString(), "version", fixture.getVersion().toString(),
+            assertThatThrownBy(() -> records.save("employee", Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(), "version", fixture.getVersion().toString(),
                     "firstName", "Uncommitted", "_reason", "Audit database failure"))).isInstanceOf(RuntimeException.class);
         } finally {
             context.setAuthentication(previous);
@@ -78,17 +78,17 @@ class AtomicRecordMutationTest {
     }
 
     @Test void createAndDeleteEachCommitOneAudit() throws Exception {
-        String id = records.save("employee", Map.of("firstName", "New", "lastName", "Fixture",
+        String id = records.save("employee", Map.of("_operation", UUID.randomUUID().toString(), "firstName", "New", "lastName", "Fixture",
                 "email", UUID.randomUUID() + "@example.com", "salary", "60000", "_reason", "Create success"));
         assertThat(audit.findByEntity("employee", id)).hasSize(1);
-        records.delete("employee", id, Map.of("_version", queries.<Employee>findById(metadata.getBySlug("employee").orElseThrow(), Long.valueOf(id)).getVersion().toString(), "_reason", "Delete success"));
+        records.delete("employee", id, Map.of("_operation", UUID.randomUUID().toString(), "_version", queries.<Employee>findById(metadata.getBySlug("employee").orElseThrow(), Long.valueOf(id)).getVersion().toString(), "_reason", "Delete success"));
         assertThat(queries.<Employee>findById(metadata.getBySlug("employee").orElseThrow(), Long.valueOf(id))).isNull();
         assertThat(audit.findByEntity("employee", id)).hasSize(2);
     }
 
     @Test void deleteRollsBackEvenAfterAuditWasFlushed() {
         failAfterAuditFlush();
-        assertThatThrownBy(() -> records.delete("employee", fixture.getId().toString(), Map.of("_version", fixture.getVersion().toString(), "_reason", "Rollback")))
+        assertThatThrownBy(() -> records.delete("employee", fixture.getId().toString(), Map.of("_operation", UUID.randomUUID().toString(), "_version", fixture.getVersion().toString(), "_reason", "Rollback")))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(reload()).isNotNull();
         assertThat(auditCount()).isZero();
@@ -97,7 +97,7 @@ class AtomicRecordMutationTest {
     @Test void createRollsBackEvenAfterAuditWasFlushed() {
         String email = UUID.randomUUID() + "@example.com";
         failAfterAuditFlush();
-        assertThatThrownBy(() -> records.save("employee", Map.of("firstName", "New", "lastName", "Fixture",
+        assertThatThrownBy(() -> records.save("employee", Map.of("_operation", UUID.randomUUID().toString(), "firstName", "New", "lastName", "Fixture",
                 "email", email, "salary", "60000", "_reason", "Rollback"))).isInstanceOf(IllegalStateException.class);
         assertThat(queries.findPage(metadata.getBySlug("employee").orElseThrow(), 0, 10, email, null, null).content()).isEmpty();
         assertThat(audit.findRecent(100)).noneMatch(log -> log.getAfterSnapshotJson() != null && log.getAfterSnapshotJson().contains(email));
@@ -106,7 +106,7 @@ class AtomicRecordMutationTest {
     @Test void databaseConstraintFailureLeavesNoSuccessAudit() {
         Employee duplicate = new Employee("Other", "Fixture", UUID.randomUUID() + "@example.com", new BigDecimal("60000"), null);
         queries.persist(duplicate);
-        assertThatThrownBy(() -> records.save("employee", Map.of("__id", fixture.getId().toString(), "version", fixture.getVersion().toString(), "email", duplicate.getEmail(), "_reason", "Constraint")))
+        assertThatThrownBy(() -> records.save("employee", Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(), "version", fixture.getVersion().toString(), "email", duplicate.getEmail(), "_reason", "Constraint")))
                 .isInstanceOf(RuntimeException.class);
         assertThat(reload().getEmail()).isEqualTo(fixture.getEmail());
         assertThat(auditCount()).isZero();
@@ -114,26 +114,26 @@ class AtomicRecordMutationTest {
 
     @Test void missingMalformedAndStaleVersionsRejectWithoutWrites() throws Exception {
         for (String version : new String[]{"", "invalid", "-1"}) {
-            assertThatThrownBy(() -> records.save("employee", Map.of("__id", fixture.getId().toString(),
+            assertThatThrownBy(() -> records.save("employee", Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(),
                     "version", version, "firstName", "Rejected", "_reason", "Version check")))
                     .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
             assertThatThrownBy(() -> records.delete("employee", fixture.getId().toString(),
-                    Map.of("_version", version, "_reason", "Version check")))
+                    Map.of("_operation", UUID.randomUUID().toString(), "_version", version, "_reason", "Version check")))
                     .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
         }
-        assertThatThrownBy(() -> records.save("employee", Map.of("__id", fixture.getId().toString(), "_reason", "Missing")))
+        assertThatThrownBy(() -> records.save("employee", Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(), "_reason", "Missing")))
                 .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
-        assertThatThrownBy(() -> records.delete("employee", fixture.getId().toString(), Map.of("_reason", "Missing")))
+        assertThatThrownBy(() -> records.delete("employee", fixture.getId().toString(), Map.of("_operation", UUID.randomUUID().toString(), "_reason", "Missing")))
                 .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
         assertThat(reload().getFirstName()).isEqualTo("Atomic");
         assertThat(auditCount()).isZero();
     }
 
     @Test void deleteCannotUseVersionFromBeforeAnEdit() throws Exception {
-        records.save("employee", Map.of("__id", fixture.getId().toString(), "version", fixture.getVersion().toString(),
+        records.save("employee", Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(), "version", fixture.getVersion().toString(),
                 "firstName", "Updated", "_reason", "Update before delete"));
         assertThatThrownBy(() -> records.delete("employee", fixture.getId().toString(),
-                Map.of("_version", fixture.getVersion().toString(), "_reason", "Stale delete")))
+                Map.of("_operation", UUID.randomUUID().toString(), "_version", fixture.getVersion().toString(), "_reason", "Stale delete")))
                 .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
                         ex -> assertThat(ex.getStatusCode().value()).isEqualTo(409));
         assertThat(reload()).isNotNull();
@@ -162,7 +162,7 @@ class AtomicRecordMutationTest {
                     context.setAuthentication(auth);
                     org.springframework.security.core.context.SecurityContextHolder.setContext(context);
                     try {
-                        return records.save("employee", Map.of("__id", fixture.getId().toString(),
+                        return records.save("employee", Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(),
                                 "version", fixture.getVersion().toString(), "firstName", name, "_reason", "Concurrent edit"));
                     } catch (RuntimeException ex) { return ex; }
                     finally { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
@@ -175,6 +175,88 @@ class AtomicRecordMutationTest {
             assertThat(failure).isInstanceOfAny(jakarta.persistence.OptimisticLockException.class,
                     org.springframework.dao.OptimisticLockingFailureException.class);
             assertThat(reload().getFirstName()).isIn("WriterOne", "WriterTwo");
+            assertThat(auditCount()).isEqualTo(1);
+        } finally { pool.shutdownNow(); }
+    }
+
+    @Test void repeatedUpdateReturnsStoredResultAndRejectsChangedInput() throws Exception {
+        var input = Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(),
+                "version", fixture.getVersion().toString(), "firstName", "Once", "_reason", "Replay check");
+        String first = records.save("employee", input);
+        assertThat(records.save("employee", input)).isEqualTo(first);
+        assertThat(auditCount()).isEqualTo(1);
+        var changed = new java.util.HashMap<>(input);
+        changed.put("firstName", "Twice");
+        assertThatThrownBy(() -> records.save("employee", changed))
+                .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode().value()).isEqualTo(409));
+        assertThat(reload().getFirstName()).isEqualTo("Once");
+    }
+
+    @Test void repeatedCreateAndDeleteDoNotRepeatEffects() throws Exception {
+        var create = Map.of("_operation", UUID.randomUUID().toString(), "firstName", "Retry", "lastName", "Fixture",
+                "email", UUID.randomUUID() + "@example.com", "salary", "60000", "_reason", "Create replay");
+        String id = records.save("employee", create);
+        assertThat(records.save("employee", create)).isEqualTo(id);
+        var delete = Map.of("_operation", UUID.randomUUID().toString(), "_version", "0", "_reason", "Delete replay");
+        records.delete("employee", id, delete);
+        records.delete("employee", id, delete);
+        assertThat(audit.findByEntity("employee", id)).hasSize(2);
+    }
+
+    @Test void replayRechecksCurrentPermissions() throws Exception {
+        var input = Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(),
+                "version", fixture.getVersion().toString(), "firstName", "Once", "_reason", "Permission replay");
+        records.save("employee", input);
+        var context = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        var previous = context.getAuthentication();
+        context.setAuthentication(new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                previous.getName(), "unused", java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"))));
+        try {
+            assertThatThrownBy(() -> records.save("employee", input))
+                    .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
+                            ex -> assertThat(ex.getStatusCode().value()).isEqualTo(403));
+        } finally { context.setAuthentication(previous); }
+    }
+
+    @Test void rolledBackReceiptCanBeRetried() throws Exception {
+        var input = Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(),
+                "version", fixture.getVersion().toString(), "firstName", "Retried", "_reason", "Rollback replay");
+        failAfterAuditFlush();
+        assertThatThrownBy(() -> records.save("employee", input)).isInstanceOf(IllegalStateException.class);
+        VectisAuditLogService auditTarget = org.springframework.test.util.AopTestUtils.getUltimateTargetObject(audit);
+        org.mockito.Mockito.reset(auditTarget);
+        records.save("employee", input);
+        assertThat(reload().getFirstName()).isEqualTo("Retried");
+        assertThat(auditCount()).isEqualTo(1);
+    }
+
+    @Test void concurrentDuplicateRequestsCommitOneEffect() throws Exception {
+        var input = Map.of("_operation", UUID.randomUUID().toString(), "__id", fixture.getId().toString(),
+                "version", fixture.getVersion().toString(), "firstName", "Once", "_reason", "Concurrent replay");
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        var start = new java.util.concurrent.CountDownLatch(1);
+        var pool = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            java.util.List<java.util.concurrent.Future<Object>> jobs = new java.util.ArrayList<>();
+            for (int i = 0; i < 2; i++) jobs.add(pool.submit(() -> {
+                var context = org.springframework.security.core.context.SecurityContextHolder.createEmptyContext();
+                context.setAuthentication(auth);
+                org.springframework.security.core.context.SecurityContextHolder.setContext(context);
+                try {
+                    if (!start.await(30, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("Start timeout");
+                    return records.save("employee", input);
+                } catch (org.springframework.web.server.ResponseStatusException ex) {
+                    assertThat(ex.getStatusCode().value()).isEqualTo(409);
+                    return ex;
+                } finally { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
+            }));
+            start.countDown();
+            var a = jobs.get(0).get(45, java.util.concurrent.TimeUnit.SECONDS);
+            var b = jobs.get(1).get(45, java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(a instanceof String || b instanceof String).isTrue();
+            assertThat(records.save("employee", input)).isEqualTo(fixture.getId().toString());
+            assertThat(reload().getFirstName()).isEqualTo("Once");
             assertThat(auditCount()).isEqualTo(1);
         } finally { pool.shutdownNow(); }
     }

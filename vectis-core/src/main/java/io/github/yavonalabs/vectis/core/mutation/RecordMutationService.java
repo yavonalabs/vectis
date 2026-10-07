@@ -23,15 +23,17 @@ public class RecordMutationService {
     private final AdminPermissionEvaluator permissionEvaluator;
     private final MutationActorProvider actors;
     private final VectisAuditLogService auditLog;
+    private final MutationReceiptStore receipts;
     private final ConversionService conversionService = DefaultConversionService.getSharedInstance();
 
     public RecordMutationService(EntityMetadataRegistry registry, DynamicCriteriaQueryEngine queryEngine,
-            AdminPermissionEvaluator permissionEvaluator, MutationActorProvider actors, VectisAuditLogService auditLog) {
+            AdminPermissionEvaluator permissionEvaluator, MutationActorProvider actors, VectisAuditLogService auditLog, MutationReceiptStore receipts) {
         this.registry = registry;
         this.queryEngine = queryEngine;
         this.permissionEvaluator = permissionEvaluator;
         this.actors = actors;
         this.auditLog = auditLog;
+        this.receipts = receipts;
     }
 
     public static class InvalidRecord extends jakarta.validation.ConstraintViolationException {
@@ -64,6 +66,17 @@ public class RecordMutationService {
         requireReason(formParams);
         String rawId = formParams.get("__id");
         boolean isNew = rawId == null || rawId.isBlank();
+        // Replay still requires current relationship permissions before returning a stored result.
+        for (var association : descriptor.associations()) {
+            if (formParams.containsKey(association.name())) {
+                var target = registry.getByClass(association.targetEntityClass()).orElse(null);
+                if (target == null || !permissionEvaluator.canViewEntity(target.slug(), principal)) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot change this relationship.");
+                }
+            }
+        }
+        var receipt = receipts.begin(principal.getName(), isNew ? "CREATE" : "UPDATE", slug, rawId, formParams);
+        if (receipt.completed()) return receipt.resultId();
         Object entity = null;
         try {
             Map<String, Object> beforeSnapshot = new HashMap<>();
@@ -155,6 +168,7 @@ public class RecordMutationService {
                     formParams.getOrDefault("_reason", "Standard operational edit")
             ));
 
+            receipt.complete(normalizedEncodedId);
             return normalizedEncodedId;
         } catch (jakarta.validation.ConstraintViolationException e) {
             throw new InvalidRecord(entity, e);
@@ -166,6 +180,9 @@ public class RecordMutationService {
         Principal principal = authorize(slug, true);
         EntityDescriptor descriptor = descriptor(slug);
         Map<String, String> allParams = input == null ? new HashMap<>() : new HashMap<>(input);
+        requireReason(allParams);
+        var receipt = receipts.begin(principal.getName(), "DELETE", slug, encodedId, allParams);
+        if (receipt.completed()) return;
         Object id = decodeId(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId());
         Object entity = queryEngine.findById(descriptor, id);
         if (entity == null) {
@@ -192,6 +209,7 @@ public class RecordMutationService {
                 username,
                 reason
         ));
+        receipt.complete(encodedId);
 
     }
 

@@ -97,6 +97,7 @@ public class AdminController {
         model.addAttribute("adminTitle", adminTitle);
         model.addAttribute("adminPath", adminPath);
         model.addAttribute("environmentLabel", environmentLabel);
+        model.addAttribute("mutationKey", java.util.UUID.randomUUID().toString());
         model.addAttribute("logoutPath", logoutPath.isBlank() ? null : logoutPath);
         model.addAttribute("operatorName", principal == null ? "Unknown" : principal.getName());
         model.addAttribute("canViewAudit", permissionEvaluator.canViewAuditLogs(principal));
@@ -422,6 +423,7 @@ public class AdminController {
             model.addAttribute("errorMessage", "Please correct the fields below before saving.");
             model.addAttribute("fieldErrors", fieldErrors);
             model.addAttribute("submittedValues", formParams);
+            model.addAttribute("mutationKey", formParams.get("_operation"));
             model.addAttribute("recordVersion", recordVersion(descriptor, entity));
         model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity));
             model.addAttribute("changeReason", formParams.get("_reason"));

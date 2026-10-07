@@ -28,7 +28,7 @@ public class ActionPreviewIntegrationTest {
                 .doesNotContain("href=\"/admin/employee/create\"", "data-action-id=\"promoteEmployee\"", "href=\"/admin/audit\"");
         mockMvc.perform(MockMvcRequestBuilders.post("/admin/employee/action/toggleLeaveStatus/3")
                 .param("_reason", "Not permitted").with(csrf())).andExpect(status().isForbidden());
-        mockMvc.perform(MockMvcRequestBuilders.post("/admin/employee/save")
+        mockMvc.perform(MockMvcRequestBuilders.post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString())
                 .param("__id", "3").param("_reason", "Not permitted").with(csrf())).andExpect(status().isForbidden());
         mockMvc.perform(MockMvcRequestBuilders.get("/admin/audit")).andExpect(status().isForbidden());
         mockMvc.perform(MockMvcRequestBuilders.get("/admin/api/search").param("q", "Alice"))

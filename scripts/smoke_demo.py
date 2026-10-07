@@ -14,14 +14,22 @@ from html.parser import HTMLParser
 
 
 class Inputs(HTMLParser):
-    def __init__(self):
+    def __init__(self, form_id=None):
         super().__init__()
         self.values = {}
+        self.form_id = form_id
+        self.in_form = form_id is None
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
-        if tag == 'input' and attrs.get('name'):
+        if tag == 'form' and self.form_id is not None:
+            self.in_form = attrs.get('id') == self.form_id
+        if self.in_form and tag == 'input' and attrs.get('name'):
             self.values[attrs['name']] = attrs.get('value', '')
+
+    def handle_endtag(self, tag):
+        if tag == 'form' and self.form_id is not None:
+            self.in_form = False
 
 
 def session():

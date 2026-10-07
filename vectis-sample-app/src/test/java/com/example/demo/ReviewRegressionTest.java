@@ -112,14 +112,14 @@ class ReviewRegressionTest {
         tx.executeWithoutResult(transaction -> {
             try {
                 String query = "search=Alice&sort=email&dir=desc";
-                mvc.perform(post("/admin/employee/save").param("__id", "1").param("version", employee(1).getVersion().toString()).param("firstName", "Alice")
+                mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).param("__id", "1").param("version", employee(1).getVersion().toString()).param("firstName", "Alice")
                         .param("_reason", "Navigation test").param("_list", query).with(user("admin").roles("ADMIN")).with(csrf()))
                         .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/admin/employee?" + query));
-                mvc.perform(post("/admin/employee/save").header("HX-Request", "true").param("__id", "1").param("version", employee(1).getVersion().toString())
+                mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).header("HX-Request", "true").param("__id", "1").param("version", employee(1).getVersion().toString())
                         .param("firstName", "Alice").param("_reason", "Navigation test").param("_list", query)
                         .with(user("admin").roles("ADMIN")).with(csrf()))
                         .andExpect(status().isOk()).andExpect(header().string("HX-Redirect", "/admin/employee/view/1?_list=search%3DAlice%26sort%3Demail%26dir%3Ddesc"));
-                var invalid = mvc.perform(post("/admin/employee/save").header("HX-Request", "true").param("__id", "1").param("version", employee(1).getVersion().toString())
+                var invalid = mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).header("HX-Request", "true").param("__id", "1").param("version", employee(1).getVersion().toString())
                         .param("firstName", "").param("_reason", "Navigation test").param("_list", query)
                         .with(user("admin").roles("ADMIN")).with(csrf())).andReturn();
                 assertThat(invalid.getResponse().getContentAsString()).contains("name=\"_list\"", "search=Alice&amp;sort=email&amp;dir=desc");
@@ -132,9 +132,9 @@ class ReviewRegressionTest {
         mvc.perform(get("/admin/employee").header("HX-Request", "true"))
                 .andExpect(status().isUnauthorized()).andExpect(header().string("HX-Redirect", "/login?expired"))
                 .andExpect(header().string("Cache-Control", "no-store")).andExpect(content().string(""));
-        mvc.perform(post("/admin/employee/save").header("HX-Request", "true").param("firstName", "Never saved"))
+        mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).header("HX-Request", "true").param("firstName", "Never saved"))
                 .andExpect(status().isUnauthorized()).andExpect(header().string("HX-Redirect", "/login?expired"));
-        mvc.perform(post("/admin/employee/save").header("HX-Request", "true").with(user("admin").roles("ADMIN")))
+        mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).header("HX-Request", "true").with(user("admin").roles("ADMIN")))
                 .andExpect(status().isForbidden()).andExpect(header().doesNotExist("HX-Redirect"));
         mvc.perform(get("/login?expired")).andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Your session has ended")));
@@ -210,7 +210,7 @@ class ReviewRegressionTest {
     }
     @Test void invalidSalaryRejectedAndDataUnchanged() throws Exception {
         var before = employee(3).getSalary();
-        mvc.perform(post("/admin/employee/save").param("__id", "3").param("version", employee(3).getVersion().toString()).param("salary", "1").param("_reason", "Validation test")
+        mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).param("__id", "3").param("version", employee(3).getVersion().toString()).param("salary", "1").param("_reason", "Validation test")
             .with(user("admin").roles("ADMIN")).with(csrf()))
             .andExpect(status().isOk()).andExpect(model().attributeExists("errorMessage"));
         assertThat(employee(3).getSalary()).isEqualByComparingTo(before);
@@ -242,7 +242,7 @@ class ReviewRegressionTest {
     }
 
     @Test void invalidFormShowsFieldErrorAndRetainsInput() throws Exception {
-        String html = mvc.perform(post("/admin/employee/save").param("__id", "3").param("version", employee(3).getVersion().toString())
+        String html = mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).param("__id", "3").param("version", employee(3).getVersion().toString())
                 .param("firstName", "   ").param("lastName", "Retained")
                 .param("_reason", "Keep my explanation").with(user("admin").roles("ADMIN")).with(csrf()))
                 .andExpect(status().isOk()).andExpect(model().attributeExists("fieldErrors"))
@@ -340,7 +340,7 @@ class ReviewRegressionTest {
     }
 
     @Test void htmxValidationReturnsOneFormFragmentWithAccessibleErrors() throws Exception {
-        String html = mvc.perform(post("/admin/employee/save").header("HX-Request", "true")
+        String html = mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).header("HX-Request", "true")
                 .param("__id", "3").param("version", employee(3).getVersion().toString()).param("firstName", " ").param("_reason", "Check correction flow")
                 .with(user("admin").roles("ADMIN")).with(csrf()))
                 .andExpect(status().isOk())
@@ -360,27 +360,27 @@ class ReviewRegressionTest {
     }
     @Test void createUpdateAuditAndDeleteWork() throws Exception {
         String email = "review-probe@example.test";
-        mvc.perform(post("/admin/employee/save").param("firstName", "Review").param("lastName", "Probe").param("email", email)
+        mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).param("firstName", "Review").param("lastName", "Probe").param("email", email)
             .param("salary", "60000").param("status", "ACTIVE").param("department", "1").param("_reason", "Review test")
             .with(user("admin").roles("ADMIN")).with(csrf())).andExpect(status().is3xxRedirection());
         var descriptor = registry.getBySlug("employee").orElseThrow();
         var created = engine.<Employee>findPage(descriptor, 0, 10, email, null, null).content().get(0);
         try {
-            mvc.perform(post("/admin/employee/save").param("__id", created.getId().toString()).param("firstName", "Updated").param("_reason", "Update test")
+            mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).param("__id", created.getId().toString()).param("firstName", "Updated").param("_reason", "Update test")
                 .param("version", created.getVersion().toString()).param("department", "1")
                 .with(user("admin").roles("ADMIN")).with(csrf())).andExpect(status().is3xxRedirection());
             assertThat(employee(created.getId()).getFirstName()).isEqualTo("Updated");
             var audits = context.getBean(io.github.yavonalabs.vectis.core.audit.VectisAuditLogService.class).findByEntity("employee", created.getId().toString());
             assertThat(audits).hasSize(2);
         } finally {
-            mvc.perform(post("/admin/employee/delete/" + created.getId()).param("_version", employee(created.getId()).getVersion().toString()).param("_reason", "Remove test fixture").with(user("admin").roles("ADMIN")).with(csrf()))
+            mvc.perform(post("/admin/employee/delete/" + created.getId()).param("_operation", java.util.UUID.randomUUID().toString()).param("_version", employee(created.getId()).getVersion().toString()).param("_reason", "Remove test fixture").with(user("admin").roles("ADMIN")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
         }
         assertThat(employee(created.getId())).isNull();
     }
 
     @Test void htmxSaveReturnsNavigationToSavedRecord() throws Exception {
-        var result = mvc.perform(post("/admin/employee/save").header("HX-Request", "true")
+        var result = mvc.perform(post("/admin/employee/save").param("_operation", java.util.UUID.randomUUID().toString()).header("HX-Request", "true")
             .param("__id", "3").param("version", employee(3).getVersion().toString()).param("firstName", "Carlos").param("_reason", "Browser navigation regression")
             .with(user("admin").roles("ADMIN")).with(csrf()))
             .andExpect(status().isOk()).andExpect(header().string("HX-Redirect", "/admin/employee/view/3")).andReturn();

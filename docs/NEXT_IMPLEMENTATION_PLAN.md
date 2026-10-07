@@ -2,6 +2,8 @@
 
 Prepared 28 September 2026. Status: proposed implementation sequence; this document does not mark its work complete.
 
+Current completion tracking: [improvement ledger](IMPROVEMENT_COMPLETION_LEDGER.md). Managed CRUD receipts are implemented; final CI/browser/restart gates remain open. See [request replay contract](MANAGED_REQUEST_REPLAY.md).
+
 Scope confirmed by the product owner on 5 October 2026: all stages below are required, including unsaved-edit protection, personal saved views and export. Dependencies still determine implementation order. Pilot feedback informs their design and acceptance criteria; it no longer determines whether these three conveniences are included. External participation, independent review and publishing prerequisites remain explicit gates, not completed engineering work.
 
 1 October: implementation has begun. See [release verification progress](RELEASE_VERIFICATION_PROGRESS.md) for preview diagnosis, new regression coverage and remaining hosted checks.
