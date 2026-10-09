@@ -48,6 +48,7 @@ def stop(proc):
 
 def main():
     logpath = ROOT / 'target/consumer-verification.log'
+    logpath.parent.mkdir(parents=True, exist_ok=True)
     with logpath.open('w', encoding='utf-8') as log:
         proc, client = start(log)
         try:
