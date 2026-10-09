@@ -32,6 +32,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Import(ReviewRegressionTest.ProbeConfiguration.class)
 class ReviewRegressionTest {
+    @Test void staleNativeSaveRetainsInputAndOriginalVersion() throws Exception {
+        String key = java.util.UUID.randomUUID().toString();
+        String html = mvc.perform(post("/admin/employee/save").param("_operation", key)
+                .param("__id", "1").param("version", "-1").param("firstName", "Unsaved work")
+                .param("status", "ON_LEAVE").param("_reason", "Retain this reason")
+                .with(user("admin").roles("ADMIN")).with(csrf()))
+                .andExpect(status().isConflict()).andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("Unsaved work", "Retain this reason", key, "Your submitted values are retained");
+        assertThat(html).containsPattern("name=\"version\"[^>]*value=\"-1\"");
+        assertThat(html).containsPattern("value=\"ON_LEAVE\"[^>]*selected=\"selected\"");
+        assertThat(employee(1).getFirstName()).isNotEqualTo("Unsaved work");
+    }
     @Autowired MockMvc mvc;
     @Autowired DynamicCriteriaQueryEngine engine;
     @Autowired EntityMetadataRegistry registry;

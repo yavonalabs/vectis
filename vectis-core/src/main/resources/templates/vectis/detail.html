@@ -6,7 +6,7 @@
       )}">
 <body>
 
-<div th:fragment="content" class="space-y-6 max-w-6xl mx-auto" x-data="{ activeTab: 'attributes' }">
+<div th:fragment="content" class="space-y-6 max-w-6xl mx-auto" x-data="{ activeTab: 'attributes' }" x-id="['details-tab', 'related-tab', 'details-panel', 'related-panel', 'activity']">
     
     <!-- Top Breadcrumbs & Action Bar -->
     <div id="detail-header" class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-[var(--vx-border)] gap-3">
@@ -54,33 +54,43 @@
             </div>
 
             <!-- Tab Switcher -->
-            <div class="flex items-center gap-2 border-b border-[var(--vx-border)] text-xs font-mono">
-                <button @click="activeTab = 'attributes'" 
+            <div role="tablist" aria-label="Record information" class="flex items-center gap-2 border-b border-[var(--vx-border)] text-xs font-mono">
+                <button @click="activeTab = 'attributes'" role="tab" x-ref="detailsTab" :id="$id('details-tab')"
+                        :aria-controls="$id('details-panel')" :aria-selected="activeTab === 'attributes'" :tabindex="activeTab === 'attributes' ? 0 : -1"
+                        @keydown.arrow-right.prevent="activeTab = 'relationships'; $refs.relatedTab.focus()" @keydown.arrow-left.prevent="activeTab = 'relationships'; $refs.relatedTab.focus()"
+                        @keydown.end.prevent="activeTab = 'relationships'; $refs.relatedTab.focus()" @keydown.home.prevent="activeTab = 'attributes'; $refs.detailsTab.focus()"
                         :class="activeTab === 'attributes' ? 'text-[var(--vx-accent-main)] border-b-2 border-[var(--vx-accent-main)] font-bold' : 'text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)]'"
                         class="px-3 py-2 transition">
                     Details
                 </button>
-                <button @click="activeTab = 'relationships'" 
+                <button @click="activeTab = 'relationships'" role="tab" x-ref="relatedTab" :id="$id('related-tab')"
+                        :aria-controls="$id('related-panel')" :aria-selected="activeTab === 'relationships'" :tabindex="activeTab === 'relationships' ? 0 : -1"
+                        @keydown.arrow-right.prevent="activeTab = 'attributes'; $refs.detailsTab.focus()" @keydown.arrow-left.prevent="activeTab = 'attributes'; $refs.detailsTab.focus()"
+                        @keydown.home.prevent="activeTab = 'attributes'; $refs.detailsTab.focus()" @keydown.end.prevent="activeTab = 'relationships'; $refs.relatedTab.focus()"
                         :class="activeTab === 'relationships' ? 'text-[var(--vx-accent-main)] border-b-2 border-[var(--vx-accent-main)] font-bold' : 'text-[var(--vx-text-muted)] hover:text-[var(--vx-text-main)]'"
                         class="px-3 py-2 transition">
                     Related records
                 </button>
             </div>
+            <a :href="'#' + $id('activity')" class="vx-secondary">View activity</a>
 
             <!-- Tab 1: Attributes -->
-            <div x-show="activeTab === 'attributes'" class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-4 shadow-sm">
+            <div x-show="activeTab === 'attributes'" role="tabpanel" :id="$id('details-panel')" :aria-labelledby="$id('details-tab')" tabindex="0" class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-4 shadow-sm">
+                <section th:each="group : ${descriptor.detailGroups()}" class="space-y-3">
+                <h3 class="font-semibold text-sm" th:text="${group.key}">Details</h3>
                 <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                    <div th:each="field : ${descriptor.fields}" th:if="${!field.isId() && !field.isVersion()}" class="py-1 flex flex-col">
+                    <div th:each="field : ${group.value}" class="py-1 flex flex-col">
                         <div class="flex items-center gap-2 justify-between">
                             <dt class="text-[11px] font-mono uppercase text-[var(--vx-text-muted)] font-semibold" th:text="${field.displayName}">Field</dt>
                         </div>
                         <dd class="mt-1 text-sm text-[var(--vx-text-main)] break-words" th:text="${field.format(entity.__${field.name}__)}">Value</dd>
                     </div>
                 </dl>
+                </section>
             </div>
 
             <!-- Tab 2: Relationships -->
-            <div x-show="activeTab === 'relationships'" class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-4 shadow-sm" style="display: none;">
+            <div x-show="activeTab === 'relationships'" role="tabpanel" :id="$id('related-panel')" :aria-labelledby="$id('related-tab')" tabindex="0" class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-4 shadow-sm" style="display: none;">
                 <div class="space-y-4">
                     <!-- Single Valued Associations -->
                     <div th:each="assoc : ${descriptor.associations}" th:if="${assoc.isSingleValued()}" class="space-y-1.5 pb-3 border-b border-[var(--vx-border)]">
@@ -92,7 +102,8 @@
                                 <span class="text-[var(--vx-accent-main)] font-mono">&rarr;</span>
                             </a>
                         </div>
-                        <p th:unless="${singleAssocDetails.containsKey(assoc.name)}" class="text-xs text-[var(--vx-text-faint)] font-mono">Not assigned</p>
+                        <p th:if="${!accessibleAssociations.contains(assoc.name)}" class="text-xs text-[var(--vx-text-muted)]">Related record unavailable.</p>
+                        <p th:if="${accessibleAssociations.contains(assoc.name) && !singleAssocDetails.containsKey(assoc.name)}" class="text-xs text-[var(--vx-text-faint)] font-mono">Not assigned</p>
                     </div>
 
                     <!-- Collection Associations -->
@@ -121,7 +132,7 @@
         <div th:class="${isDrawer != null && isDrawer ? 'col-span-1 space-y-4 min-w-0' : 'lg:col-span-1 space-y-4 min-w-0'}">
             
             <!-- Widget 1: Operations Hub (Vectis Differentiator) -->
-            <div class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-4 shadow-sm min-w-0">
+            <div th:if="${canDelete || !#lists.isEmpty(actions)}" class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-4 shadow-sm min-w-0">
                 <div class="flex items-center justify-between pb-2 border-b border-[var(--vx-border)]">
                     <div class="text-xs font-mono font-bold text-[var(--vx-text-muted)] uppercase tracking-wider flex items-center gap-2">
                         <span>OPERATIONS HUB</span>
@@ -191,7 +202,7 @@
 
             <!-- Widget 3: Activity Timeline -->
             <div class="bg-[var(--vx-surface-base)] border border-[var(--vx-border)] rounded-xl p-5 space-y-3 shadow-sm">
-                <div class="text-xs font-mono font-bold text-[var(--vx-text-muted)] uppercase tracking-wider pb-2 border-b border-[var(--vx-border)]">ACTIVITY TIMELINE</div>
+                <h3 :id="$id('activity')" tabindex="-1" class="text-xs font-mono font-bold text-[var(--vx-text-muted)] uppercase tracking-wider pb-2 border-b border-[var(--vx-border)]">Activity</h3>
                 <p th:unless="${canViewAudit}" class="py-4 text-xs text-[var(--vx-text-muted)]">Activity history is unavailable for your account.</p>
                 <div th:if="${canViewAudit and #lists.isEmpty(entityAudits)}" class="py-4 text-xs text-[var(--vx-text-faint)] text-center font-mono">
                     No activity recorded yet.
@@ -203,10 +214,13 @@
                                 <span class="font-semibold text-[var(--vx-text-main)]" th:text="${audit.actionName}">Operation</span>
                                 <span class="text-[9px] font-mono text-[var(--vx-text-muted)]" th:text="${'by ' + (audit.actorUsername ?: 'Operator')}">by admin</span>
                             </div>
-                            <span class="font-mono text-[9px] text-[var(--vx-text-faint)]" th:text="${#temporals.format(audit.timestamp, 'MM/dd HH:mm')}">Time</span>
+                            <time class="font-mono text-[10px] text-[var(--vx-text-muted)]" th:datetime="${audit.timestamp}" th:title="${audit.timestamp}" th:text="${audit.timestamp}">Time</time>
                         </div>
                         <p th:if="${audit.reason != null && !audit.reason.isBlank()}" 
                            class="text-[10px] text-[var(--vx-text-muted)] italic" th:text="${'&ldquo;' + audit.reason + '&rdquo;'}">Reason</p>
+                        <ul th:if="${!#lists.isEmpty(auditChanges.get(audit.id))}" class="space-y-1">
+                            <li th:each="change : ${auditChanges.get(audit.id)}" th:text="${change}" class="break-words"></li>
+                        </ul>
                     </div>
                 </div>
             </div>

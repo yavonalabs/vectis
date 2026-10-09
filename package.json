@@ -1,0 +1,16 @@
+{
+  "name": "vectis-release-assets",
+  "private": true,
+  "scripts": {
+    "build:assets": "node scripts/build-assets.cjs",
+    "test": "node --test scripts/action-modal.test.cjs scripts/unsaved-edits.test.cjs"
+  },
+  "devDependencies": {
+    "@alpinejs/anchor": "3.17.4",
+    "@fontsource/inter": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
+    "alpinejs": "3.17.4",
+    "htmx.org": "1.9.12",
+    "tailwindcss": "3.4.17"
+  }
+}

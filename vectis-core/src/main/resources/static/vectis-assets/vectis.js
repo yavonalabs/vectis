@@ -95,6 +95,7 @@ function globalSearch() {
 function actionModal() {
     return {
         loadingPreview: false, previewData: null, previewError: '', submitting: false,
+        operationKey: '',
         reasonProvided: '', actionId: '', entityId: '', slug: '', requestSequence: 0,
         get canSubmit() {
             return !this.loadingPreview && !this.submitting && !!this.previewData && !this.previewError
@@ -102,6 +103,7 @@ function actionModal() {
         },
         async openAction(detail) {
             const requestId = ++this.requestSequence;
+            this.operationKey = window.crypto.randomUUID();
             this.slug = detail.slug; this.actionId = detail.actionId; this.entityId = detail.entityId;
             this.reasonProvided = ''; this.previewData = null; this.previewError = ''; this.submitting = false;
             this.loadingPreview = true;

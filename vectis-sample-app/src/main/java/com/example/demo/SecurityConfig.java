@@ -29,6 +29,10 @@ public class SecurityConfig {
                         .anyMatch(authority -> authority.getAuthority().equals("ROLE_RESTRICTED"));
                 return super.canViewEntity(slug, principal) && (!restricted || "employee".equals(slug));
             }
+            @Override
+            public boolean canExportEntity(String slug, java.security.Principal principal) {
+                return canViewEntity(slug, principal) && canEditEntity(slug, principal);
+            }
         };
     }
 

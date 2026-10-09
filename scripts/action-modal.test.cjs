@@ -16,6 +16,7 @@ test('confirmation form preserves initial version zero and clears absent version
 
 function modalFor(response) {
     const context = vm.createContext({
+        window: { crypto: { randomUUID: () => 'test-action-operation' } },
         document: { addEventListener() {}, body: { dataset: { adminBase: '/portal/ops' } },
             getElementById() { return { focus() {} }; } },
         FormData: class {}, fetch: async () => response

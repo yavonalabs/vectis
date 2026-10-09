@@ -156,7 +156,8 @@ public class EntityMetadataRegistry {
                         adminFieldDescription,
                         presentation == null ? 100 : presentation.order(),
                         presentation == null || presentation.showInList(),
-                        presentation == null ? "" : presentation.currency()
+                        presentation == null ? "" : presentation.currency(),
+                        presentation == null || presentation.group().isBlank() ? "Details" : presentation.group()
                 );
 
                 if (isId) {

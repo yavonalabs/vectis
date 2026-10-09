@@ -8,7 +8,7 @@ The reservation, entity mutation, success audit and completion receipt share the
 
 Concurrent requests contend on the database primary key. One transaction can reserve and execute. A competing request can receive the committed result or a 409 reservation conflict; retrying the exact request after completion returns the stored result. A reservation database failure also returns 409 with no success claim. It is not safe to replace the key automatically after an uncertain network response.
 
-This protects managed CRUD, not custom actions or arbitrary external callbacks. It does not promise exactly-once external execution. Receipt storage is database-backed rather than process-local; actual process-restart testing remains a release gate until recorded separately.
+This describes managed CRUD. Explicit `MANAGED_LOCAL` custom actions now use the same receipt boundary; see [managed actions and recovery](MANAGED_ACTIONS_AND_EXPORT.md) for proposal and migration requirements. Host-managed actions and arbitrary external callbacks have no exactly-once guarantee. Receipt storage is database-backed; final PostgreSQL process-restart evidence remains a release gate until recorded separately.
 
 ## Schema and retention
 
@@ -16,4 +16,4 @@ Production hosts must provision the receipt table in the same database/transacti
 
 There is deliberately no automatic receipt expiration or cleanup in this slice. Retain receipts for the entire promised retry horizon; keeping them indefinitely preserves replay protection while the data store survives. Before introducing cleanup, define and enforce a supported retry expiry at the API boundary. Deleting a receipt without such enforcement permits that old key to execute again. Backups/restores must treat records, audit and receipts as one consistent data set.
 
-Manual construction of `RecordMutationService` now requires `MutationReceiptStore`. Hosts explicitly listing entity packages must include `io.github.yavonalabs.vectis.core.mutation`. The starter's default entity scan includes it. Legacy action contracts, reviewed-proposal binding and conflict input recovery remain separate work.
+Manual construction of `RecordMutationService` requires `MutationReceiptStore`. Hosts explicitly listing entity packages must include `io.github.yavonalabs.vectis.core.mutation`. The starter's default entity scan includes it. The managed-action guide documents the current action contract and additional tables; do not infer that legacy host actions have adopted managed guarantees.

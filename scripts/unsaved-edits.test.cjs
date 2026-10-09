@@ -42,6 +42,22 @@ test('session expiry retains values and prevents automatic redirect', () => {
     assert.equal(h.form.elements[0].value,'Bob'); assert.equal(h.notice.hidden,false);
     assert.equal(h.fire('beforeunload'),true);
 });
+
+test('conflicts retain edits and prevent another save until reload', () => {
+    const h=harness(); h.form.elements[0].value='Kept';
+    assert.equal(h.fire('htmx:beforeOnLoad',{elt:h.form,xhr:{status:409}}),true);
+    assert.equal(h.form.elements[0].value,'Kept');
+    assert.match(h.notice.textContent,/edits are kept/);
+    assert.equal(h.fire('htmx:beforeRequest',{elt:h.form}),true);
+});
+
+test('server errors preserve input without implying a confirmed rollback', () => {
+    const h=harness(); h.form.elements[0].value='Kept';
+    assert.equal(h.fire('htmx:beforeOnLoad',{elt:h.form,xhr:{status:500}}),true);
+    assert.equal(h.form.elements[0].value,'Kept');
+    assert.match(h.notice.textContent,/could not be confirmed/);
+    assert.equal(h.fire('beforeunload'),true);
+});
 test('validation swap preserves the original baseline', () => {
     const h=harness();
     h.swap({elements:[{name:'firstName',type:'text',value:'Invalid'}],dataset:{unsaved:'true'},isConnected:true});

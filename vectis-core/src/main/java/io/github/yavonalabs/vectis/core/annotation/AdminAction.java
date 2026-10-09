@@ -13,6 +13,8 @@ public @interface AdminAction {
     String confirmMessage() default "Are you sure you want to execute this action?";
     String requiredRole() default "";
     RiskLevel risk() default RiskLevel.MODERATE;
+    io.github.yavonalabs.vectis.core.action.ActionExecutionMode executionMode()
+            default io.github.yavonalabs.vectis.core.action.ActionExecutionMode.HOST_MANAGED;
     /** Public method on this class returning proposed scalar values without side effects. */
     String previewMethod() default "";
 }

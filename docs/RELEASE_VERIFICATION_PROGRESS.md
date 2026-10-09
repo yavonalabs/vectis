@@ -1,4 +1,14 @@
-# Release verification progress — updated 5 October 2026
+# Release verification progress — updated 9 October 2026
+
+## 9 October hardening candidate (not frozen)
+
+`mvn -B -ntp verify` passed on Java 17 / Spring Boot 3.5.16: 117 Java tests, zero failures/errors/skips. `npm test` passed all 19 JavaScript tests; `npm run build:assets` rebuilt the bundled assets. Local logs: `target/freeze-boot35-recheck.log`, `target/freeze-js-final.log`, `target/freeze-assets-final.log`.
+
+The first upgraded run found ten rendering errors at the form layout's title expression. Removing the restricted expression from that fragment argument fixed them; the full repeated suite passed. New typed-adapter tests verify managed commit/replay, conflict, unknown host outcomes, outer-transaction rejection and conflicting save identities. The independently packaged consumer also passed on 3.5.16: custom context/admin paths, CSRF, managed commit, receipt recovery, actual two-JVM persistent-H2 restart, exact retry with unchanged version/effect, one audit, schema validation and local asset access. Evidence: `target/freeze-consumer-final.log` and `target/consumer-verification.log`. Current PostgreSQL CI remains separate evidence.
+
+Earlier local browser checks covered admin login, record lists/details, accessible tab selection, managed review/submit and CSV download. List geometry was checked at 320/375/768/1280 pixels with contained table scrolling. These checks used the earlier local candidate and do not certify the final hosted artifact, contrast/zoom or a real screen reader. See the completion ledger for outstanding engineering acceptance and the freeze boundary for external release gates.
+
+The entries below are historical evidence for their respective builds, not a declaration that older open findings remain unfixed or that later builds inherit their verification.
 
 This records the first implementation slice of NEXT_IMPLEMENTATION_PLAN.md, not completion of its release gates.
 

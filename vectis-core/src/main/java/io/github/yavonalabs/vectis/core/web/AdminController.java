@@ -85,6 +85,9 @@ public class AdminController {
         if (!permissionEvaluator.canAccessAdmin(principal)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied to Admin Console");
         }
+        // Resolve deferred token/session creation before a large template flushes output.
+        Object csrf = request.getAttribute("_csrf");
+        if (csrf != null) PropertyAccessorFactory.forBeanPropertyAccess(csrf).getPropertyValue("token");
         @SuppressWarnings("unchecked")
         Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(
                 org.springframework.web.servlet.HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
@@ -152,8 +155,13 @@ public class AdminController {
         }
 
         model.addAttribute("savedViews", savedViews.list(slug));
+        model.addAttribute("appliedFilters", List.of());
+        model.addAttribute("canExport", permissionEvaluator.canExportEntity(slug, principal));
+        model.addAttribute("exportColumns", descriptor.fields().stream().filter(f -> !f.isVersion() && !f.isEmbeddedId()
+                && (f.isString() || f.isNumeric() || f.isBoolean() || f.isEnum() || f.isDateOrTime())).toList());
         try {
             model.addAttribute("savedViewState", io.github.yavonalabs.vectis.core.view.SavedViewState.capture(descriptor, parameters));
+            model.addAttribute("appliedFilters", AppliedFilters.chips(descriptor, parameters));
         } catch (ResponseStatusException invalidView) {
             model.addAttribute("savedViewError", "Apply valid filters and a page size of 10, 25 or 50 before saving a view.");
         }
@@ -198,7 +206,7 @@ public class AdminController {
                 var target = registry.getByClass(assoc.targetEntityClass()).orElse(null);
                 if (target == null || !permissionEvaluator.canViewEntity(target.slug(), principal)) continue;
                 Object value = rowWrapper.getPropertyValue(assoc.name());
-                if (value != null) labels.put(assoc.name(), io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(target, value));
+                labels.put(assoc.name(), value == null ? "Not assigned" : io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(target, value));
             }
             associationLabels.put(row, labels);
         }
@@ -242,10 +250,12 @@ public class AdminController {
         BeanWrapper wrapper = PropertyAccessorFactory.forBeanPropertyAccess(entity);
         Map<String, List<Map<String, String>>> collectionDetails = new HashMap<>();
         Map<String, Map<String, String>> singleAssocDetails = new HashMap<>();
+        java.util.Set<String> accessibleAssociations = new java.util.HashSet<>();
 
         for (AssociationDescriptor assoc : descriptor.associations()) {
             EntityDescriptor targetDesc = registry.getByClass(assoc.targetEntityClass()).orElse(null);
             if (targetDesc == null || !permissionEvaluator.canViewEntity(targetDesc.slug(), principal)) continue;
+            accessibleAssociations.add(assoc.name());
 
             if (assoc.isSingleValued()) {
                 Object assocVal = wrapper.getPropertyValue(assoc.name());
@@ -268,9 +278,14 @@ public class AdminController {
         model.addAttribute("entity", entity);
         model.addAttribute("encodedId", encodedId);
         model.addAttribute("singleAssocDetails", singleAssocDetails);
+        model.addAttribute("accessibleAssociations", accessibleAssociations);
         model.addAttribute("collectionDetails", collectionDetails);
         model.addAttribute("actions", getAllowedActions(slug, descriptor, principal));
-        model.addAttribute("entityAudits", permissionEvaluator.canViewAuditLogs(principal) ? auditLogService.findByEntity(slug, encodedId) : List.of());
+        var entityAudits = permissionEvaluator.canViewAuditLogs(principal) ? auditLogService.findByEntity(slug, encodedId) : java.util.List.<io.github.yavonalabs.vectis.core.audit.VectisAuditLog>of();
+        model.addAttribute("entityAudits", entityAudits);
+        Map<String, List<String>> auditChanges = new HashMap<>();
+        for (var audit : entityAudits) auditChanges.put(audit.getId(), io.github.yavonalabs.vectis.core.audit.AuditPresentation.changes(audit, descriptor));
+        model.addAttribute("auditChanges", auditChanges);
         model.addAttribute("recordVersion", recordVersion(descriptor, entity));
         model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity));
         model.addAttribute("canEdit", permissionEvaluator.canEditEntity(slug, principal));
@@ -409,11 +424,13 @@ public class AdminController {
             }
             return "redirect:" + adminPath + "/" + slug + ListNavigation.querySuffix(request.getParameter("_list"));
 
-        } catch (ResponseStatusException e) { throw e;
+        } catch (ResponseStatusException e) {
+            if (e.getStatusCode().value() != 409 && e.getStatusCode().value() != 400) throw e;
+            return retainedForm(descriptor, formParams, model, request, response, principal, e.getStatusCode().value(),
+                    e.getReason() + " Your submitted values are retained below.");
         } catch (OptimisticLockException | org.springframework.dao.OptimisticLockingFailureException e) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Conflict: This record was modified by another user while you were editing it. Please refresh and try again.");
-            return (isNew ? "redirect:" + adminPath + "/" + slug + "/create" : "redirect:" + adminPath + "/" + slug + "/edit/" + rawId) + ListNavigation.contextSuffix(request.getParameter("_list"));
+            return retainedForm(descriptor, formParams, model, request, response, principal, 409,
+                    "This record changed while you were editing. Your values are retained. Copy them, then reload and review the current record before saving.");
         } catch (io.github.yavonalabs.vectis.core.mutation.RecordMutationService.InvalidRecord e) {
             entity = e.entity();
             model.addAttribute("descriptor", descriptor);
@@ -439,9 +456,39 @@ public class AdminController {
             return "true".equalsIgnoreCase(request.getHeader("HX-Request"))
                     ? "vectis/fragments/edit-form :: editFormFragment" : "vectis/form";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "The record could not be saved. Check its values and try again.");
-            return (isNew ? "redirect:" + adminPath + "/" + slug + "/create" : "redirect:" + adminPath + "/" + slug + "/edit/" + rawId) + ListNavigation.contextSuffix(request.getParameter("_list"));
+            return retainedForm(descriptor, formParams, model, request, response, principal, 500,
+                    "The save could not be confirmed. Your submitted values and operation key are retained. Check the operation result before changing or retrying this request.");
         }
+    }
+
+    private String retainedForm(EntityDescriptor descriptor, Map<String, String> input, Model model,
+            HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response, Principal principal, int status, String message) {
+        io.github.yavonalabs.vectis.core.mutation.MutationInputs.validate(input);
+        String id = input.get("__id");
+        boolean isNew = id == null || id.isBlank();
+        Object entity;
+        try {
+            entity = isNew ? descriptor.javaType().getDeclaredConstructor().newInstance()
+                    : queryEngine.findById(descriptor, decodeId(id, descriptor.idField().type(), descriptor.idField().isEmbeddedId()));
+        } catch (Exception ex) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to reload this form."); }
+        if (entity == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "This record is no longer available.");
+        model.addAttribute("descriptor", descriptor); model.addAttribute("entity", entity);
+        model.addAttribute("isNew", isNew); model.addAttribute("encodedId", isNew ? null : id);
+        var options = loadFormAssociationOptions(descriptor, principal, entity);
+        for (var entry : options.entrySet()) {
+            if (!input.containsKey(entry.getKey())) continue;
+            String selected = input.get(entry.getKey());
+            var choices = new ArrayList<>(entry.getValue());
+            if (!selected.isBlank() && choices.stream().noneMatch(option -> option.get("id").equals(selected)))
+                choices.add(Map.of("id", selected, "label", "Submitted selection unavailable"));
+            entry.setValue(choices);
+        }
+        model.addAttribute("formOptions", options); model.addAttribute("submittedValues", input);
+        model.addAttribute("mutationKey", input.get("_operation")); model.addAttribute("errorMessage", message);
+        model.addAttribute("recordVersion", recordVersion(descriptor, entity));
+        model.addAttribute("recordLabel", io.github.yavonalabs.vectis.core.metadata.RecordPresentation.label(descriptor, entity));
+        model.addAttribute("changeReason", input.get("_reason")); response.setStatus(status);
+        return "true".equalsIgnoreCase(request.getHeader("HX-Request")) ? "vectis/fragments/edit-form :: editFormFragment" : "vectis/form";
     }
 
     @PostMapping("/{slug}/action/{actionId}/{encodedId}")
@@ -458,7 +505,9 @@ public class AdminController {
 
         try {
             var result = actionMutations.execute(slug, actionId, encodedId, allParams);
-            redirectAttributes.addFlashAttribute("flashMessage", "Action '" + result.actionLabel() + "' executed successfully!");
+            redirectAttributes.addFlashAttribute("flashMessage", result.outcome() == io.github.yavonalabs.vectis.core.mutation.ActionMutationService.Outcome.COMMITTED
+                    ? "Action '" + result.actionLabel() + "' committed." + (result.replayed() ? " Showing the original result; it was not executed again." : "")
+                    : "Action '" + result.actionLabel() + "' completed its host handler. Downstream delivery is owned by the host application.");
         } catch (ResponseStatusException e) {
             throw e;
         } catch (jakarta.validation.ConstraintViolationException e) {

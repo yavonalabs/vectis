@@ -17,6 +17,9 @@ public class VectisChangeEvent extends ApplicationEvent {
     private final String actorUsername;
     private final String reason;
     private final Instant eventInstant;
+    private String operationId;
+    public VectisChangeEvent withOperationId(String operationId) { this.operationId = operationId; return this; }
+    public String getOperationId() { return operationId; }
 
     public VectisChangeEvent(
             Object source,

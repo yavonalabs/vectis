@@ -5,93 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle != null ? pageTitle + ' - ' + adminTitle : adminTitle}">Operations Console</title>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-
+    <link rel="stylesheet" th:href="@{/vectis-assets/vendor/fonts.css}">
+    <link rel="stylesheet" th:href="@{/vectis-assets/vendor/utilities.css}">
+    <script th:src="@{/vectis-assets/vendor/htmx.min.js}"></script>
     <script th:src="@{/vectis-assets/vectis.js}"></script>
     <script th:src="@{/vectis-assets/unsaved-edits.js}"></script>
-    <!-- Alpine.js Plugins -->
-    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/anchor@3.x.x/dist/cdn.min.js"></script>
-    <!-- Alpine.js Core -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer th:src="@{/vectis-assets/vendor/alpine-anchor.min.js}"></script>
+    <script defer th:src="@{/vectis-assets/vendor/alpine.min.js}"></script>
 
-    <style>
-        :root {
-            --vx-canvas: #090a0f;
-            --vx-surface-base: #0f1117;
-            --vx-surface-card: #151821;
-            --vx-surface-overlay: #1c202c;
-            --vx-surface-active: #232838;
-            --vx-border: rgba(255, 255, 255, 0.08);
-            --vx-border-subtle: rgba(255, 255, 255, 0.04);
-            --vx-text-main: #f3f4f6;
-            --vx-text-muted: #9ca3af;
-            --vx-text-faint: #6b7280;
-            --vx-accent: #10b981;
-            --vx-accent-main: #10b981;
-            --vx-accent-hover: #059669;
-            --vx-accent-glow: rgba(16, 185, 129, 0.15);
-        }
 
-        body {
-            background-color: var(--vx-canvas);
-            color: var(--vx-text-main);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            letter-spacing: -0.011em;
-        }
-
-        .font-mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        /* Type Badges */
-        .type-badge {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            padding: 1px 6px;
-            border-radius: 4px;
-            background-color: #1a1e29;
-            color: #9ca3af;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            text-transform: lowercase;
-            font-weight: 500;
-        }
-
-        /* Tiered Risk Badges */
-        .risk-badge-low { color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); }
-        .risk-badge-moderate { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); }
-        .risk-badge-impact { color: #f97316; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.25); }
-        .risk-badge-danger { color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); }
-
-        /* Toast Notifications */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #151821;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            padding: 12px 18px;
-            border-radius: 10px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            transform: translateX(400px);
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .toast.show { transform: translateX(0); }
-
-        .htmx-indicator { display: none; }
-        .htmx-request .htmx-indicator { display: inline-block; }
-        .htmx-request.htmx-indicator { display: inline-block; }
-    </style>
     <link rel="stylesheet" th:href="@{/vectis-assets/operator.css}">
     <link rel="icon" type="image/svg+xml" th:href="@{/vectis-assets/vectis-favicon.svg}">
 </head>
@@ -338,6 +260,8 @@
 
             <form id="modal-action-form" method="post" action="" @submit="if (!canSubmit) { $event.preventDefault(); } else { submitting = true; }">
                 <input type="hidden" name="_version" :value="previewData?.version ?? ''" />
+                <input type="hidden" name="_proposal" :value="previewData?.proposal ?? ''" />
+                <input type="hidden" name="_operation" :value="operationKey" />
                 <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="space-y-1.5" x-show="previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL'">
                     <label for="action-reason" class="text-xs font-medium text-[var(--vx-text-main)]">

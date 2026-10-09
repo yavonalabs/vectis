@@ -91,9 +91,62 @@ public class VectisAutoConfiguration {
     public io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutationService(
             EntityMetadataRegistry metadata, EntityActionRegistry actions, DynamicCriteriaQueryEngine queries,
             AdminPermissionEvaluator permissions, ApplicationEventPublisher events,
+            io.github.yavonalabs.vectis.core.mutation.ManagedActionTransaction managed,
+            io.github.yavonalabs.vectis.core.mutation.ActionProposalStore proposals,
+            io.github.yavonalabs.vectis.core.mutation.MutationReceiptStore receipts, VectisAuditLogService audit,
             ObjectProvider<io.github.yavonalabs.vectis.core.mutation.MutationActorProvider> actors) {
         return new io.github.yavonalabs.vectis.core.mutation.ActionMutationService(metadata, actions, queries,
-                permissions, actors.getIfAvailable(() -> () -> null), events);
+                permissions, actors.getIfAvailable(() -> () -> null), events, managed, receipts, proposals, audit);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.mutation.ManagedActionTransaction managedActionTransaction(
+            org.springframework.transaction.PlatformTransactionManager manager, EntityManager em) {
+        return new io.github.yavonalabs.vectis.core.mutation.ManagedActionTransaction(manager, em);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.mutation.ActionProposalStore actionProposalStore(EntityManager em) {
+        return new io.github.yavonalabs.vectis.core.mutation.ActionProposalStore(em);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.export.RecordExportService recordExportService(EntityMetadataRegistry metadata,
+            DynamicCriteriaQueryEngine queries, AdminPermissionEvaluator permissions,
+            ObjectProvider<io.github.yavonalabs.vectis.core.mutation.MutationActorProvider> actors) {
+        return new io.github.yavonalabs.vectis.core.export.RecordExportService(metadata, queries, permissions, actors.getIfAvailable(() -> () -> null));
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.web.RecordExportController recordExportController(io.github.yavonalabs.vectis.core.export.RecordExportService exports) {
+        return new io.github.yavonalabs.vectis.core.web.RecordExportController(exports);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.web.OperationResultController operationResultController(
+            ObjectProvider<io.github.yavonalabs.vectis.core.mutation.MutationActorProvider> actors,
+            io.github.yavonalabs.vectis.core.mutation.MutationReceiptStore receipts, AdminPermissionEvaluator permissions) {
+        return new io.github.yavonalabs.vectis.core.web.OperationResultController(actors.getIfAvailable(() -> () -> null), receipts, permissions);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.web.BuildIdentityController buildIdentityController(
+            ObjectProvider<io.github.yavonalabs.vectis.core.mutation.MutationActorProvider> actors, AdminPermissionEvaluator permissions) {
+        return new io.github.yavonalabs.vectis.core.web.BuildIdentityController(actors.getIfAvailable(() -> () -> null), permissions);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public io.github.yavonalabs.vectis.core.mutation.MutationExecutor mutationExecutor(
+            io.github.yavonalabs.vectis.core.mutation.RecordMutationService records,
+            io.github.yavonalabs.vectis.core.mutation.ActionMutationService actions) {
+        return new io.github.yavonalabs.vectis.core.mutation.MutationExecutor(records, actions);
     }
 
     @Bean
@@ -159,8 +212,9 @@ public class VectisAutoConfiguration {
     @ConditionalOnMissingBean
     public io.github.yavonalabs.vectis.core.web.ActionPreviewController actionPreviewController(
             EntityActionRegistry actions, EntityMetadataRegistry registry, DynamicCriteriaQueryEngine queries,
-            AdminPermissionEvaluator permissions, jakarta.validation.Validator validator) {
-        return new io.github.yavonalabs.vectis.core.web.ActionPreviewController(actions, registry, queries, permissions, validator);
+            AdminPermissionEvaluator permissions, jakarta.validation.Validator validator,
+            io.github.yavonalabs.vectis.core.mutation.ActionProposalStore proposals) {
+        return new io.github.yavonalabs.vectis.core.web.ActionPreviewController(actions, registry, queries, permissions, validator, proposals);
     }
 
     @Bean

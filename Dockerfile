@@ -5,7 +5,8 @@ COPY vectis-core ./vectis-core
 COPY vectis-autoconfigure ./vectis-autoconfigure
 COPY vectis-spring-boot-starter ./vectis-spring-boot-starter
 COPY vectis-sample-app ./vectis-sample-app
-RUN mvn -B -ntp verify
+ARG RENDER_GIT_COMMIT=unknown
+RUN mvn -B -ntp -Dvectis.build.revision=${RENDER_GIT_COMMIT} verify
 
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app

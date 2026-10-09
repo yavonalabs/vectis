@@ -9,4 +9,6 @@ public interface AdminPermissionEvaluator {
     boolean canDeleteEntity(String entitySlug, Principal principal);
     boolean canExecuteAction(String entitySlug, String actionId, Principal principal);
     boolean canViewAuditLogs(Principal principal);
+    /** Export is a separate capability; existing implementations deny it by default. */
+    default boolean canExportEntity(String entitySlug, Principal principal) { return false; }
 }

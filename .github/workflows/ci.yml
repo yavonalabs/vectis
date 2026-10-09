@@ -18,9 +18,18 @@ jobs:
           java-version: '17'
           cache: maven
       - name: Verify all modules
-        run: mvn -B -ntp verify
+        run: mvn -B -ntp -Dvectis.build.revision="$GITHUB_SHA" verify
       - name: Verify preview response handling
         run: node --test scripts/action-modal.test.cjs scripts/unsaved-edits.test.cjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Verify bundled assets are reproducible
+        run: |
+          npm ci --ignore-scripts
+          npm run build:assets
+          git diff --exit-code -- vectis-core/src/main/resources/static/vectis-assets/vendor
   postgres-mutations:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -44,9 +53,35 @@ jobs:
           java-version: '17'
           cache: maven
       - name: Verify PostgreSQL mutations and personal saved views
-        run: mvn -B -ntp -pl vectis-sample-app -am -Dtest=AtomicRecordMutationTest,SavedViewIntegrationTest -Dsurefire.failIfNoSpecifiedTests=false test
+        run: mvn -B -ntp -pl vectis-sample-app -am -Dtest=AtomicRecordMutationTest,ManagedActionMutationTest,SavedViewIntegrationTest -Dsurefire.failIfNoSpecifiedTests=false test
         env:
           VECTIS_TEST_DB_URL: jdbc:postgresql://localhost:5432/vectis_test
           VECTIS_TEST_DB_DRIVER: org.postgresql.Driver
           VECTIS_TEST_DB_USER: vectis_test
           VECTIS_TEST_DB_PASSWORD: disposable_ci_password
+      - name: Install built artifacts and build independent consumer
+        run: |
+          mvn -B -ntp -DskipTests install
+          mvn -B -ntp -f verification/consumer/pom.xml clean package
+      - name: Apply upgrade migrations to independent consumer database
+        env:
+          PGPASSWORD: disposable_ci_password
+        run: |
+          createdb -h localhost -U vectis_test vectis_consumer
+          psql -v ON_ERROR_STOP=1 -h localhost -U vectis_test -d vectis_consumer -f verification/consumer/baseline-postgresql.sql
+          psql -v ON_ERROR_STOP=1 -h localhost -U vectis_test -d vectis_consumer -f docs/sql/mutation-receipts-postgresql.sql
+          psql -v ON_ERROR_STOP=1 -h localhost -U vectis_test -d vectis_consumer -f docs/sql/saved-views-postgresql.sql
+          psql -v ON_ERROR_STOP=1 -h localhost -U vectis_test -d vectis_consumer -f docs/sql/action-proposals-postgresql.sql
+          psql -v ON_ERROR_STOP=1 -h localhost -U vectis_test -d vectis_consumer -f docs/sql/operation-recovery-postgresql.sql
+      - name: Verify consumer restart and lost-response replay on PostgreSQL
+        run: python scripts/verify-consumer.py
+        env:
+          VECTIS_CONSUMER_DB: jdbc:postgresql://localhost:5432/vectis_consumer
+          VECTIS_CONSUMER_DDL: validate
+          VECTIS_TEST_DB_USER: vectis_test
+          VECTIS_TEST_DB_PASSWORD: disposable_ci_password
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: consumer-verification
+          path: target/consumer-verification.log

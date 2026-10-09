@@ -114,6 +114,29 @@ public class DynamicCriteriaQueryEngine {
         return findById(descriptor, id, true);
     }
 
+    /** Scalar projection only: never materializes related entities or hidden fields. */
+    @Transactional(readOnly = true)
+    public List<jakarta.persistence.Tuple> exportRows(EntityDescriptor descriptor, List<FieldDescriptor> columns,
+            String search, String sort, String direction, List<RecordFilter> filters) {
+        if (columns.isEmpty() || columns.size() > 20 || columns.stream().anyMatch(f -> !descriptor.fields().contains(f) || f.isEmbeddedId() || f.isVersion()))
+            throw new IllegalArgumentException("Invalid export projection");
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        var query = cb.createTupleQuery();
+        var root = query.from(descriptor.javaType());
+        List<Selection<?>> selection = new ArrayList<>();
+        for (var column : columns) {
+            // Bound text before JDBC materializes it. The service rejects oversized cells.
+            selection.add(column.isString() ? cb.substring(root.<String>get(column.name()), 1, 2049) : root.get(column.name()));
+        }
+        query.multiselect(selection);
+        Predicate predicate = buildPredicate(cb, root, descriptor, search, filters);
+        if (predicate != null) query.where(predicate);
+        String order = sort == null || sort.isBlank() ? descriptor.idField().name() : sort;
+        if (descriptor.fields().stream().noneMatch(f -> f.name().equals(order))) throw new IllegalArgumentException("Invalid sort");
+        query.orderBy("desc".equals(direction) ? cb.desc(root.get(order)) : cb.asc(root.get(order)), cb.asc(root.get(descriptor.idField().name())));
+        return entityManager.createQuery(query).setMaxResults(1001).setHint("jakarta.persistence.query.timeout", 10000).getResultList();
+    }
+
     @Transactional(readOnly = true)
     public <T> T findById(EntityDescriptor descriptor, Object id, boolean initializeCollections) {
         @SuppressWarnings("unchecked")

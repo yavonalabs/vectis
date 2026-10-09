@@ -71,6 +71,7 @@ Supply the host application's authentication and security filter chain. The defa
 - The Render sample deployment is undergoing [hosted release verification](docs/HOSTED_DEMO_VERIFICATION.md); it is not a production-readiness certification.
 - [Personal saved views](docs/PERSONAL_SAVED_VIEWS.md) and [unsaved-edit protection](docs/UNSAVED_EDITS.md) are implemented, with verification limits documented. Schema-managed installations need the saved-view table migration.
 - Export and additional mutation-lifecycle work remain on the [roadmap](docs/NEXT_IMPLEMENTATION_PLAN.md); the [completion ledger](docs/IMPROVEMENT_COMPLETION_LEDGER.md) tracks remaining gates.
+- The validated [backend](docs/BACKEND_REVIEW_ACTION_PLAN.md) and [UI](docs/UI_REVIEW_ACTION_PLAN.md) plans define the next candidate. The [code-freeze boundary](docs/CODE_FREEZE_BOUNDARY.md) sets required completion evidence and defers further feature expansion; code is not frozen yet.
 - Runtime UI assets currently include CDN dependencies.
 - No enterprise edition, SSO product, approval workflow or commercial pricing is announced by this repository.
 
@@ -83,3 +84,6 @@ Useful feedback describes a real recurring support task, the smallest reproducti
 ## License
 
 [Apache License 2.0](LICENSE). Copyright 2026 Vectis Contributors (YavonaLabs).
+## Candidate hardening
+
+The current integration work is documented in [Managed actions, recovery and export](docs/MANAGED_ACTIONS_AND_EXPORT.md). The [code-freeze boundary](docs/CODE_FREEZE_BOUNDARY.md) remains the release gate; passing builds alone do not authorize production writes.

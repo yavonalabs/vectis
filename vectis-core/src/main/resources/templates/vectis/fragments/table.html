@@ -27,9 +27,32 @@
         </form>
     </details>
 
+    <details th:if="${canExport && filterError == null && savedViewError == null}" class="vx-filter-details vx-filter-form">
+        <summary>Export applied results</summary>
+        <p>CSV export includes all matching records, up to 1,000 rows, 20 columns and 2 MiB. Values are limited to 2,048 characters. If a limit is exceeded, no partial file is downloaded.</p>
+        <form method="get" th:action="@{${adminPath} + '/' + ${descriptor.slug} + '/export.csv'}">
+            <input type="hidden" name="search" th:value="${search}">
+            <input type="hidden" name="sort" th:value="${sort}">
+            <input type="hidden" name="dir" th:value="${dir}">
+            <th:block th:each="condition : ${filterRows}">
+                <input type="hidden" name="filterField" th:value="${condition.field}">
+                <input type="hidden" name="filterOp" th:value="${condition.operator}">
+                <input type="hidden" name="filterValue" th:value="${condition.value}">
+            </th:block>
+            <fieldset class="space-y-2"><legend>Choose columns</legend>
+                <label th:each="field : ${exportColumns}" class="inline-flex items-center gap-2 mr-3">
+                    <input type="checkbox" name="column" th:value="${field.name}">
+                    <span th:text="${field.displayName}"></span>
+                </label>
+            </fieldset>
+            <button type="submit" class="vx-secondary mt-3">Download CSV</button>
+        </form>
+    </details>
+
     <form id="record-filters" method="get" th:action="@{${adminPath} + '/' + ${descriptor.slug}}"
           th:attr="hx-get=@{${adminPath} + '/' + ${descriptor.slug}}" hx-target="#table-container"
-          hx-push-url="true" class="vx-filter-form">
+          hx-push-url="true" class="vx-filter-form" x-data="{ unapplied: false }" @input="unapplied = true" @change="unapplied = true">
+        <p x-show="unapplied" x-cloak role="status">Unapplied changes. Select Apply search &amp; filters to update these results.</p>
         <input type="hidden" name="sort" th:value="${sort}">
         <input type="hidden" name="dir" th:value="${dir}">
         <div class="vx-filter-toolbar">
@@ -89,6 +112,9 @@
             </div>
         </details>
         <div class="vx-filter-summary" th:if="${filterError != null || filterCount > 0 || (search != null && !search.isBlank())}">
+            <a th:each="chip : ${appliedFilters}" class="vx-secondary"
+               th:href="@{${adminPath} + '/' + ${descriptor.slug} + '?' + ${chip.query}}"
+               th:aria-label="${'Remove applied filter: ' + chip.label}" th:text="${chip.label + ' ×'}"></a>
             <span th:text="${filterError != null ? 'Filters need attention' : filterCount + ' filter(s)' + (search != null && !search.isBlank() ? ' · Search: ' + search : '')}"></span>
             <a th:href="@{${adminPath} + '/' + ${descriptor.slug}(size=${size})}">Clear search and filters</a>
         </div>
@@ -162,10 +188,9 @@
                     </td>
 
                     <td th:each="assoc : ${descriptor.associations}" th:if="${assoc.isSingleValued()}" class="px-4 py-2.5 text-left border-r border-[var(--vx-border)]">
-                        <span th:if="${row.__${assoc.name}__ != null}"
+                        <span
                               class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs bg-[var(--vx-surface-card)] text-[var(--vx-text-main)] border border-[var(--vx-border)] font-medium"
                               th:text="${associationLabels.get(row).getOrDefault(assoc.name, 'Unavailable')}">Department</span>
-                        <span th:if="${row.__${assoc.name}__ == null}" class="text-[var(--vx-text-faint)] font-mono text-xs">Not assigned</span>
                     </td>
 
                     <!-- Dynamic Actions Dropdown with Vector SVGs -->

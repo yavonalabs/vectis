@@ -46,7 +46,7 @@
         <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
         <input type="hidden" name="_operation" th:value="${mutationKey}" />
         <input th:if="${!isNew}" type="hidden" name="__id" th:value="${encodedId}" />
-        <input th:if="${descriptor.hasVersion()}" type="hidden" th:name="${descriptor.versionField.name}" th:value="${entity.__${descriptor.versionField.name}__}" />
+        <input th:if="${descriptor.hasVersion()}" type="hidden" th:name="${descriptor.versionField.name}" th:value="${submittedValues.containsKey(descriptor.versionField.name) ? submittedValues.get(descriptor.versionField.name) : entity.__${descriptor.versionField.name}__}" />
 
         <!-- Form Fields Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -67,7 +67,7 @@
                            th:aria-describedby="${fieldErrors.containsKey(field.name) ? field.name + '-error' : null}"
                                th:name="${field.name}" 
                                value="true"
-                               th:checked="${entity.__${field.name}__ == true}"
+                               th:checked="${!submittedValues.isEmpty() ? submittedValues.get(field.name) == 'true' : entity.__${field.name}__ == true}"
                                class="sr-only peer">
                         <div class="w-10 h-5 bg-[var(--vx-surface-overlay)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[var(--vx-canvas)] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--vx-text-main)] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--vx-accent-main)]"></div>
                     </label>
@@ -84,7 +84,7 @@
                         <option th:each="enumVal : ${field.getEnumConstants()}"
                                 th:value="${enumVal}"
                                 th:text="${field.format(enumVal)}"
-                                th:selected="${entity.__${field.name}__ != null && entity.__${field.name}__.toString() == enumVal.toString()}"></option>
+                                th:selected="${submittedValues.containsKey(field.name) ? submittedValues.get(field.name) == enumVal.toString() : entity.__${field.name}__ != null && entity.__${field.name}__.toString() == enumVal.toString()}"></option>
                     </select>
                 </div>
 
@@ -127,7 +127,7 @@
                     <option th:each="opt : ${formOptions.get(assoc.name)}"
                             th:value="${opt.id}"
                             th:text="${opt.label}"
-                            th:selected="${opt.get('selected') == 'true'}"></option>
+                            th:selected="${submittedValues.containsKey(assoc.name) ? submittedValues.get(assoc.name) == opt.id : opt.get('selected') == 'true'}"></option>
                 </select>
                 <div class="vx-relationship-search">
                     <label th:for="${assoc.name + '-search'}">Find more options

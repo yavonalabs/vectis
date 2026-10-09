@@ -21,27 +21,27 @@ public class Employee {
 
     @NotBlank
     @Column(nullable = false)
-    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Legal first name", order = 10, showInList = false)
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Legal first name", order = 10, showInList = false, group = "Identity")
     private String firstName;
 
     @NotBlank
     @Column(nullable = false)
-    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Legal last name", order = 20, showInList = false)
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Legal last name", order = 20, showInList = false, group = "Identity")
     private String lastName;
 
     @Email
     @Column(nullable = false, unique = true)
-    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Corporate email address", order = 30)
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Corporate email address", order = 30, group = "Identity")
     private String email;
 
     @jakarta.validation.constraints.Min(30000)
     @jakarta.validation.constraints.Max(500000)
     @Column(precision = 10, scale = 2)
-    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Annual base salary in USD", currency = "USD", order = 40, showInList = false)
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Annual base salary in USD", currency = "USD", order = 40, showInList = false, group = "Compensation")
     private BigDecimal salary;
 
     @Enumerated(EnumType.STRING)
-    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Current employment status", order = 50)
+    @io.github.yavonalabs.vectis.core.annotation.AdminField(description = "Current employment status", order = 50, group = "Employment")
     private EmploymentStatus status = EmploymentStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -79,6 +79,7 @@ public class Employee {
 
     @AdminAction(
         label = "Increase annual salary by 15%",
+        executionMode = io.github.yavonalabs.vectis.core.action.ActionExecutionMode.MANAGED_LOCAL,
         color = "indigo",
         confirmMessage = "Increase this team member's annual base salary by 15%? This changes the recorded salary; it does not issue a bonus payment.",
         previewMethod = "previewMeritBonus"
@@ -91,6 +92,7 @@ public class Employee {
 
     @AdminAction(
         label = "Change leave status",
+        executionMode = io.github.yavonalabs.vectis.core.action.ActionExecutionMode.MANAGED_LOCAL,
         color = "amber",
         confirmMessage = "Switch between active employment and on leave. Review the proposed status below.",
         previewMethod = "previewLeaveStatus"

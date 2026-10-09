@@ -18,13 +18,10 @@ public class MutationReceiptStore {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public MutationReceipt begin(String actor, String operation, String slug, String recordId, Map<String, String> input) {
+        MutationInputs.validate(input);
         String key = input.get("_operation");
         if (key == null || !key.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid operation key is required. Reload the form.");
-        }
-        if (input.size() > 100 || input.entrySet().stream().anyMatch(e -> e.getKey().length() > 200 || e.getValue() == null || e.getValue().length() > 65536)
-                || input.values().stream().mapToLong(String::length).sum() > 131072) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mutation input exceeds supported limits.");
         }
         TreeMap<String, String> canonical = new TreeMap<>(input);
         canonical.keySet().removeAll(Set.of("_csrf", "_operation", "_list"));
@@ -42,7 +39,7 @@ public class MutationReceiptStore {
             if (!existing.completed()) throw new ResponseStatusException(HttpStatus.CONFLICT, "Operation is not complete. Retry the same request later.");
             return existing;
         }
-        MutationReceipt receipt = new MutationReceipt(id, fingerprint);
+        MutationReceipt receipt = new MutationReceipt(id, fingerprint, slug, operation);
         try {
             em.persist(receipt);
             em.flush();
@@ -56,5 +53,13 @@ public class MutationReceiptStore {
 
     private String hash(String value) throws Exception {
         return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Transactional(readOnly = true)
+    public MutationReceipt findForActor(String actor, String key) {
+        if (key == null || !key.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid operation key.");
+        try { return em.find(MutationReceipt.class, hash(json.writeValueAsString(List.of(actor, key.toLowerCase(Locale.ROOT))))); }
+        catch (Exception e) { throw new IllegalStateException("Cannot read operation result", e); }
     }
 }

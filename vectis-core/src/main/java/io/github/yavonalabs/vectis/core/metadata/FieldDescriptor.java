@@ -22,8 +22,15 @@ public record FieldDescriptor(
     String description,
     int order,
     boolean showInList,
-    String currency
+    String currency,
+    String group
 ) {
+    public FieldDescriptor(String name, String displayName, Class<?> type, boolean isId,
+            boolean isEmbeddedId, boolean isVersion, boolean isSearchable, boolean isNullable,
+            Set<String> validationRules, Long min, Long max, String description, int order, boolean showInList, String currency) {
+        this(name, displayName, type, isId, isEmbeddedId, isVersion, isSearchable, isNullable,
+                validationRules, min, max, description, order, showInList, currency, "Details");
+    }
     public FieldDescriptor(String name, String displayName, Class<?> type, boolean isId,
             boolean isEmbeddedId, boolean isVersion, boolean isSearchable, boolean isNullable,
             Set<String> validationRules, Long min, Long max, String description) {

@@ -25,14 +25,17 @@ public class ActionPreviewController {
     private final DynamicCriteriaQueryEngine queries;
     private final AdminPermissionEvaluator permissions;
     private final Validator validator;
+    private final io.github.yavonalabs.vectis.core.mutation.ActionProposalStore proposals;
 
     public ActionPreviewController(EntityActionRegistry actions, EntityMetadataRegistry registry,
-            DynamicCriteriaQueryEngine queries, AdminPermissionEvaluator permissions, Validator validator) {
+            DynamicCriteriaQueryEngine queries, AdminPermissionEvaluator permissions, Validator validator,
+            io.github.yavonalabs.vectis.core.mutation.ActionProposalStore proposals) {
         this.actions = actions;
         this.registry = registry;
         this.queries = queries;
         this.permissions = permissions;
         this.validator = validator;
+        this.proposals = proposals;
     }
 
     @PostMapping("/{slug}/action/{actionId}/{encodedId}/preview")
@@ -44,6 +47,7 @@ public class ActionPreviewController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot preview this action.");
         }
         var descriptor = registry.getBySlug(slug).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        io.github.yavonalabs.vectis.core.mutation.MutationInputs.validate(params);
         EntityAction<Object> action = (EntityAction<Object>) actions.getAction(descriptor.javaType(), actionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (action.getPreviewHandler() == null) {
@@ -58,7 +62,9 @@ public class ActionPreviewController {
         BeanUtils.copyProperties(original, candidate);
         Map<String, Object> proposed;
         DryRunContextHolder.set(true);
-        try { proposed = action.getPreviewHandler().apply(candidate, Collections.unmodifiableMap(params)); }
+        boolean managed = action.getExecutionMode() == io.github.yavonalabs.vectis.core.action.ActionExecutionMode.MANAGED_LOCAL;
+        try { proposed = action.getPreviewHandler().apply(candidate, managed
+                ? io.github.yavonalabs.vectis.core.mutation.ActionProposalStore.businessInput(params) : Collections.unmodifiableMap(params)); }
         finally { DryRunContextHolder.clear(); }
         if (proposed == null) throw new IllegalStateException("Preview must return proposed values.");
         var before = PropertyAccessorFactory.forBeanPropertyAccess(original);
@@ -77,8 +83,12 @@ public class ActionPreviewController {
         if (!validator.validate(candidate).isEmpty()) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "This action would produce invalid data. Review the action's business rules before continuing.");
         }
+        String version = descriptor.hasVersion() ? String.valueOf(before.getPropertyValue(descriptor.versionField().name())) : "";
+        String proposal = managed && action.isRequiresConfirmation()
+                ? proposals.issue(principal.getName(), slug, actionId, encodedId, version, params) : "";
         return Map.of("riskLevel", action.getRiskLevel().name(), "hasChanges", !changes.isEmpty(),
-                "plainTextChanges", changes, "version", descriptor.hasVersion() ? String.valueOf(before.getPropertyValue(descriptor.versionField().name())) : "");
+                "plainTextChanges", changes, "version", version, "proposal", proposal,
+                "executionMode", action.getExecutionMode().name());
     }
 
     @ExceptionHandler(Exception.class)

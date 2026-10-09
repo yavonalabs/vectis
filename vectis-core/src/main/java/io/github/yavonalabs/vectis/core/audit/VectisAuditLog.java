@@ -33,6 +33,10 @@ public class VectisAuditLog {
 
     @Column(length = 1000)
     private String reason;
+    @Column(name = "operation_id", length = 36)
+    private String operationId;
+    public String getOperationId() { return operationId; }
+    public void setOperationId(String operationId) { this.operationId = operationId; }
 
     @Lob
     @Column(name = "before_snapshot_json")

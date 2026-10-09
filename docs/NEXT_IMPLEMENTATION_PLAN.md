@@ -2,6 +2,8 @@
 
 Prepared 28 September 2026. Status: proposed implementation sequence; this document does not mark its work complete.
 
+7 October review reconciliation: the [backend action plan](BACKEND_REVIEW_ACTION_PLAN.md), [UI action plan](UI_REVIEW_ACTION_PLAN.md) and [code-freeze boundary](CODE_FREEZE_BOUNDARY.md) now define the bounded candidate scope and acceptance criteria. This document preserves the broader sequence and external pilot obligations. Historical baseline findings below must not be read as current defects; use the completion ledger and evidence records for current status.
+
 Current completion tracking: [improvement ledger](IMPROVEMENT_COMPLETION_LEDGER.md). Managed CRUD receipts are implemented; final CI/browser/restart gates remain open. See [request replay contract](MANAGED_REQUEST_REPLAY.md).
 
 Scope confirmed by the product owner on 5 October 2026: all stages below are required, including unsaved-edit protection, personal saved views and export. Dependencies still determine implementation order. Pilot feedback informs their design and acceptance criteria; it no longer determines whether these three conveniences are included. External participation, independent review and publishing prerequisites remain explicit gates, not completed engineering work.
@@ -20,7 +22,7 @@ The first pilot targets a Spring Boot/JPA application with a repeated record loo
 
 Keep Java 17, Spring Boot, JPA, server-rendered templates, HTMX, Alpine and host-owned authentication. No frontend rewrite, raw SQL execution, automatic AI remediation, cross-framework support, multi-application control plane or Invariant integration in this cycle. Multi-tenant isolation, granular field RBAC and approval workflows are not implicit promises.
 
-## 2. Baseline and evidence
+## 2. Historical baseline and evidence (28 September)
 
 | Area | Current evidence | Remaining gap |
 |---|---|---|
@@ -33,7 +35,7 @@ Keep Java 17, Spring Boot, JPA, server-rendered templates, HTMX, Alpine and host
 | Validation | Latest local Maven verification: 63 passing tests; focused browser checks | Passing tests do not establish all lifecycle or production guarantees |
 | Adoption | No customer evidence established in this work | Independent setup, repeated real workflow use, willingness to pay |
 
-Recent specific findings: `_version` is checked for actions only when supplied; no durable idempotency protocol is established; audit writes use `REQUIRES_NEW` and are not atomic with mutations; local action preview returned Forbidden during the focus check. These need scoped fixes or diagnosis, not reassuring copy.
+Findings at that baseline included optional action versions, absent durable replay, independent audit writes and a local preview Forbidden response. Subsequent work fixed mandatory version enforcement and managed CRUD atomicity/replay; a fresh-session preview check did not reproduce the Forbidden response. Custom-action guarantees and remaining verification are tracked in the current plans, not inferred from this historical list.
 
 ## 3. Delivery sequence and estimates
 

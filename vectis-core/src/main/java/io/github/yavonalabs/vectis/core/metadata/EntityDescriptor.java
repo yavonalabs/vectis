@@ -25,4 +25,11 @@ public record EntityDescriptor(
     public boolean hasVersion() {
         return versionField != null;
     }
+    public java.util.Map<String, List<FieldDescriptor>> detailGroups() {
+        var groups = new java.util.LinkedHashMap<String, List<FieldDescriptor>>();
+        for (var field : fields) {
+            if (!field.isId() && !field.isVersion()) groups.computeIfAbsent(field.group(), ignored -> new java.util.ArrayList<>()).add(field);
+        }
+        return groups;
+    }
 }

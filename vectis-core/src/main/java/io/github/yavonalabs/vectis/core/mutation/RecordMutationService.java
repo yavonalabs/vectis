@@ -166,7 +166,7 @@ public class RecordMutationService {
                     afterSnapshot,
                     username,
                     formParams.getOrDefault("_reason", "Standard operational edit")
-            ));
+            ).withOperationId(formParams.get("_operation")));
 
             receipt.complete(normalizedEncodedId);
             return normalizedEncodedId;
@@ -208,7 +208,7 @@ public class RecordMutationService {
                 Map.of(),
                 username,
                 reason
-        ));
+        ).withOperationId(allParams.get("_operation")));
         receipt.complete(encodedId);
 
     }

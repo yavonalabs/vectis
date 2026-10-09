@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{vectis/layout :: html(
-        pageTitle=${(isNew ? 'New ' : 'Edit ') + descriptor.singularName()},
+        pageTitle=${descriptor.singularName()},
         content=~{::content}
       )}">
 <body>

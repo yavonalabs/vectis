@@ -98,6 +98,7 @@ public class EntityActionRegistry {
                                 .modalTitle(label)
                                 .modalDescription(ann.confirmMessage())
                                 .risk(ann.risk())
+                                .executionMode(ann.executionMode())
                                 .requiresConfirmation(ann.requiresConfirmation())
                                 .handler((entity, params) -> {
                                     try {
@@ -143,6 +144,7 @@ public class EntityActionRegistry {
                         .modalTitle(label)
                         .modalDescription(ann.confirmMessage())
                         .risk(ann.risk())
+                        .executionMode(ann.executionMode())
                         .requiresConfirmation(ann.requiresConfirmation())
                         .handler((entity, params) -> {
                             try {

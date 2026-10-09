@@ -15,6 +15,7 @@ public class EntityAction<T> {
     private String modalTitle;
     private String modalDescription;
     private boolean requiresConfirmation = true;
+    private ActionExecutionMode executionMode = ActionExecutionMode.HOST_MANAGED;
     private io.github.yavonalabs.vectis.core.annotation.RiskLevel riskLevel = io.github.yavonalabs.vectis.core.annotation.RiskLevel.MODERATE;
     private BiConsumer<T, Map<String, String>> handler;
     private BiFunction<T, Map<String, String>, Map<String, Object>> previewHandler;
@@ -79,6 +80,11 @@ public class EntityAction<T> {
     }
 
     public String getId() { return id; }
+    public EntityAction<T> executionMode(ActionExecutionMode mode) {
+        this.executionMode = java.util.Objects.requireNonNull(mode);
+        return this;
+    }
+    public ActionExecutionMode getExecutionMode() { return executionMode; }
     /** A side-effect-free projection of proposed scalar values; never the execute handler. */
     public EntityAction<T> preview(BiFunction<T, Map<String, String>, Map<String, Object>> previewHandler) {
         this.previewHandler = previewHandler;

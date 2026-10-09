@@ -87,7 +87,7 @@ class EntityPermissionIntegrationTest {
                 .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
                         ex -> assertThat(ex.getStatusCode().value()).isEqualTo(400));
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> mutations.execute("employee", "toggleLeaveStatus", "1",
-                java.util.Map.of("_reason", "Direct call", "_version", "-1")))
+                java.util.Map.of("_reason", "Direct call", "_version", "-1", "_operation", java.util.UUID.randomUUID().toString())))
                 .isInstanceOfSatisfying(org.springframework.web.server.ResponseStatusException.class,
                         ex -> assertThat(ex.getStatusCode().value()).isEqualTo(409));
     }
@@ -98,6 +98,10 @@ class EntityPermissionIntegrationTest {
             String html = mvc.perform(get(path).with(user("restricted").roles("RESTRICTED")))
                     .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
             assertThat(html).doesNotContain("Engineering");
+            if (!path.equals("/admin/employee")) {
+                assertThat(html).contains("Related record unavailable.")
+                        .doesNotContain("Not assigned", "OPERATIONS HUB");
+            }
         }
         String detail = mvc.perform(get("/admin/employee/view/1").with(user("restricted").roles("RESTRICTED")))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();

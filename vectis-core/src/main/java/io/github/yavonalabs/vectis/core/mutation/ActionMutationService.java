@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Legacy action orchestration boundary. Intentionally not transactional: existing
- * handlers may own transactions or external effects. Atomic managed mode follows separately.
+ * Authorized action boundary. Managed local handlers execute inside the explicit
+ * commit wrapper; host-managed handlers retain responsibility for their own effects.
  */
 public class ActionMutationService {
     private final EntityMetadataRegistry metadata;
@@ -29,22 +29,38 @@ public class ActionMutationService {
     private final AdminPermissionEvaluator permissions;
     private final MutationActorProvider actors;
     private final ApplicationEventPublisher events;
+    private final ManagedActionTransaction managed;
+    private final MutationReceiptStore receipts;
+    private final ActionProposalStore proposals;
+    private final io.github.yavonalabs.vectis.core.audit.VectisAuditLogService audit;
 
     public ActionMutationService(EntityMetadataRegistry metadata, EntityActionRegistry actions,
             DynamicCriteriaQueryEngine queries, AdminPermissionEvaluator permissions,
-            MutationActorProvider actors, ApplicationEventPublisher events) {
+            MutationActorProvider actors, ApplicationEventPublisher events,
+            ManagedActionTransaction managed, MutationReceiptStore receipts, ActionProposalStore proposals,
+            io.github.yavonalabs.vectis.core.audit.VectisAuditLogService audit) {
         this.metadata = metadata;
         this.actions = actions;
         this.queries = queries;
         this.permissions = permissions;
         this.actors = actors;
         this.events = events;
+        this.managed = managed;
+        this.receipts = receipts;
+        this.proposals = proposals;
+        this.audit = audit;
     }
 
-    public record Result(String actionLabel) {}
+    public enum Outcome { COMMITTED, HOST_COMPLETED }
+    public record Result(String actionLabel, Outcome outcome, boolean replayed) {}
 
     @SuppressWarnings("unchecked")
     public Result execute(String slug, String actionId, String encodedId, Map<String, String> parameters) {
+        return executeInternal(slug, actionId, encodedId, parameters, false);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Result executeInternal(String slug, String actionId, String encodedId, Map<String, String> parameters, boolean inManagedTransaction) {
         var actor = actors.currentActor();
         if (actor == null || !permissions.canAccessAdmin(actor) || !permissions.canViewEntity(slug, actor)
                 || !permissions.canExecuteAction(slug, actionId, actor)) {
@@ -56,9 +72,20 @@ public class ActionMutationService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Action not found"));
         // Copy input so a handler cannot rewrite the reason used for its audit record.
         Map<String, String> params = parameters == null ? new HashMap<>() : new HashMap<>(parameters);
+        MutationInputs.validate(params);
         String reason = params.get("_reason");
-        if (action.getRiskLevel() != RiskLevel.LOW && (reason == null || reason.isBlank() || reason.length() > 1000)) {
+        if ((reason != null && reason.length() > 1000) || (action.getRiskLevel() != RiskLevel.LOW && (reason == null || reason.isBlank()))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Enter a reason for this change (1–1000 characters).");
+        }
+        if (action.getExecutionMode() == io.github.yavonalabs.vectis.core.action.ActionExecutionMode.MANAGED_LOCAL && !inManagedTransaction) {
+            return managed.commit(() -> executeInternal(slug, actionId, encodedId, params, true));
+        }
+        MutationReceipt receipt = null;
+        if (inManagedTransaction) {
+            if (!descriptor.hasVersion()) throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Managed actions require a versioned entity.");
+            receipt = receipts.begin(actor.getName(), "ACTION:" + actionId, slug, encodedId, params);
+            if (receipt.completed()) return new Result(action.getLabel(), Outcome.COMMITTED, true);
         }
         Object id;
         try { id = IdCodec.decode(encodedId, descriptor.idField().type(), descriptor.idField().isEmbeddedId()); }
@@ -78,12 +105,32 @@ public class ActionMutationService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "This action has no execution handler.");
         }
         var before = snapshot(entity, descriptor);
-        action.getHandler().accept(entity, params);
+        if (inManagedTransaction && action.isRequiresConfirmation()) {
+            proposals.consume(actor.getName(), slug, actionId, encodedId, params.get("_version"), params);
+        }
+        if (inManagedTransaction) managed.guardVersion(entity);
+        try {
+        action.getHandler().accept(entity, inManagedTransaction ? ActionProposalStore.businessInput(params) : java.util.Collections.unmodifiableMap(params));
         Object saved = queries.save(entity);
-        events.publishEvent(new VectisChangeEvent(this, slug, encodedId, action.getLabel(),
+        var event = new VectisChangeEvent(this, slug, encodedId, action.getLabel(),
                 VectisChangeEvent.OperationType.ACTION, before, snapshot(saved, descriptor), actor.getName(),
-                reason == null ? "Executed via Vectis Console" : reason));
-        return new Result(action.getLabel());
+                reason == null ? "Executed via Vectis Console" : reason);
+        if (inManagedTransaction) {
+            event.withOperationId(params.get("_operation"));
+            audit.recordMutation(event);
+            receipt.complete(encodedId);
+        } else {
+            events.publishEvent(event);
+        }
+        return new Result(action.getLabel(), inManagedTransaction ? Outcome.COMMITTED : Outcome.HOST_COMPLETED, false);
+        } catch (RuntimeException failure) {
+            if (inManagedTransaction) throw failure;
+            throw new HostActionOutcomeUnknown(failure);
+        }
+    }
+
+    public static class HostActionOutcomeUnknown extends RuntimeException {
+        HostActionOutcomeUnknown(Throwable cause) { super("Host action outcome is unconfirmed.", cause); }
     }
 
     private Map<String, Object> snapshot(Object entity, EntityDescriptor descriptor) {

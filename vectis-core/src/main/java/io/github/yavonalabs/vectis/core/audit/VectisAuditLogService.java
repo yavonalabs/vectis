@@ -60,6 +60,7 @@ public class VectisAuditLogService {
                     event.getEventInstant() != null ? event.getEventInstant() : Instant.now()
             );
 
+            log.setOperationId(event.getOperationId());
             entityManager.persist(log);
     }
 

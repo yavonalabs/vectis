@@ -1,6 +1,6 @@
 # Mutation lifecycle decision
 
-Date: 5 October 2026. Status: design accepted for staged implementation; transaction guarantees below are not implemented yet.
+Date: 5 October 2026. Status: design accepted and partially implemented. Managed CRUD atomicity/replay exists; custom-action modes, proposal enforcement and complete outcome semantics remain pending. The [backend action plan](BACKEND_REVIEW_ACTION_PLAN.md) and [freeze boundary](CODE_FREEZE_BOUNDARY.md) define the remaining candidate scope.
 
 Implementation progress: legacy action orchestration has been extracted into `ActionMutationService`. Its direct entry point obtains the actor through `MutationActorProvider` and checks console, entity and action access before loading or executing a record. The default Spring Security adapter rejects missing and anonymous authentication. Hosts using custom authentication must provide a trusted server-context actor provider; absent that provider, direct mutation access fails closed. The controller retains redirects and validation feedback. Create/edit/delete now delegate to `RecordMutationService`, which repeats authorization and relationship checks and obtains actor identity from the same provider. Validation failures carry the submitted entity back to the controller for form rendering. Managed CRUD now uses one transaction for record and audit writes; its PostgreSQL verification gate remains open. Structured outcome expansion and managed action execution remain pending. See ATOMIC_RECORD_MUTATIONS.md for limits and compatibility.
 

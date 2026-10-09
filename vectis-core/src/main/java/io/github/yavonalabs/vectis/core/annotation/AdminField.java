@@ -15,4 +15,6 @@ public @interface AdminField {
     boolean showInList() default true;
     /** ISO 4217 code. Empty means an ordinary number, never inferred currency. */
     String currency() default "";
+    /** Explicit detail-section label; omitted fields stay in Details. */
+    String group() default "Details";
 }

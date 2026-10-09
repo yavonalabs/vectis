@@ -1,5 +1,59 @@
+
+
+
+        body {
+            background-color: var(--vx-canvas);
+            color: var(--vx-text-main);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.011em;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Type Badges */
+        .type-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background-color: #1a1e29;
+            color: #9ca3af;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            text-transform: lowercase;
+            font-weight: 500;
+        }
+
+        /* Tiered Risk Badges */
+        .risk-badge-low { color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .risk-badge-moderate { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); }
+        .risk-badge-impact { color: #f97316; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.25); }
+        .risk-badge-danger { color: #ef4444; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #151821;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 12px 18px;
+            border-radius: 10px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .toast.show { transform: translateX(0); }
+
+        .htmx-indicator { display: none; }
+        .htmx-request .htmx-indicator { display: inline-block; }
+        .htmx-request.htmx-indicator { display: inline-block; }
+
 /* Shared operator presentation; permissions are always enforced by the server. */
-:root { --vx-text-muted: var(--vx-text-muted); --vx-text-faint: #9aa6b8; --vx-focus: #6ee7b7; }
+
 body { font-size: 14px; line-height: 1.5; }
 main .text-xs, nav .text-xs { font-size: 14px; }
 main .text-\[9px\], main .text-\[10px\], main .text-\[11px\] { font-size: 12px; }

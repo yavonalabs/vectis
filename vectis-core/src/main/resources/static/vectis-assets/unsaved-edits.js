@@ -71,6 +71,15 @@ function createUnsavedEditState(snapshot) {
         if (xhr.status === 401 && dirty()) {
             event.preventDefault();
             showMessage('Your session has ended. These edits are not saved. Copy anything you need before signing in again.');
+        } else if (xhr.status >= 400) {
+            event.preventDefault();
+            state.retain();
+            if (xhr.status === 409) {
+                requiresReload = true;
+                showMessage('This request conflicts with the current record or operation. Your edits are kept. Copy them, then reload and review before saving.');
+            } else {
+                showMessage('The save could not be confirmed. Your edits are kept. Check the operation result before retrying; do not assume the request failed.');
+            }
         } else if (xhr.status >= 200 && xhr.status < 300 && xhr.getResponseHeader('HX-Redirect')) {
             if (submittedSnapshot !== null && snapshot(form) !== submittedSnapshot) {
                 event.preventDefault();
