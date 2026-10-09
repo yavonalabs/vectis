@@ -184,6 +184,17 @@ class ManagedActionMutationTest {
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/admin/api/operations/" + key))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.outcome").value("COMMITTED"));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/admin/operations/" + key))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Cache-Control", "no-store"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("Local change committed")));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/admin/operations/" + key)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("other").roles("ADMIN")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("Outcome unconfirmed")));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/admin/operations/" + key)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("action-reviewer").roles("USER")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/admin/api/operations/" + key)
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("other").roles("ADMIN")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());

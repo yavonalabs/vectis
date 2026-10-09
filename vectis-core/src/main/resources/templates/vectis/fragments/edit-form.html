@@ -168,6 +168,12 @@
         </div>
 
         <!-- Footer Buttons -->
+        <details class="vx-filter-details">
+            <summary>Recover an uncertain save</summary>
+            <p>Keep this reference if the response is lost. Inspect its result before retrying; opening the result keeps this form in place.</p>
+            <code class="break-all" th:text="${mutationKey}"></code>
+            <a class="vx-secondary" target="_blank" rel="noopener" th:href="@{${adminPath} + '/operations/' + ${mutationKey}}">Inspect operation result (new tab)</a>
+        </details>
         <div class="flex items-center justify-end gap-3 pt-6 border-t border-[var(--vx-border)]">
             <a th:href="@{${listUrl}}" class="px-4 py-2 bg-[var(--vx-surface-overlay)] hover:bg-[var(--vx-surface-active)] border border-[var(--vx-border)] text-[var(--vx-text-main)] rounded-xl text-xs font-semibold transition">
                 Cancel

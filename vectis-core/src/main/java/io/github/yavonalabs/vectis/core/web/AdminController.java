@@ -48,6 +48,7 @@ public class AdminController {
     private final io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations;
     private final io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations;
     private final io.github.yavonalabs.vectis.core.view.SavedViewService savedViews;
+    private final OperationResultController operationResults;
     private final ConversionService conversionService = DefaultConversionService.getSharedInstance();
 
     @Value("${vectis.title:Operations Console}")
@@ -66,7 +67,8 @@ public class AdminController {
             VectisAuditLogService auditLogService,
             io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations,
             io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations,
-            io.github.yavonalabs.vectis.core.view.SavedViewService savedViews
+            io.github.yavonalabs.vectis.core.view.SavedViewService savedViews,
+            OperationResultController operationResults
     ) {
         this.registry = registry;
         this.queryEngine = queryEngine;
@@ -78,6 +80,7 @@ public class AdminController {
         this.actionMutations = actionMutations;
         this.recordMutations = recordMutations;
         this.savedViews = savedViews;
+        this.operationResults = operationResults;
     }
 
     @ModelAttribute
@@ -459,6 +462,20 @@ public class AdminController {
             return retainedForm(descriptor, formParams, model, request, response, principal, 500,
                     "The save could not be confirmed. Your submitted values and operation key are retained. Check the operation result before changing or retrying this request.");
         }
+    }
+
+    @GetMapping("/operations/{key}")
+    public String operationResult(@PathVariable String key, Model model, jakarta.servlet.http.HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-store");
+        model.addAttribute("operationReference", key);
+        try {
+            model.addAttribute("operationResult", operationResults.result(key).getBody());
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode().value() != 404) throw ex;
+            response.setStatus(404);
+            model.addAttribute("operationResult", Map.of("outcome", "UNKNOWN"));
+        }
+        return "vectis/operation-result";
     }
 
     private String retainedForm(EntityDescriptor descriptor, Map<String, String> input, Model model,

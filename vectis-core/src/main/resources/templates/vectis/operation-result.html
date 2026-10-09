@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{vectis/layout :: html(pageTitle='Operation result', content=~{::content})}">
+<body>
+<section th:fragment="content" class="vx-form max-w-4xl mx-auto space-y-4">
+    <h1 class="text-xl font-bold">Operation result</h1>
+    <p>Reference: <code class="break-all" th:text="${operationReference}"></code></p>
+    <div role="status" th:if="${operationResult.outcome == 'COMMITTED'}">
+        <h2 class="font-semibold">Local change committed</h2>
+        <p>This account's recorded request completed. Inspect the record and its activity before starting another change. This result does not establish delivery to other systems.</p>
+        <p>Section: <span th:text="${operationResult.entity}"></span>. Record: <span th:text="${operationResult.recordId}"></span>.</p>
+    </div>
+    <div role="status" th:unless="${operationResult.outcome == 'COMMITTED'}">
+        <h2 class="font-semibold">Outcome unconfirmed</h2>
+        <p>No completed result is available to this account. This does not prove the request failed or that no change occurred. Check the record, activity and connected systems before retrying. Keep this reference and the original input; do not replace the reference to retry an uncertain request.</p>
+    </div>
+    <a class="vx-secondary" th:href="@{${adminPath}}">Return to workspace</a>
+</section>
+</body>
+</html>

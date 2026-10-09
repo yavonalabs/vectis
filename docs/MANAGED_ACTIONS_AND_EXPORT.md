@@ -24,6 +24,8 @@ Use a new UUID `_operation` for a new request and preserve the same key, proposa
 
 `GET {vectis.path}/api/operations/{operationId}` reports an account's authorized managed result, with `Cache-Control: no-store`. Another account cannot retrieve it. Revoking the applicable operation/entity permission also denies recovery. A missing result is not proof that a host/external action had no effect. Old receipts without the new metadata still protect exact retries but cannot be inspected through this endpoint.
 
+Forms expose their reference under “Recover an uncertain save”; managed action reviews expose a recovery reference. The result opens in a new tab at `{vectis.path}/operations/{operationId}`, preserving entered form values. The page uses the same authorization boundary as the JSON endpoint and distinguishes a committed local result from an unconfirmed outcome. Opening it never executes or retries a mutation. Manual `AdminController` construction now also requires `OperationResultController`; starter wiring supplies it.
+
 Success audits include the operation ID for new managed requests. Record activity projects old JSON snapshots through current exposure metadata; removed/hidden fields are not rendered. Failed/unknown host actions do not acquire a fabricated success receipt. A durable general-purpose failure/unknown-outcome journal is not implemented yet.
 
 ## Export

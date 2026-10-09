@@ -262,6 +262,12 @@
                 <input type="hidden" name="_version" :value="previewData?.version ?? ''" />
                 <input type="hidden" name="_proposal" :value="previewData?.proposal ?? ''" />
                 <input type="hidden" name="_operation" :value="operationKey" />
+                <details x-show="previewData?.executionMode === 'MANAGED_LOCAL'" class="vx-filter-details">
+                    <summary>Recovery reference</summary>
+                    <p>Keep this reference if the response is lost. Inspect the result before retrying.</p>
+                    <code class="break-all" x-text="operationKey"></code>
+                    <a class="vx-secondary" target="_blank" rel="noopener" :href="document.body.dataset.adminBase + '/operations/' + operationKey">Inspect operation result (new tab)</a>
+                </details>
                 <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="space-y-1.5" x-show="previewData?.riskLevel === 'MODERATE' || previewData?.riskLevel === 'HIGH' || previewData?.riskLevel === 'CRITICAL'">
                     <label for="action-reason" class="text-xs font-medium text-[var(--vx-text-main)]">

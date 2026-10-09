@@ -100,7 +100,7 @@ class EntityPermissionIntegrationTest {
             assertThat(html).doesNotContain("Engineering");
             if (!path.equals("/admin/employee")) {
                 assertThat(html).contains("Related record unavailable.")
-                        .doesNotContain("Not assigned", "OPERATIONS HUB");
+                        .doesNotContain("Not assigned", "Available operations");
             }
         }
         String detail = mvc.perform(get("/admin/employee/view/1").with(user("restricted").roles("RESTRICTED")))

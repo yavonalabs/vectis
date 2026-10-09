@@ -192,7 +192,8 @@ public class VectisAutoConfiguration {
             VectisAuditLogService auditLogService,
             io.github.yavonalabs.vectis.core.mutation.ActionMutationService actionMutations,
             io.github.yavonalabs.vectis.core.mutation.RecordMutationService recordMutations,
-            io.github.yavonalabs.vectis.core.view.SavedViewService savedViews
+            io.github.yavonalabs.vectis.core.view.SavedViewService savedViews,
+            io.github.yavonalabs.vectis.core.web.OperationResultController operationResults
     ) {
         return new AdminController(
                 registry,
@@ -204,7 +205,8 @@ public class VectisAutoConfiguration {
                 auditLogService,
                 actionMutations,
                 recordMutations,
-                savedViews
+                savedViews,
+                operationResults
         );
     }
 
