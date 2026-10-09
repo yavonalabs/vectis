@@ -39,11 +39,13 @@
                 <input type="hidden" name="filterOp" th:value="${condition.operator}">
                 <input type="hidden" name="filterValue" th:value="${condition.value}">
             </th:block>
-            <fieldset class="space-y-2"><legend>Choose columns</legend>
-                <label th:each="field : ${exportColumns}" class="inline-flex items-center gap-2 mr-3">
+            <fieldset class="vx-export-columns"><legend>Choose columns</legend>
+                <div class="vx-column-options">
+                <label th:each="field : ${exportColumns}" class="vx-column-option">
                     <input type="checkbox" name="column" th:value="${field.name}">
                     <span th:text="${field.displayName}"></span>
                 </label>
+                </div>
             </fieldset>
             <button type="submit" class="vx-secondary mt-3">Download CSV</button>
         </form>

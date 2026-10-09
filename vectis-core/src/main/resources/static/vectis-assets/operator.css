@@ -57,7 +57,7 @@
 body { font-size: 14px; line-height: 1.5; }
 main .text-xs, nav .text-xs { font-size: 14px; }
 main .text-\[9px\], main .text-\[10px\], main .text-\[11px\] { font-size: 12px; }
-button, input, select { min-height: 40px; }
+button, input:not([type="checkbox"]):not([type="radio"]), select { min-height: 40px; }
 button, a, input, select, summary { outline-offset: 3px; }
 :focus-visible { outline: 2px solid var(--vx-focus) !important; }
 [x-cloak] { display: none !important; }
@@ -80,8 +80,13 @@ button, a, input, select, summary { outline-offset: 3px; }
 .vx-saved-views p { font-size: 13px; }
 .vx-saved-views label { max-width: 100%; }
 .vx-filter-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
-.vx-filter-form input, .vx-filter-form select, .vx-relationship-search input { padding: 8px 10px; background: var(--vx-surface-card); border: 1px solid var(--vx-border); border-radius: 6px; color: var(--vx-text-main); min-width: 0; width: 100%; }
+.vx-filter-form input:not([type="checkbox"]):not([type="radio"]), .vx-filter-form select, .vx-relationship-search input { padding: 8px 10px; background: var(--vx-surface-card); border: 1px solid var(--vx-border); border-radius: 6px; color: var(--vx-text-main); min-width: 0; width: 100%; }
 .vx-search-label { flex: 1; min-width: 160px; }
+.vx-export-columns legend { font-weight: 600; margin-bottom: 8px; }
+.vx-column-options { display: flex; flex-wrap: wrap; gap: 8px 12px; }
+.vx-filter-form .vx-column-option { display: inline-flex; flex-direction: row; align-items: center; gap: 8px; min-height: 40px; max-width: 100%; padding: 4px 8px; cursor: pointer; }
+.vx-column-option input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; padding: 0; margin: 0; flex: 0 0 18px; accent-color: var(--vx-accent-main); }
+.vx-column-option span { overflow-wrap: anywhere; }
 .vx-primary, .vx-secondary { display: inline-flex; align-items: center; justify-content: center; padding: 8px 12px; border-radius: 8px; font-size: 14px; min-height: 40px; }
 .vx-primary { background: var(--vx-accent-main); color: #ffffff; font-weight: 600; }
 .vx-secondary { border: 1px solid var(--vx-border); color: var(--vx-text-main); background: var(--vx-surface-card); }
@@ -163,7 +168,7 @@ body{background:var(--vx-canvas);color:var(--vx-text-main)}
 #main-content .font-mono{font-family:inherit}
 #main-content [class*="rounded-xl"],#main-content [class*="rounded-2xl"]{border-radius:18px}
 .vx-filter-form{border-radius:18px;padding:20px;box-shadow:0 3px 0 #e7eade}
-.vx-filter-form input,.vx-filter-form select,.vx-relationship-search input{border-radius:10px;background:var(--vx-canvas);color:var(--vx-text-main)}
+.vx-filter-form input:not([type="checkbox"]):not([type="radio"]),.vx-filter-form select,.vx-relationship-search input{border-radius:10px;background:var(--vx-canvas);color:var(--vx-text-main)}
 .vx-record-link{color:var(--vx-accent-main);text-decoration:none;font-weight:650}.vx-record-link:hover{text-decoration:underline}
 .vx-record-table th{background:var(--vx-surface-overlay);color:var(--vx-text-muted);padding-top:15px;padding-bottom:15px}
 .vx-record-table td{border-color:var(--vx-border-subtle)}.vx-record-table tbody tr:hover{background:#f7f3fb}
