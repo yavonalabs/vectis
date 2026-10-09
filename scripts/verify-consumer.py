@@ -42,12 +42,16 @@ def start(log, base=BASE, arguments=()):
     proc.terminate(); proc.wait(timeout=20)
     raise RuntimeError('Consumer did not become ready')
 
-def post(client, path, values):
+def post(client, path, values, expected_status=200):
     with client.open(BASE + '/consumer-record/view/1') as response: html = response.read().decode()
     tokens = Tokens(); tokens.feed(html)
     assert tokens.csrf, 'No CSRF token rendered'
     payload = dict(values, _csrf=tokens.csrf)
-    with client.open(BASE + path, urllib.parse.urlencode(payload).encode()) as response: return response.read().decode()
+    try: response = client.open(BASE + path, urllib.parse.urlencode(payload).encode())
+    except urllib.error.HTTPError as error: response = error
+    with response:
+        assert response.status == expected_status, f'Unexpected HTTP {response.status} at {path}'
+        return response.read().decode()
 
 def stop(proc):
     proc.terminate(); proc.wait(timeout=30)
@@ -64,6 +68,21 @@ def main():
             with client.open(BASE + '/api/operations/' + request['_operation']) as response: first = json.load(response)
             assert first['outcome'] == 'COMMITTED'
             before_restart = json.loads(post(client, '/api/consumer-record/action/complete/1/preview', {}))
+            # The HTML validation contract returns the retained form with HTTP 200.
+            invalid = post(client, '/consumer-record/save', {'__id':'1', 'version':before_restart['version'], 'name':'', '_operation':str(uuid.uuid4()), '_reason':'Consumer validation check'})
+            assert 'must not be blank' in invalid, 'Consumer validation error not rendered'
+            assert json.loads(post(client, '/api/consumer-record/action/complete/1/preview', {}))['version'] == before_restart['version'], 'Invalid save changed the version'
+            with client.open(BASE + '/consumer-record/view/1') as response: assert 'Private team label' in response.read().decode()
+            reader = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+            reader.addheaders = [('Authorization', 'Basic ' + base64.b64encode(b'reader:disposable-fixture').decode())]
+            with reader.open(BASE + '/consumer-record/view/1') as response:
+                restricted = response.read().decode()
+                assert 'Related record unavailable.' in restricted and 'Private team label' not in restricted and 'Not assigned' not in restricted
+            for path in ('/consumer-team', '/consumer-team/view/1', '/consumer-record/edit/1'):
+                try: reader.open(BASE + path); raise AssertionError('Restricted consumer access allowed: ' + path)
+                except urllib.error.HTTPError as error: assert error.code == 403
+            post(reader, '/consumer-record/action/complete/1', {'_operation':str(uuid.uuid4()), '_version':before_restart['version'], '_reason':'Denied reader check'}, 403)
+            assert json.loads(post(client, '/api/consumer-record/action/complete/1/preview', {}))['version'] == before_restart['version'], 'Denied reader action changed the version'
             with client.open('http://localhost:18089/portal/vectis-assets/vendor/alpine.min.js') as response: assert response.status == 200
             view_name = 'Restart view ' + str(uuid.uuid4())
             page = post(client, '/consumer-record/saved-views', {'name': view_name, 'state': 'search=Independent&size=25'})
@@ -93,6 +112,6 @@ def main():
                 tokens = Tokens(); tokens.feed(response.read().decode()); assert tokens.csrf, 'Default-path edit form missing CSRF'
             with client.open('http://localhost:18089/vectis-assets/vendor/alpine.min.js') as response: assert response.status == 200
         finally: stop(proc)
-    print('PASS: separately packaged consumer, default/custom paths, CSRF, managed mutation, persistent restart, exact replay, single audit, personal view restart/cleanup, schema validation, local asset')
+    print('PASS: separately packaged consumer, default/custom paths, CSRF, validation rollback, restricted relationship/edit access, managed mutation, persistent restart, exact replay, single audit, personal view restart/cleanup, schema validation, local asset')
 
 if __name__ == '__main__': main()

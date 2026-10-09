@@ -52,7 +52,7 @@ The disposable sample's `create-drop` configuration is never a production migrat
 
 Templates load local, pinned htmx, Alpine, Alpine Anchor, compiled Tailwind utilities and Latin Inter/JetBrains Mono fonts. Other scripts/font servers are not required at runtime. Licenses ship with the assets. Run `npm ci --ignore-scripts` and `npm run build:assets` after template/class changes, and commit the generated assets. CI rebuilds and compares them. Maven consumers do not need Node.
 
-The current Alpine/inline-event template architecture still requires a CSP compatible with inline handlers and Alpine expression evaluation. Bundling assets does **not** establish strict nonce-only/no-`unsafe-eval` CSP support. Do not weaken an existing host CSP silently; test its policy against Vectis or keep this integration disabled until compatible. The October dependency audit also reports build-time Tailwind dependency advisories; those remain a release review item, not a clean-audit claim.
+The current Alpine/inline-event template architecture still requires a CSP compatible with inline handlers and Alpine expression evaluation. Bundling assets does **not** establish strict nonce-only/no-`unsafe-eval` CSP support. Do not weaken an existing host CSP silently; test its policy against Vectis or keep this integration disabled until compatible. The [dependency review](DEPENDENCY_REVIEW.md) records the selector-parser fix and residual build-time braces advisory; a clean full audit is not claimed.
 
 ## Build identity
 

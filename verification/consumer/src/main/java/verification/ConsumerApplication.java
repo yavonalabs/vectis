@@ -23,11 +23,26 @@ public class ConsumerApplication {
                 .httpBasic(org.springframework.security.config.Customizer.withDefaults()).build();
     }
     @Bean UserDetailsService users() {
-        return new InMemoryUserDetailsManager(User.withUsername("installer").password("{noop}disposable-fixture").roles("ADMIN").build());
+        return new InMemoryUserDetailsManager(User.withUsername("installer").password("{noop}disposable-fixture").roles("ADMIN").build(),
+                User.withUsername("reader").password("{noop}disposable-fixture").roles("USER").build());
+    }
+    @Bean io.github.yavonalabs.vectis.core.security.AdminPermissionEvaluator permissions() {
+        return new io.github.yavonalabs.vectis.core.security.AdminPermissionEvaluator() {
+            public boolean canAccessAdmin(java.security.Principal p) { return p != null; }
+            public boolean canViewEntity(String slug, java.security.Principal p) { return p != null && (p.getName().equals("installer") || slug.equals("consumer-record")); }
+            public boolean canEditEntity(String slug, java.security.Principal p) { return p != null && p.getName().equals("installer"); }
+            public boolean canDeleteEntity(String slug, java.security.Principal p) { return canEditEntity(slug,p); }
+            public boolean canExecuteAction(String slug, String action, java.security.Principal p) { return canEditEntity(slug,p); }
+            public boolean canViewAuditLogs(java.security.Principal p) { return canEditEntity("",p); }
+        };
     }
     @Bean CommandLineRunner seed(EntityManager em, PlatformTransactionManager manager) {
         return args -> new TransactionTemplate(manager).executeWithoutResult(tx -> {
-            if (em.find(ConsumerRecord.class, 1L) == null) em.persist(new ConsumerRecord());
+            ConsumerTeam team = em.find(ConsumerTeam.class, 1L);
+            if (team == null) { team = new ConsumerTeam(); em.persist(team); }
+            ConsumerRecord record = em.find(ConsumerRecord.class, 1L);
+            if (record == null) { record = new ConsumerRecord(); em.persist(record); }
+            if (record.getTeam() == null) record.setTeam(team);
         });
     }
 }

@@ -2,6 +2,14 @@
 
 ## 9 October hardening candidate (not frozen)
 
+### Consumer acceptance and dependency closeout
+
+The independent consumer now includes a validated name and a related team entity, plus a reader restricted to the root entity. Actual packaged HTTP checks passed locally: blank-name validation retained the form without committing a version change; the admin saw the target label, the reader saw unavailable without that label or a falsely absent state; direct target/edit access and a CSRF-authenticated mutation attempt were denied without advancing the version. Default/custom paths, process restart, exact replay, one success audit and saved-view persistence/cleanup still passed. Evidence: `target/freeze-consumer-final-access.log`. These assertions also run in the PostgreSQL consumer CI step; its new result must be recorded separately.
+
+Tailwind is pinned to 3.4.19 with selector-parser overridden to patched 7.1.6. Asset build and all 19 JavaScript tests passed. Comparing parsed generated CSS rules against the preceding candidate found zero changed rules. Full npm findings reduced from seven to five; all remaining findings trace to unpatched build-only braces. Exposure and mitigation are documented in [DEPENDENCY_REVIEW.md](DEPENDENCY_REVIEW.md), without a clean-audit or runtime-library certification claim.
+
+The owner volunteered to perform the actual mobile/screen-reader checks using [HOSTED_ACCESSIBILITY_CHECKLIST.md](HOSTED_ACCESSIBILITY_CHECKLIST.md). Those results are pending; no unavailable tooling check is recorded as passed. Code freeze remains open until the required acceptance evidence and residual-risk decisions are recorded.
+
 The recovery/personal-view follow-up `b067694c28b05f497075c9f739b8592627bff45d` passed both jobs in [run 37954075585](https://github.com/yavonalabs/vectis/actions/runs/37954075585), including PostgreSQL default/custom-path consumer checks and persistent saved-view reopening/cleanup. Both remotes resolve to that code candidate. Packaged local artifacts carry its revision; checksums are in `target/release-candidate/manifest.json`. At the last hosted identity check, Render still reported `0919e79`; a later deployment must be verified separately. Render dashboard inspection reached sign-in, so its authenticated build status was unavailable.
 
 The browser's later tab inventory confirmed that clicking the recovery link did create a separate result tab. The first inventory response was too early. The draft remained in the original form; the result showed “Outcome unconfirmed” for the unsubmitted reference. This corrects the earlier provisional popup observation below.
